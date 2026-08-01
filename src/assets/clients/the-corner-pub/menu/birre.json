@@ -1,0 +1,65 @@
+{
+  "id": "birre",
+  "name": {
+    "it": "Birre",
+    "en": "Beers",
+    "fr": "Bières",
+    "de": "Biere"
+  },
+  "order": 3,
+  "enabled": true,
+  "items": [
+    {
+      "id": "ipa-spina",
+      "code": "BIR-01",
+      "name": {
+        "it": "IPA alla spina",
+        "en": "Draft IPA",
+        "fr": "IPA pression",
+        "de": "IPA vom Fass"
+      },
+      "description": {
+        "it": "Birra IPA 0.4L.",
+        "en": "IPA beer 0.4L.",
+        "fr": "Bière IPA 0,4L.",
+        "de": "IPA-Bier 0,4L."
+      },
+      "price": 6.5,
+      "currency": "EUR",
+      "allergens": ["gluten"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "lager-spina",
+      "code": "BIR-02",
+      "name": {
+        "it": "Lager alla spina",
+        "en": "Draft Lager",
+        "fr": "Lager pression",
+        "de": "Lager vom Fass"
+      },
+      "description": {
+        "it": "Birra lager 0.4L.",
+        "en": "Lager beer 0.4L.",
+        "fr": "Bière lager 0,4L.",
+        "de": "Lagerbier 0,4L."
+      },
+      "price": 5.5,
+      "currency": "EUR",
+      "allergens": ["gluten"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 2
+    }
+  ]
+}

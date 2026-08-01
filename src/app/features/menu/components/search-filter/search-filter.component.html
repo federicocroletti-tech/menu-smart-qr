@@ -1,0 +1,50 @@
+<section class="search-filter" [attr.aria-label]="translationService.translate('search')">
+  <label for="menu-search">{{ translationService.translate('search') }}</label>
+  <input
+    id="menu-search"
+    type="search"
+    name="menu-search"
+    [placeholder]="translationService.translate('search')"
+    [(ngModel)]="filter.query"
+    (input)="emitChanges()"
+  />
+
+  <fieldset class="toggles">
+    <legend class="visually-hidden">{{ translationService.translate('allCategories') }}</legend>
+    <label>
+      <input
+        type="checkbox"
+        name="vegetarianOnly"
+        [(ngModel)]="filter.vegetarianOnly"
+        (change)="emitChanges()"
+      />
+      {{ translationService.translate('vegetarian') }}
+    </label>
+    <label>
+      <input type="checkbox" name="veganOnly" [(ngModel)]="filter.veganOnly" (change)="emitChanges()" />
+      {{ translationService.translate('vegan') }}
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        name="glutenFreeOnly"
+        [(ngModel)]="filter.glutenFreeOnly"
+        (change)="emitChanges()"
+      />
+      {{ translationService.translate('glutenFree') }}
+    </label>
+    <label>
+      <input type="checkbox" name="spicyOnly" [(ngModel)]="filter.spicyOnly" (change)="emitChanges()" />
+      {{ translationService.translate('spicy') }}
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        name="recommendedOnly"
+        [(ngModel)]="filter.recommendedOnly"
+        (change)="emitChanges()"
+      />
+      {{ translationService.translate('recommended') }}
+    </label>
+  </fieldset>
+</section>

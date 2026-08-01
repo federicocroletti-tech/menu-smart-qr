@@ -1,0 +1,65 @@
+{
+  "id": "panini",
+  "name": {
+    "it": "Panini",
+    "en": "Sandwiches",
+    "fr": "Sandwiches",
+    "de": "Panini"
+  },
+  "order": 3,
+  "enabled": true,
+  "items": [
+    {
+      "id": "panino-crudo",
+      "code": "PAN-01",
+      "name": {
+        "it": "Panino crudo e mozzarella",
+        "en": "Ham and mozzarella sandwich",
+        "fr": "Sandwich jambon cru mozzarella",
+        "de": "Panino mit Rohschinken und Mozzarella"
+      },
+      "description": {
+        "it": "Pane rustico, crudo, mozzarella e rucola.",
+        "en": "Rustic bread with ham, mozzarella and rocket.",
+        "fr": "Pain rustique, jambon cru, mozzarella et roquette.",
+        "de": "Rustikales Brot mit Rohschinken, Mozzarella und Rucola."
+      },
+      "price": 6.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "panino-vegetariano",
+      "code": "PAN-02",
+      "name": {
+        "it": "Panino vegetariano",
+        "en": "Vegetarian sandwich",
+        "fr": "Sandwich végétarien",
+        "de": "Vegetarisches Panino"
+      },
+      "description": {
+        "it": "Verdure grigliate, hummus e pomodoro.",
+        "en": "Grilled vegetables, hummus and tomato.",
+        "fr": "Légumes grillés, houmous et tomate.",
+        "de": "Gegrilltes Gemüse, Hummus und Tomate."
+      },
+      "price": 6,
+      "currency": "EUR",
+      "allergens": ["gluten", "sesame"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 2
+    }
+  ]
+}

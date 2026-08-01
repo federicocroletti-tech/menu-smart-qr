@@ -1,0 +1,52 @@
+.menu-page {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.875rem;
+  display: grid;
+  gap: 1.125rem;
+  background: var(--color-background, #fff8f2);
+  color: var(--color-text, #212121);
+  overflow-x: clip;
+}
+
+.top-tools {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.menu-sections {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.menu-sections > section {
+  scroll-margin-top: 5.5rem;
+}
+
+.menu-page.has-mobile-contact-bar {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 600px) {
+  .menu-page {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .menu-page {
+    padding: 1.25rem 1.25rem 2rem;
+    gap: 1.25rem;
+  }
+
+  .menu-page.has-mobile-contact-bar {
+    padding-bottom: 2rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .menu-page {
+    padding-inline: 1.5rem;
+  }
+}

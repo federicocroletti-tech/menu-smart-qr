@@ -1,0 +1,66 @@
+{
+  "clientId": "the-corner-pub",
+  "currency": "EUR",
+  "categories": [
+    {
+      "id": "burger",
+      "name": {
+        "it": "Burger",
+        "en": "Burgers",
+        "fr": "Burgers",
+        "de": "Burger"
+      },
+      "order": 1,
+      "enabled": true,
+      "file": "burger.json"
+    },
+    {
+      "id": "fritti",
+      "name": {
+        "it": "Fritti",
+        "en": "Fried Snacks",
+        "fr": "Fritures",
+        "de": "Frittierte Snacks"
+      },
+      "order": 2,
+      "enabled": true,
+      "file": "fritti.json"
+    },
+    {
+      "id": "birre",
+      "name": {
+        "it": "Birre",
+        "en": "Beers",
+        "fr": "Bières",
+        "de": "Biere"
+      },
+      "order": 3,
+      "enabled": true,
+      "file": "birre.json"
+    },
+    {
+      "id": "cocktail",
+      "name": {
+        "it": "Cocktail",
+        "en": "Cocktails",
+        "fr": "Cocktails",
+        "de": "Cocktails"
+      },
+      "order": 4,
+      "enabled": true,
+      "file": "cocktail.json"
+    },
+    {
+      "id": "dolci",
+      "name": {
+        "it": "Dolci",
+        "en": "Desserts",
+        "fr": "Desserts",
+        "de": "Desserts"
+      },
+      "order": 5,
+      "enabled": true,
+      "file": "dolci.json"
+    }
+  ]
+}

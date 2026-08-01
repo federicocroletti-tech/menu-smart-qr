@@ -1,0 +1,97 @@
+{
+  "id": "dolci",
+  "name": {
+    "it": "Dolci",
+    "en": "Desserts",
+    "fr": "Desserts",
+    "de": "Desserts"
+  },
+  "description": {
+    "it": "Dolci fatti in casa.",
+    "en": "Homemade desserts.",
+    "fr": "Desserts maison.",
+    "de": "Hausgemachte Desserts."
+  },
+  "order": 6,
+  "enabled": true,
+  "items": [
+    {
+      "id": "tiramisu",
+      "code": "DOL-01",
+      "name": {
+        "it": "Tiramisù",
+        "en": "Tiramisu",
+        "fr": "Tiramisu",
+        "de": "Tiramisu"
+      },
+      "description": {
+        "it": "Classico tiramisù con mascarpone, caffè e cacao.",
+        "en": "Classic tiramisu with mascarpone, coffee and cocoa.",
+        "fr": "Tiramisu classique au mascarpone, café et cacao.",
+        "de": "Klassisches Tiramisu mit Mascarpone, Kaffee und Kakao."
+      },
+      "price": 5.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "eggs", "milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "pastiera-napoletana",
+      "code": "DOL-02",
+      "name": {
+        "it": "Pastiera napoletana",
+        "en": "Neapolitan pastiera",
+        "fr": "Pastiera napolitaine",
+        "de": "Neapolitanische Pastiera"
+      },
+      "description": {
+        "it": "Crostata tradizionale con ricotta, grano cotto e agrumi.",
+        "en": "Traditional tart with ricotta, cooked wheat and citrus.",
+        "fr": "Tarte traditionnelle à la ricotta, blé cuit et agrumes.",
+        "de": "Traditionelle Tarte mit Ricotta, gekochtem Weizen und Zitrusfrüchten."
+      },
+      "price": 5,
+      "currency": "EUR",
+      "allergens": ["gluten", "eggs", "milk"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 2
+    },
+    {
+      "id": "cheesecake",
+      "code": "DOL-03",
+      "name": {
+        "it": "Cheesecake",
+        "en": "Cheesecake",
+        "fr": "Cheesecake",
+        "de": "Cheesecake"
+      },
+      "description": {
+        "it": "Cheesecake cremosa con topping ai frutti rossi.",
+        "en": "Creamy cheesecake with mixed berries topping.",
+        "fr": "Cheesecake crémeux avec coulis de fruits rouges.",
+        "de": "Cremiger Cheesecake mit Beeren-Topping."
+      },
+      "price": 6,
+      "currency": "EUR",
+      "allergens": ["gluten", "eggs", "milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 3
+    }
+  ]
+}

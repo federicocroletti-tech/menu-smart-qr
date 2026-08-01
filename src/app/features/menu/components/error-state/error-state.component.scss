@@ -1,0 +1,25 @@
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.85rem;
+  min-height: 220px;
+  justify-content: center;
+  padding: 2rem 1rem;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 1rem;
+}
+
+button {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary, #c62828);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}

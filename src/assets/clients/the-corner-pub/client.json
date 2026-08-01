@@ -1,0 +1,88 @@
+{
+  "id": "the-corner-pub",
+  "name": "The Corner Pub",
+  "type": "pub",
+  "description": {
+    "it": "Pub moderno con burger artigianali, birre selezionate e cocktail classici.",
+    "en": "Modern pub with handcrafted burgers, selected beers and classic cocktails.",
+    "fr": "Pub moderne avec burgers artisanaux, bières sélectionnées et cocktails classiques.",
+    "de": "Modernes Pub mit handgemachten Burgern, ausgewählten Bieren und klassischen Cocktails."
+  },
+  "theme": {
+    "primary": "#14532D",
+    "secondary": "#F59E0B",
+    "background": "#0B1220",
+    "surface": "#111827",
+    "text": "#F9FAFB",
+    "muted": "#D1D5DB",
+    "border": "#374151"
+  },
+  "contacts": {
+    "phone": "+39 011 5551234",
+    "whatsapp": "+39 349 5550001",
+    "email": "hello@thecornerpub.it",
+    "address": {
+      "it": "Via Roma 10, Torino",
+      "en": "Via Roma 10, Turin",
+      "fr": "Via Roma 10, Turin",
+      "de": "Via Roma 10, Turin"
+    },
+    "mapsUrl": "https://maps.google.com/?q=Via+Roma+10+Torino",
+    "social": {
+      "facebook": "https://facebook.com/thecornerpub",
+      "instagram": "https://instagram.com/thecornerpub"
+    }
+  },
+  "openingHours": [
+    { "day": "monday", "closed": true },
+    { "day": "tuesday", "closed": false, "slots": [{ "open": "18:00", "close": "01:00" }] },
+    { "day": "wednesday", "closed": false, "slots": [{ "open": "18:00", "close": "01:00" }] },
+    { "day": "thursday", "closed": false, "slots": [{ "open": "18:00", "close": "01:00" }] },
+    { "day": "friday", "closed": false, "slots": [{ "open": "18:00", "close": "02:00" }] },
+    { "day": "saturday", "closed": false, "slots": [{ "open": "18:00", "close": "02:00" }] },
+    { "day": "sunday", "closed": false, "slots": [{ "open": "18:00", "close": "00:30" }] }
+  ],
+  "seo": {
+    "title": {
+      "it": "The Corner Pub | Menu Digitale",
+      "en": "The Corner Pub | Digital Menu",
+      "fr": "The Corner Pub | Menu Numérique",
+      "de": "The Corner Pub | Digitale Speisekarte"
+    },
+    "description": {
+      "it": "Scopri burger, fritti, birre e cocktail di The Corner Pub.",
+      "en": "Discover burgers, fried snacks, beers and cocktails at The Corner Pub.",
+      "fr": "Découvrez burgers, fritures, bières et cocktails de The Corner Pub.",
+      "de": "Entdecken Sie Burger, Frittiertes, Biere und Cocktails im The Corner Pub."
+    },
+    "canonicalUrl": "https://menu.thecornerpub.it"
+  },
+  "settings": {
+    "defaultLanguage": "it",
+    "enabledLanguages": ["it", "en", "fr", "de"],
+    "featureFlags": {
+      "showImages": false,
+      "showAllergens": true,
+      "showSpicyBadge": true,
+      "showVegetarianBadge": true,
+      "showVeganBadge": true,
+      "showGlutenFreeBadge": true,
+      "showRecommendedSection": true,
+      "showSearch": true,
+      "showCategoryNav": true,
+      "showContactBar": true,
+      "showOpeningHours": true,
+      "showUnavailableItems": true,
+      "enableLanguageSelector": true,
+      "enableDishCodes": true,
+      "enablePrices": true,
+      "enableDescriptions": true
+    }
+  },
+  "notes": {
+    "it": "Allergeni disponibili su richiesta. Servizio incluso.",
+    "en": "Allergen information available on request. Service included.",
+    "fr": "Informations allergènes sur demande. Service inclus.",
+    "de": "Allergeninformationen auf Anfrage. Service inbegriffen."
+  }
+}

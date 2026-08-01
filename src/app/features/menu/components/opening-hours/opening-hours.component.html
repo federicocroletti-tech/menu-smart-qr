@@ -1,0 +1,21 @@
+@if (orderedHours.length > 0) {
+  <section class="opening-hours" [attr.aria-label]="translationService.translate('openingHours')">
+    <h3>{{ translationService.translate('openingHours') }}</h3>
+    <ul>
+      @for (day of orderedHours; track day.day) {
+        <li>
+          <span class="day">{{ getDayLabel(day.day) }}</span>
+          @if (day.closed || !day.slots?.length) {
+            <span class="value closed">{{ translationService.translate('closed') }}</span>
+          } @else {
+            <span class="value">
+              @for (slot of day.slots; track $index) {
+                <span>{{ slot.open }} - {{ slot.close }}</span>
+              }
+            </span>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+}

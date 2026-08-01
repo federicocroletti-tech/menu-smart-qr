@@ -1,0 +1,4 @@
+<div class="error-state" role="alert">
+  <p>{{ translationService.translate('error') }}</p>
+  <button type="button" (click)="retry.emit()">{{ translationService.translate('retry') }}</button>
+</div>

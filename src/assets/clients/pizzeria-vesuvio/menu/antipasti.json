@@ -1,0 +1,97 @@
+{
+  "id": "antipasti",
+  "name": {
+    "it": "Antipasti",
+    "en": "Starters",
+    "fr": "Entrées",
+    "de": "Vorspeisen"
+  },
+  "description": {
+    "it": "Per iniziare con gusto.",
+    "en": "A tasty way to start.",
+    "fr": "Pour bien commencer.",
+    "de": "Ein leckerer Start."
+  },
+  "order": 1,
+  "enabled": true,
+  "items": [
+    {
+      "id": "bruschette",
+      "code": "ANT-01",
+      "name": {
+        "it": "Bruschette",
+        "en": "Bruschetta",
+        "fr": "Bruschetta",
+        "de": "Bruschetta"
+      },
+      "description": {
+        "it": "Pane tostato con pomodoro fresco, basilico e olio EVO.",
+        "en": "Toasted bread with fresh tomato, basil and extra virgin olive oil.",
+        "fr": "Pain grillé avec tomate fraîche, basilic et huile d'olive extra vierge.",
+        "de": "Geröstetes Brot mit frischen Tomaten, Basilikum und nativem Olivenöl extra."
+      },
+      "price": 6,
+      "currency": "EUR",
+      "allergens": ["gluten"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "crocche-patate",
+      "code": "ANT-02",
+      "name": {
+        "it": "Crocchè di patate",
+        "en": "Potato croquettes",
+        "fr": "Croquettes de pommes de terre",
+        "de": "Kartoffelkroketten"
+      },
+      "description": {
+        "it": "Crocchette artigianali con patate, prezzemolo e cuore filante.",
+        "en": "Homemade croquettes with potatoes, parsley and a melted cheese center.",
+        "fr": "Croquettes artisanales de pommes de terre au persil avec coeur fondant.",
+        "de": "Hausgemachte Kroketten mit Kartoffeln, Petersilie und schmelzendem Kern."
+      },
+      "price": 5,
+      "currency": "EUR",
+      "allergens": ["gluten", "eggs", "milk"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 2
+    },
+    {
+      "id": "frittatina-napoletana",
+      "code": "ANT-03",
+      "name": {
+        "it": "Frittatina napoletana",
+        "en": "Neapolitan pasta fritter",
+        "fr": "Frittatina napolitaine",
+        "de": "Neapolitanische Frittatina"
+      },
+      "description": {
+        "it": "Frittatina di pasta con besciamella, piselli e macinato.",
+        "en": "Fried pasta fritter with bechamel, peas and minced meat.",
+        "fr": "Frittatina de pâtes avec béchamel, petits pois et viande hachée.",
+        "de": "Frittierte Pasta-Frittatina mit Béchamel, Erbsen und Hackfleisch."
+      },
+      "price": 4.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "eggs", "milk", "celery"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 3
+    }
+  ]
+}

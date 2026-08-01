@@ -1,0 +1,60 @@
+{
+  "id": "bevande",
+  "name": {
+    "it": "Bevande",
+    "en": "Drinks",
+    "fr": "Boissons",
+    "de": "Getränke"
+  },
+  "order": 5,
+  "enabled": true,
+  "items": [
+    {
+      "id": "acqua",
+      "code": "BEV-01",
+      "name": { "it": "Acqua 50cl", "en": "Water 50cl", "fr": "Eau 50cl", "de": "Wasser 50cl" },
+      "description": {
+        "it": "Naturale o frizzante.",
+        "en": "Still or sparkling.",
+        "fr": "Plate ou gazeuse.",
+        "de": "Still oder sprudelnd."
+      },
+      "price": 1.5,
+      "currency": "EUR",
+      "allergens": [],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 1
+    },
+    {
+      "id": "succo-arancia",
+      "code": "BEV-02",
+      "name": {
+        "it": "Succo d'arancia",
+        "en": "Orange juice",
+        "fr": "Jus d'orange",
+        "de": "Orangensaft"
+      },
+      "description": {
+        "it": "Bottiglietta 20cl.",
+        "en": "20cl bottle.",
+        "fr": "Bouteille 20cl.",
+        "de": "20cl Flasche."
+      },
+      "price": 3,
+      "currency": "EUR",
+      "allergens": [],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 2
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "id": "bar-milano",
+  "name": "Bar Milano",
+  "type": "bar",
+  "description": {
+    "it": "Bar di quartiere con caffetteria, colazioni, panini freschi e aperitivo serale.",
+    "en": "Neighborhood bar with coffee, breakfast, fresh sandwiches and evening aperitivo.",
+    "fr": "Bar de quartier avec caféterie, petit-déjeuner, sandwiches frais et apéritif du soir.",
+    "de": "Stadtteilbar mit Kaffee, Frühstück, frischen Panini und Aperitif am Abend."
+  },
+  "theme": {
+    "primary": "#1E3A8A",
+    "secondary": "#F59E0B",
+    "background": "#F8FAFC",
+    "surface": "#FFFFFF",
+    "text": "#0F172A",
+    "muted": "#475569",
+    "border": "#CBD5E1"
+  },
+  "contacts": {
+    "phone": "+39 02 1234567",
+    "whatsapp": "+39 347 4567890",
+    "email": "ciao@barmilano.it",
+    "address": {
+      "it": "Corso Buenos Aires 42, Milano",
+      "en": "Corso Buenos Aires 42, Milan",
+      "fr": "Corso Buenos Aires 42, Milan",
+      "de": "Corso Buenos Aires 42, Mailand"
+    },
+    "mapsUrl": "https://maps.google.com/?q=Corso+Buenos+Aires+42+Milano",
+    "social": {
+      "instagram": "https://instagram.com/barmilano"
+    }
+  },
+  "openingHours": [
+    { "day": "monday", "closed": false, "slots": [{ "open": "07:00", "close": "20:30" }] },
+    { "day": "tuesday", "closed": false, "slots": [{ "open": "07:00", "close": "20:30" }] },
+    { "day": "wednesday", "closed": false, "slots": [{ "open": "07:00", "close": "20:30" }] },
+    { "day": "thursday", "closed": false, "slots": [{ "open": "07:00", "close": "20:30" }] },
+    { "day": "friday", "closed": false, "slots": [{ "open": "07:00", "close": "21:30" }] },
+    { "day": "saturday", "closed": false, "slots": [{ "open": "08:00", "close": "21:30" }] },
+    { "day": "sunday", "closed": true }
+  ],
+  "seo": {
+    "title": {
+      "it": "Bar Milano | Menu Digitale",
+      "en": "Bar Milano | Digital Menu",
+      "fr": "Bar Milano | Menu Numérique",
+      "de": "Bar Milano | Digitale Speisekarte"
+    },
+    "description": {
+      "it": "Scopri caffè, colazioni, panini e aperitivi del Bar Milano.",
+      "en": "Discover coffees, breakfasts, sandwiches and aperitifs from Bar Milano.",
+      "fr": "Découvrez cafés, petits-déjeuners, sandwiches et apéritifs du Bar Milano.",
+      "de": "Entdecken Sie Kaffee, Frühstück, Panini und Aperitifs im Bar Milano."
+    },
+    "canonicalUrl": "https://menu.barmilano.it"
+  },
+  "settings": {
+    "defaultLanguage": "it",
+    "enabledLanguages": ["it", "en", "fr", "de"],
+    "featureFlags": {
+      "showImages": false,
+      "showAllergens": true,
+      "showSpicyBadge": true,
+      "showVegetarianBadge": true,
+      "showVeganBadge": true,
+      "showGlutenFreeBadge": true,
+      "showRecommendedSection": true,
+      "showSearch": true,
+      "showCategoryNav": true,
+      "showContactBar": true,
+      "showOpeningHours": true,
+      "showUnavailableItems": true,
+      "enableLanguageSelector": true,
+      "enableDishCodes": true,
+      "enablePrices": true,
+      "enableDescriptions": true
+    }
+  },
+  "notes": {
+    "it": "Allergeni disponibili su richiesta. Servizio al tavolo +10%.",
+    "en": "Allergen information available on request. Table service +10%.",
+    "fr": "Informations allergènes sur demande. Service à table +10%.",
+    "de": "Allergeninformationen auf Anfrage. Tischservice +10%."
+  }
+}

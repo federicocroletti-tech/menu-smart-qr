@@ -1,0 +1,123 @@
+{
+  "id": "bevande",
+  "name": {
+    "it": "Bevande",
+    "en": "Drinks",
+    "fr": "Boissons",
+    "de": "Getränke"
+  },
+  "description": {
+    "it": "Bevande fresche e birre.",
+    "en": "Cold drinks and beers.",
+    "fr": "Boissons fraîches et bières.",
+    "de": "Erfrischungsgetränke und Biere."
+  },
+  "order": 7,
+  "enabled": true,
+  "items": [
+    {
+      "id": "acqua-naturale",
+      "code": "BEV-01",
+      "name": {
+        "it": "Acqua naturale",
+        "en": "Still water",
+        "fr": "Eau plate",
+        "de": "Stilles Wasser"
+      },
+      "description": {
+        "it": "Bottiglia 0.75L.",
+        "en": "0.75L bottle.",
+        "fr": "Bouteille 0,75L.",
+        "de": "0,75L Flasche."
+      },
+      "price": 2.5,
+      "currency": "EUR",
+      "allergens": [],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 1
+    },
+    {
+      "id": "acqua-frizzante",
+      "code": "BEV-02",
+      "name": {
+        "it": "Acqua frizzante",
+        "en": "Sparkling water",
+        "fr": "Eau pétillante",
+        "de": "Sprudelwasser"
+      },
+      "description": {
+        "it": "Bottiglia 0.75L.",
+        "en": "0.75L bottle.",
+        "fr": "Bouteille 0,75L.",
+        "de": "0,75L Flasche."
+      },
+      "price": 2.5,
+      "currency": "EUR",
+      "allergens": [],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 2
+    },
+    {
+      "id": "coca-cola",
+      "code": "BEV-03",
+      "name": {
+        "it": "Coca-Cola",
+        "en": "Coca-Cola",
+        "fr": "Coca-Cola",
+        "de": "Coca-Cola"
+      },
+      "description": {
+        "it": "Lattina 33cl.",
+        "en": "33cl can.",
+        "fr": "Canette 33cl.",
+        "de": "33cl Dose."
+      },
+      "price": 3,
+      "currency": "EUR",
+      "allergens": [],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 3
+    },
+    {
+      "id": "birra-spina",
+      "code": "BEV-04",
+      "name": {
+        "it": "Birra alla spina",
+        "en": "Draft beer",
+        "fr": "Bière pression",
+        "de": "Bier vom Fass"
+      },
+      "description": {
+        "it": "Chiara 0.4L.",
+        "en": "Blonde beer 0.4L.",
+        "fr": "Bière blonde 0,4L.",
+        "de": "Helles Bier 0,4L."
+      },
+      "price": 5,
+      "currency": "EUR",
+      "allergens": ["gluten"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 4
+    }
+  ]
+}

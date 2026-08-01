@@ -1,0 +1,61 @@
+{
+  "id": "caffetteria",
+  "name": {
+    "it": "Caffetteria",
+    "en": "Coffee Bar",
+    "fr": "Caféterie",
+    "de": "Kaffee-Bar"
+  },
+  "description": {
+    "it": "Classici italiani e specialty coffee.",
+    "en": "Italian classics and specialty coffee.",
+    "fr": "Classiques italiens et café de spécialité.",
+    "de": "Italienische Klassiker und Specialty Coffee."
+  },
+  "order": 1,
+  "enabled": true,
+  "items": [
+    {
+      "id": "espresso",
+      "code": "CAF-01",
+      "name": { "it": "Espresso", "en": "Espresso", "fr": "Espresso", "de": "Espresso" },
+      "description": {
+        "it": "Miscela arabica intensa.",
+        "en": "Strong arabica blend.",
+        "fr": "Mélange arabica intense.",
+        "de": "Kräftige Arabica-Mischung."
+      },
+      "price": 1.3,
+      "currency": "EUR",
+      "allergens": [],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 1
+    },
+    {
+      "id": "cappuccino",
+      "code": "CAF-02",
+      "name": { "it": "Cappuccino", "en": "Cappuccino", "fr": "Cappuccino", "de": "Cappuccino" },
+      "description": {
+        "it": "Espresso con latte montato.",
+        "en": "Espresso with steamed milk.",
+        "fr": "Espresso avec lait moussé.",
+        "de": "Espresso mit aufgeschäumter Milch."
+      },
+      "price": 1.8,
+      "currency": "EUR",
+      "allergens": ["milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 2
+    }
+  ]
+}

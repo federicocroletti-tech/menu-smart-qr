@@ -1,0 +1,55 @@
+{
+  "id": "fritti",
+  "name": {
+    "it": "Fritti",
+    "en": "Fried Snacks",
+    "fr": "Fritures",
+    "de": "Frittierte Snacks"
+  },
+  "order": 2,
+  "enabled": true,
+  "items": [
+    {
+      "id": "onion-rings",
+      "code": "FRI-01",
+      "name": { "it": "Onion Rings", "en": "Onion Rings", "fr": "Onion Rings", "de": "Onion Rings" },
+      "description": {
+        "it": "Anelli di cipolla fritti con salsa BBQ.",
+        "en": "Crispy onion rings with BBQ sauce.",
+        "fr": "Rondelles d'oignon croustillantes avec sauce BBQ.",
+        "de": "Knusprige Zwiebelringe mit BBQ-Sauce."
+      },
+      "price": 5.5,
+      "currency": "EUR",
+      "allergens": ["gluten"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "chicken-wings",
+      "code": "FRI-02",
+      "name": { "it": "Chicken Wings", "en": "Chicken Wings", "fr": "Ailes de poulet", "de": "Chicken Wings" },
+      "description": {
+        "it": "Alette di pollo piccanti.",
+        "en": "Spicy chicken wings.",
+        "fr": "Ailes de poulet épicées.",
+        "de": "Scharfe Hähnchenflügel."
+      },
+      "price": 7,
+      "currency": "EUR",
+      "allergens": ["gluten"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": true,
+      "glutenFree": false,
+      "order": 2
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "secondi",
+  "name": {
+    "it": "Secondi",
+    "en": "Main courses",
+    "fr": "Plats principaux",
+    "de": "Hauptgerichte"
+  },
+  "description": {
+    "it": "Categoria non attiva per questa demo.",
+    "en": "Category disabled for this demo.",
+    "fr": "Catégorie désactivée pour cette démo.",
+    "de": "Kategorie für diese Demo deaktiviert."
+  },
+  "order": 3,
+  "enabled": false,
+  "items": [
+    {
+      "id": "tagliata-manzo",
+      "code": "SEC-01",
+      "name": {
+        "it": "Tagliata di manzo",
+        "en": "Sliced beef steak",
+        "fr": "Tagliata de boeuf",
+        "de": "Rinder-Tagliata"
+      },
+      "description": {
+        "it": "Tagliata di manzo con rucola e scaglie di grana.",
+        "en": "Sliced beef steak with rocket and parmesan flakes.",
+        "fr": "Tagliata de boeuf avec roquette et copeaux de parmesan.",
+        "de": "Rindersteak in Scheiben mit Rucola und Parmesanspänen."
+      },
+      "price": 16,
+      "currency": "EUR",
+      "allergens": ["milk"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 1
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+<div class="language-selector">
+  <label for="language-select">{{ translationService.translate('language') }}</label>
+  <select id="language-select" name="language" [(ngModel)]="selectedLanguage">
+    @for (language of languages; track language) {
+      <option [value]="language">{{ language.toUpperCase() }}</option>
+    }
+  </select>
+</div>

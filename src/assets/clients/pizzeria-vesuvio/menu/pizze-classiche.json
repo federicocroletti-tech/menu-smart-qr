@@ -1,0 +1,149 @@
+{
+  "id": "pizze-classiche",
+  "name": {
+    "it": "Pizze classiche",
+    "en": "Classic pizzas",
+    "fr": "Pizzas classiques",
+    "de": "Klassische Pizzen"
+  },
+  "description": {
+    "it": "I grandi classici della tradizione.",
+    "en": "Timeless pizzas from tradition.",
+    "fr": "Les grands classiques de la tradition.",
+    "de": "Die zeitlosen Klassiker der Tradition."
+  },
+  "order": 4,
+  "enabled": true,
+  "items": [
+    {
+      "id": "margherita",
+      "code": "PCL-01",
+      "name": {
+        "it": "Margherita",
+        "en": "Margherita",
+        "fr": "Margherita",
+        "de": "Margherita"
+      },
+      "description": {
+        "it": "Pomodoro San Marzano, fior di latte, basilico, olio EVO.",
+        "en": "San Marzano tomato, mozzarella, basil, extra virgin olive oil.",
+        "fr": "Tomate San Marzano, mozzarella, basilic, huile d'olive extra vierge.",
+        "de": "San-Marzano-Tomaten, Mozzarella, Basilikum, natives Olivenöl extra."
+      },
+      "price": 7.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "marinara",
+      "code": "PCL-02",
+      "name": {
+        "it": "Marinara",
+        "en": "Marinara",
+        "fr": "Marinara",
+        "de": "Marinara"
+      },
+      "description": {
+        "it": "Pomodoro, aglio, origano, olio EVO.",
+        "en": "Tomato, garlic, oregano, extra virgin olive oil.",
+        "fr": "Tomate, ail, origan, huile d'olive extra vierge.",
+        "de": "Tomate, Knoblauch, Oregano, natives Olivenöl extra."
+      },
+      "price": 6.5,
+      "currency": "EUR",
+      "allergens": ["gluten"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 2
+    },
+    {
+      "id": "diavola",
+      "code": "PCL-03",
+      "name": {
+        "it": "Diavola",
+        "en": "Diavola",
+        "fr": "Diavola",
+        "de": "Diavola"
+      },
+      "description": {
+        "it": "Pomodoro, fior di latte, salame piccante.",
+        "en": "Tomato, mozzarella, spicy salami.",
+        "fr": "Tomate, mozzarella, salami piquant.",
+        "de": "Tomate, Mozzarella, scharfe Salami."
+      },
+      "price": 9,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": true,
+      "glutenFree": false,
+      "order": 3
+    },
+    {
+      "id": "quattro-formaggi",
+      "code": "PCL-04",
+      "name": {
+        "it": "Quattro Formaggi",
+        "en": "Four Cheese",
+        "fr": "Quatre Fromages",
+        "de": "Vier Käse"
+      },
+      "description": {
+        "it": "Fior di latte, gorgonzola, provola, parmigiano.",
+        "en": "Mozzarella, gorgonzola, smoked provola, parmesan.",
+        "fr": "Mozzarella, gorgonzola, provola fumée, parmesan.",
+        "de": "Mozzarella, Gorgonzola, geräucherter Provola, Parmesan."
+      },
+      "price": 10,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 4
+    },
+    {
+      "id": "capricciosa",
+      "code": "PCL-05",
+      "name": {
+        "it": "Capricciosa",
+        "en": "Capricciosa",
+        "fr": "Capricciosa",
+        "de": "Capricciosa"
+      },
+      "description": {
+        "it": "Pomodoro, fior di latte, prosciutto cotto, funghi, carciofi, olive.",
+        "en": "Tomato, mozzarella, cooked ham, mushrooms, artichokes, olives.",
+        "fr": "Tomate, mozzarella, jambon cuit, champignons, artichauts, olives.",
+        "de": "Tomate, Mozzarella, Kochschinken, Pilze, Artischocken, Oliven."
+      },
+      "price": 10.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 5
+    }
+  ]
+}

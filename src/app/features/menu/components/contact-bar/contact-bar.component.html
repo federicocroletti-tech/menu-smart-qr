@@ -1,0 +1,27 @@
+<nav class="contact-bar" [attr.aria-label]="translationService.translate('contacts')">
+  @if (phoneUrl) {
+    <a [href]="phoneUrl" [attr.aria-label]="translationService.translate('call')">
+      {{ translationService.translate('call') }}
+    </a>
+  }
+  @if (whatsappUrl) {
+    <a
+      [href]="whatsappUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      [attr.aria-label]="translationService.translate('whatsapp')"
+    >
+      {{ translationService.translate('whatsapp') }}
+    </a>
+  }
+  @if (client.contacts.mapsUrl) {
+    <a
+      [href]="client.contacts.mapsUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      [attr.aria-label]="translationService.translate('map')"
+    >
+      {{ translationService.translate('map') }}
+    </a>
+  }
+</nav>

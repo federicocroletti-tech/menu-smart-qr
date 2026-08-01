@@ -1,0 +1,134 @@
+[
+  {
+    "id": "gluten",
+    "name": {
+      "it": "Cereali contenenti glutine",
+      "en": "Cereals containing gluten",
+      "fr": "Céréales contenant du gluten",
+      "de": "Glutenhaltiges Getreide"
+    },
+    "description": {
+      "it": "Grano, segale, orzo, avena, farro, kamut e derivati.",
+      "en": "Wheat, rye, barley, oats, spelt, khorasan wheat and derivatives.",
+      "fr": "Blé, seigle, orge, avoine, épeautre, blé khorasan et dérivés.",
+      "de": "Weizen, Roggen, Gerste, Hafer, Dinkel, Khorasan-Weizen und Derivate."
+    }
+  },
+  {
+    "id": "crustaceans",
+    "name": {
+      "it": "Crostacei",
+      "en": "Crustaceans",
+      "fr": "Crustacés",
+      "de": "Krebstiere"
+    }
+  },
+  {
+    "id": "eggs",
+    "name": {
+      "it": "Uova",
+      "en": "Eggs",
+      "fr": "Oeufs",
+      "de": "Eier"
+    }
+  },
+  {
+    "id": "fish",
+    "name": {
+      "it": "Pesce",
+      "en": "Fish",
+      "fr": "Poisson",
+      "de": "Fisch"
+    }
+  },
+  {
+    "id": "peanuts",
+    "name": {
+      "it": "Arachidi",
+      "en": "Peanuts",
+      "fr": "Arachides",
+      "de": "Erdnüsse"
+    }
+  },
+  {
+    "id": "soy",
+    "name": {
+      "it": "Soia",
+      "en": "Soybeans",
+      "fr": "Soja",
+      "de": "Sojabohnen"
+    }
+  },
+  {
+    "id": "milk",
+    "name": {
+      "it": "Latte",
+      "en": "Milk",
+      "fr": "Lait",
+      "de": "Milch"
+    }
+  },
+  {
+    "id": "nuts",
+    "name": {
+      "it": "Frutta a guscio",
+      "en": "Tree nuts",
+      "fr": "Fruits à coque",
+      "de": "Schalenfrüchte"
+    }
+  },
+  {
+    "id": "celery",
+    "name": {
+      "it": "Sedano",
+      "en": "Celery",
+      "fr": "Céleri",
+      "de": "Sellerie"
+    }
+  },
+  {
+    "id": "mustard",
+    "name": {
+      "it": "Senape",
+      "en": "Mustard",
+      "fr": "Moutarde",
+      "de": "Senf"
+    }
+  },
+  {
+    "id": "sesame",
+    "name": {
+      "it": "Semi di sesamo",
+      "en": "Sesame seeds",
+      "fr": "Graines de sésame",
+      "de": "Sesamsamen"
+    }
+  },
+  {
+    "id": "sulfites",
+    "name": {
+      "it": "Anidride solforosa e solfiti",
+      "en": "Sulphur dioxide and sulphites",
+      "fr": "Anhydride sulfureux et sulfites",
+      "de": "Schwefeldioxid und Sulfite"
+    }
+  },
+  {
+    "id": "lupin",
+    "name": {
+      "it": "Lupini",
+      "en": "Lupin",
+      "fr": "Lupin",
+      "de": "Lupinen"
+    }
+  },
+  {
+    "id": "molluscs",
+    "name": {
+      "it": "Molluschi",
+      "en": "Molluscs",
+      "fr": "Mollusques",
+      "de": "Weichtiere"
+    }
+  }
+]

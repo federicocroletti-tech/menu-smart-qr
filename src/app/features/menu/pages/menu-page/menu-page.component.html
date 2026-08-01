@@ -1,0 +1,70 @@
+<main class="menu-page" [class.has-mobile-contact-bar]="hasMobileContactBar" [attr.aria-busy]="loading">
+  @if (loading) {
+    <app-loading-state />
+  } @else if (hasError) {
+    <app-error-state (retry)="onRetry()" />
+  } @else if (client) {
+    <app-restaurant-header [client]="client" />
+
+    <div class="top-tools">
+      @if (featureFlags['enableLanguageSelector']) {
+        <app-language-selector />
+      }
+    </div>
+
+    @if (isEmpty) {
+      <app-empty-state />
+    } @else {
+      @if (featureFlags['showRecommendedSection']) {
+        <app-recommended-section
+          [categories]="categories"
+          [showUnavailableItems]="featureFlags['showUnavailableItems'] ?? true"
+          [showAllergens]="featureFlags['showAllergens'] ?? true"
+          [showDishCodes]="featureFlags['enableDishCodes'] ?? true"
+          [showPrices]="featureFlags['enablePrices'] ?? true"
+          [showDescriptions]="featureFlags['enableDescriptions'] ?? true"
+          [allergenMap]="allergenMap"
+        />
+      }
+
+      @if (featureFlags['showSearch']) {
+        <app-search-filter (filterChange)="onFilterChange($event)" />
+      }
+
+      @if (featureFlags['showCategoryNav']) {
+        <app-category-nav
+          [categories]="categories"
+          [activeCategoryId]="activeCategoryId"
+          (categorySelect)="onCategorySelect($event)"
+        />
+      }
+
+      <div class="menu-sections">
+        @for (category of categories; track category.id) {
+          <section [id]="toSectionId(category.id)" [attr.aria-label]="category.name | localizedText">
+            <app-menu-section
+              [category]="category"
+              [filter]="filter"
+              [showUnavailableItems]="featureFlags['showUnavailableItems'] ?? true"
+              [showAllergens]="featureFlags['showAllergens'] ?? true"
+              [showDishCodes]="featureFlags['enableDishCodes'] ?? true"
+              [showPrices]="featureFlags['enablePrices'] ?? true"
+              [showDescriptions]="featureFlags['enableDescriptions'] ?? true"
+              [allergenMap]="allergenMap"
+            />
+          </section>
+        }
+      </div>
+    }
+
+    @if (featureFlags['showContactBar']) {
+      <app-contact-bar [client]="client" />
+    }
+    <app-footer-info
+      [client]="client"
+      [showOpeningHours]="featureFlags['showOpeningHours'] ?? true"
+    />
+  } @else {
+    <app-error-state (retry)="onRetry()" />
+  }
+</main>

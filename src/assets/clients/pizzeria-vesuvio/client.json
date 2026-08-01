@@ -1,0 +1,133 @@
+{
+  "id": "pizzeria-vesuvio",
+  "name": "Pizzeria Vesuvio",
+  "type": "pizzeria",
+  "description": {
+    "it": "Pizzeria tradizionale napoletana con impasti a lunga lievitazione e ingredienti selezionati.",
+    "en": "Traditional Neapolitan pizzeria with long-fermented dough and selected ingredients.",
+    "fr": "Pizzeria napolitaine traditionnelle avec pâte à longue fermentation et ingrédients sélectionnés.",
+    "de": "Traditionelle neapolitanische Pizzeria mit lang gereiftem Teig und ausgewählten Zutaten."
+  },
+  "theme": {
+    "primary": "#C62828",
+    "secondary": "#F9A825",
+    "background": "#FFF8F2",
+    "surface": "#FFFFFF",
+    "text": "#212121",
+    "primaryColor": "#C62828",
+    "secondaryColor": "#F9A825",
+    "backgroundColor": "#FFF8F2",
+    "textColor": "#212121"
+  },
+  "contacts": {
+    "phone": "+39 081 7654321",
+    "whatsapp": "+39 333 1234567",
+    "email": "info@pizzeriavesuvio.it",
+    "address": {
+      "it": "Via Toledo 120, Napoli",
+      "en": "Via Toledo 120, Naples",
+      "fr": "Via Toledo 120, Naples",
+      "de": "Via Toledo 120, Neapel"
+    },
+    "mapsUrl": "https://maps.google.com/?q=Via+Toledo+120+Napoli"
+  },
+  "openingHours": [
+    {
+      "day": "monday",
+      "closed": true
+    },
+    {
+      "day": "tuesday",
+      "closed": false,
+      "slots": [
+        { "open": "12:00", "close": "15:00" },
+        { "open": "19:00", "close": "23:30" }
+      ]
+    },
+    {
+      "day": "wednesday",
+      "closed": false,
+      "slots": [
+        { "open": "12:00", "close": "15:00" },
+        { "open": "19:00", "close": "23:30" }
+      ]
+    },
+    {
+      "day": "thursday",
+      "closed": false,
+      "slots": [
+        { "open": "12:00", "close": "15:00" },
+        { "open": "19:00", "close": "23:30" }
+      ]
+    },
+    {
+      "day": "friday",
+      "closed": false,
+      "slots": [
+        { "open": "12:00", "close": "15:00" },
+        { "open": "19:00", "close": "00:00" }
+      ]
+    },
+    {
+      "day": "saturday",
+      "closed": false,
+      "slots": [
+        { "open": "12:00", "close": "15:30" },
+        { "open": "19:00", "close": "00:30" }
+      ]
+    },
+    {
+      "day": "sunday",
+      "closed": false,
+      "slots": [
+        { "open": "12:00", "close": "15:30" },
+        { "open": "19:00", "close": "23:30" }
+      ]
+    }
+  ],
+  "seo": {
+    "title": {
+      "it": "Pizzeria Vesuvio | Menu Digitale",
+      "en": "Pizzeria Vesuvio | Digital Menu",
+      "fr": "Pizzeria Vesuvio | Menu Numérique",
+      "de": "Pizzeria Vesuvio | Digitale Speisekarte"
+    },
+    "description": {
+      "it": "Scopri il menu digitale di Pizzeria Vesuvio con pizze classiche, speciali e dolci artigianali.",
+      "en": "Discover Pizzeria Vesuvio's digital menu with classic and special pizzas, plus homemade desserts.",
+      "fr": "Découvrez le menu numérique de la Pizzeria Vesuvio avec pizzas classiques, spéciales et desserts maison.",
+      "de": "Entdecken Sie die digitale Speisekarte der Pizzeria Vesuvio mit klassischen und besonderen Pizzen sowie hausgemachten Desserts."
+    },
+    "ogImage": "https://example.com/pizzeria-vesuvio-og.jpg",
+    "canonicalUrl": "https://menu.pizzeriavesuvio.it",
+    "imageUrl": "https://example.com/pizzeria-vesuvio-og.jpg"
+  },
+  "settings": {
+    "defaultLanguage": "it",
+    "enabledLanguages": ["it", "en", "fr", "de"],
+    "featureFlags": {
+      "showImages": false,
+      "showAllergens": true,
+      "showSpicyBadge": true,
+      "showVegetarianBadge": true,
+      "showVeganBadge": true,
+      "showGlutenFreeBadge": true,
+      "showRecommendedSection": true,
+      "showSearch": true,
+      "showCategoryNav": true,
+      "showContactBar": true,
+      "showOpeningHours": true,
+      "showUnavailableItems": false,
+      "enableLanguageSelector": true,
+      "enableDishCodes": true,
+      "enablePrices": true,
+      "enableDescriptions": true
+    }
+  },
+  "notes": {
+    "it": "Allergeni disponibili su richiesta. Coperto €2,00 a persona.",
+    "en": "Allergen information available on request. Cover charge €2.00 per person.",
+    "fr": "Informations sur les allergènes disponibles sur demande. Couvert €2,00 par personne.",
+    "de": "Allergeninformationen auf Anfrage verfügbar. Gedeck €2,00 pro Person."
+  }
+}

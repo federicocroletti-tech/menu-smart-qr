@@ -1,0 +1,16 @@
+<nav class="category-nav" aria-label="Menu categories">
+  <ul role="list">
+    @for (category of categories; track category.id) {
+      <li>
+        <button
+          type="button"
+          [class.active]="category.id === activeCategoryId"
+          [attr.aria-current]="category.id === activeCategoryId ? 'page' : null"
+          (click)="categorySelect.emit(category.id)"
+        >
+          {{ category.name | localizedText }}
+        </button>
+      </li>
+    }
+  </ul>
+</nav>

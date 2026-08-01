@@ -1,0 +1,66 @@
+{
+  "clientId": "bar-milano",
+  "currency": "EUR",
+  "categories": [
+    {
+      "id": "caffetteria",
+      "name": {
+        "it": "Caffetteria",
+        "en": "Coffee Bar",
+        "fr": "Caféterie",
+        "de": "Kaffee-Bar"
+      },
+      "order": 1,
+      "enabled": true,
+      "file": "caffetteria.json"
+    },
+    {
+      "id": "colazioni",
+      "name": {
+        "it": "Colazioni",
+        "en": "Breakfast",
+        "fr": "Petit-déjeuner",
+        "de": "Frühstück"
+      },
+      "order": 2,
+      "enabled": true,
+      "file": "colazioni.json"
+    },
+    {
+      "id": "panini",
+      "name": {
+        "it": "Panini",
+        "en": "Sandwiches",
+        "fr": "Sandwiches",
+        "de": "Panini"
+      },
+      "order": 3,
+      "enabled": true,
+      "file": "panini.json"
+    },
+    {
+      "id": "aperitivi",
+      "name": {
+        "it": "Aperitivi",
+        "en": "Aperitifs",
+        "fr": "Apéritifs",
+        "de": "Aperitifs"
+      },
+      "order": 4,
+      "enabled": true,
+      "file": "aperitivi.json"
+    },
+    {
+      "id": "bevande",
+      "name": {
+        "it": "Bevande",
+        "en": "Drinks",
+        "fr": "Boissons",
+        "de": "Getränke"
+      },
+      "order": 5,
+      "enabled": true,
+      "file": "bevande.json"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+<footer class="footer-info" [attr.aria-label]="translationService.translate('contacts')">
+  <section class="info-grid">
+    <div class="contact-column">
+      <h2>{{ translationService.translate('contacts') }}</h2>
+
+      @if (client.contacts.address) {
+        <p>
+          <strong>Address:</strong>
+          <span>{{ client.contacts.address | localizedText }}</span>
+        </p>
+      }
+      @if (client.contacts.phone) {
+        <p>
+          <strong>Phone:</strong>
+          <a [href]="'tel:' + client.contacts.phone.replace(/\s+/g, '')">{{ client.contacts.phone }}</a>
+        </p>
+      }
+      @if (client.contacts.email) {
+        <p>
+          <strong>Email:</strong>
+          <a [href]="'mailto:' + client.contacts.email">{{ client.contacts.email }}</a>
+        </p>
+      }
+
+      @if (client.contacts.social) {
+        <ul class="social-links">
+          @if (client.contacts.social.facebook) {
+            <li>
+              <a [href]="client.contacts.social.facebook" target="_blank" rel="noopener noreferrer">
+                Facebook
+              </a>
+            </li>
+          }
+          @if (client.contacts.social.instagram) {
+            <li>
+              <a [href]="client.contacts.social.instagram" target="_blank" rel="noopener noreferrer">
+                Instagram
+              </a>
+            </li>
+          }
+          @if (client.contacts.social.tiktok) {
+            <li>
+              <a [href]="client.contacts.social.tiktok" target="_blank" rel="noopener noreferrer">TikTok</a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    @if (showOpeningHours) {
+      <app-opening-hours [openingHours]="client.openingHours" />
+    }
+  </section>
+
+  @if (noteLines.length > 0) {
+    <section class="notes" [attr.aria-label]="translationService.translate('allergens')">
+      <h3>{{ translationService.translate('allergens') }} / Servizio</h3>
+      <ul>
+        @for (noteLine of noteLines; track noteLine) {
+          <li>{{ noteLine }}</li>
+        }
+      </ul>
+    </section>
+  }
+
+  <p class="updated">{{ translationService.translate('menuDigital') }} · {{ translationService.translate('updatedMenu') }}</p>
+</footer>

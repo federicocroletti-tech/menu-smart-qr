@@ -1,0 +1,90 @@
+{
+  "clientId": "pizzeria-vesuvio",
+  "currency": "EUR",
+  "categories": [
+    {
+      "id": "antipasti",
+      "name": {
+        "it": "Antipasti",
+        "en": "Starters",
+        "fr": "Entrées",
+        "de": "Vorspeisen"
+      },
+      "order": 1,
+      "enabled": true,
+      "file": "antipasti.json"
+    },
+    {
+      "id": "primi",
+      "name": {
+        "it": "Primi",
+        "en": "First courses",
+        "fr": "Premiers plats",
+        "de": "Erste Gänge"
+      },
+      "order": 2,
+      "enabled": false,
+      "file": "primi.json"
+    },
+    {
+      "id": "secondi",
+      "name": {
+        "it": "Secondi",
+        "en": "Main courses",
+        "fr": "Plats principaux",
+        "de": "Hauptgerichte"
+      },
+      "order": 3,
+      "enabled": false,
+      "file": "secondi.json"
+    },
+    {
+      "id": "pizze-classiche",
+      "name": {
+        "it": "Pizze classiche",
+        "en": "Classic pizzas",
+        "fr": "Pizzas classiques",
+        "de": "Klassische Pizzen"
+      },
+      "order": 4,
+      "enabled": true,
+      "file": "pizze-classiche.json"
+    },
+    {
+      "id": "pizze-speciali",
+      "name": {
+        "it": "Pizze speciali",
+        "en": "Special pizzas",
+        "fr": "Pizzas spéciales",
+        "de": "Spezialpizzen"
+      },
+      "order": 5,
+      "enabled": true,
+      "file": "pizze-speciali.json"
+    },
+    {
+      "id": "dolci",
+      "name": {
+        "it": "Dolci",
+        "en": "Desserts",
+        "fr": "Desserts",
+        "de": "Desserts"
+      },
+      "order": 6,
+      "enabled": true,
+      "file": "dolci.json"
+    },
+    {
+      "id": "bevande",
+      "name": {
+        "it": "Bevande",
+        "en": "Drinks",
+        "fr": "Boissons",
+        "de": "Getränke"
+      },
+      "order": 7,
+      "enabled": true,
+      "file": "bevande.json"
+    }
+  ]
+}

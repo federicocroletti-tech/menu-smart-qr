@@ -1,0 +1,10 @@
+@if (allergens.length > 0) {
+  <div class="allergen-list">
+    <span class="label">{{ translationService.translate('allergens') }}:</span>
+    <div class="chips">
+      @for (allergen of allergens; track allergen.id) {
+        <span class="chip">{{ allergen.name | localizedText }}</span>
+      }
+    </div>
+  </div>
+}

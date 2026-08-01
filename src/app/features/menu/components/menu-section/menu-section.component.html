@@ -1,0 +1,25 @@
+<section class="menu-section">
+  <h2>{{ category.name | localizedText }}</h2>
+  @if (category.description) {
+    <p class="description">{{ category.description | localizedText }}</p>
+  }
+
+  @if (filteredItems.length > 0) {
+    <div class="items-grid" role="list">
+      @for (item of filteredItems; track item.id) {
+        <app-menu-item-card
+          role="listitem"
+          [item]="item"
+          [showUnavailableItems]="showUnavailableItems"
+          [showAllergens]="showAllergens"
+          [showDishCodes]="showDishCodes"
+          [showPrices]="showPrices"
+          [showDescriptions]="showDescriptions"
+          [allergenMap]="allergenMap"
+        />
+      }
+    </div>
+  } @else {
+    <p class="empty-message">{{ translationService.translate('noItems') }}</p>
+  }
+</section>

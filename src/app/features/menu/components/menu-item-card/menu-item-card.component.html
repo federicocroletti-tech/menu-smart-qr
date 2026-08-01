@@ -1,0 +1,63 @@
+@if (!isUnavailableHidden) {
+  <article
+    class="menu-item-card"
+    [class.unavailable]="!item.available"
+    [attr.aria-label]="item.name | localizedText"
+  >
+    <header>
+      <div class="title-row">
+        <h3>
+          @if (showDishCodes && item.code) {
+            <small class="code">{{ item.code }}</small>
+          }
+          {{ item.name | localizedText }}
+        </h3>
+        @if (showPrices) {
+          <strong class="price" [attr.aria-label]="'Price ' + (item.price | price: item.currency)">
+            {{ item.price | price: item.currency }}
+          </strong>
+        }
+      </div>
+
+      @if (showDescriptions) {
+        <p class="description">{{ item.description | localizedText }}</p>
+      }
+    </header>
+
+    @if (item.priceVariants?.length) {
+      <ul class="variants">
+        @for (variant of item.priceVariants; track variant.id) {
+          <li>
+            <span>{{ variant.name | localizedText }}</span>
+            <span>{{ variant.price | price: item.currency }}</span>
+          </li>
+        }
+      </ul>
+    }
+
+    <ul class="badges" aria-label="Item attributes">
+      @if (item.recommended) {
+        <li>{{ translationService.translate('recommended') }}</li>
+      }
+      @if (item.vegetarian) {
+        <li>{{ translationService.translate('vegetarian') }}</li>
+      }
+      @if (item.vegan) {
+        <li>{{ translationService.translate('vegan') }}</li>
+      }
+      @if (item.spicy) {
+        <li>{{ translationService.translate('spicy') }}</li>
+      }
+      @if (item.glutenFree) {
+        <li>{{ translationService.translate('glutenFree') }}</li>
+      }
+      @if (!item.available) {
+        <li>{{ translationService.translate('unavailable') }}</li>
+      }
+    </ul>
+
+    @if (showAllergens) {
+      <app-allergen-list [allergenIds]="item.allergens" [allergenMap]="allergenMap" />
+    }
+  </article>
+}

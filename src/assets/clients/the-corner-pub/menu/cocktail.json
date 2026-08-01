@@ -1,0 +1,55 @@
+{
+  "id": "cocktail",
+  "name": {
+    "it": "Cocktail",
+    "en": "Cocktails",
+    "fr": "Cocktails",
+    "de": "Cocktails"
+  },
+  "order": 4,
+  "enabled": true,
+  "items": [
+    {
+      "id": "gin-tonic",
+      "code": "COC-01",
+      "name": { "it": "Gin Tonic", "en": "Gin Tonic", "fr": "Gin Tonic", "de": "Gin Tonic" },
+      "description": {
+        "it": "Gin premium e tonica mediterranea.",
+        "en": "Premium gin with Mediterranean tonic.",
+        "fr": "Gin premium et tonic méditerranéen.",
+        "de": "Premium Gin mit mediterranem Tonic."
+      },
+      "price": 9,
+      "currency": "EUR",
+      "allergens": ["sulfites"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 1
+    },
+    {
+      "id": "moscow-mule",
+      "code": "COC-02",
+      "name": { "it": "Moscow Mule", "en": "Moscow Mule", "fr": "Moscow Mule", "de": "Moscow Mule" },
+      "description": {
+        "it": "Vodka, lime e ginger beer.",
+        "en": "Vodka, lime and ginger beer.",
+        "fr": "Vodka, citron vert et ginger beer.",
+        "de": "Wodka, Limette und Ginger Beer."
+      },
+      "price": 8.5,
+      "currency": "EUR",
+      "allergens": [],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 2
+    }
+  ]
+}

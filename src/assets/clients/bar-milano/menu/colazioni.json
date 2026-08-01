@@ -1,0 +1,65 @@
+{
+  "id": "colazioni",
+  "name": {
+    "it": "Colazioni",
+    "en": "Breakfast",
+    "fr": "Petit-déjeuner",
+    "de": "Frühstück"
+  },
+  "order": 2,
+  "enabled": true,
+  "items": [
+    {
+      "id": "cornetto-classico",
+      "code": "COL-01",
+      "name": {
+        "it": "Cornetto classico",
+        "en": "Classic croissant",
+        "fr": "Croissant classique",
+        "de": "Klassisches Croissant"
+      },
+      "description": {
+        "it": "Cornetto al burro.",
+        "en": "Butter croissant.",
+        "fr": "Croissant au beurre.",
+        "de": "Buttercroissant."
+      },
+      "price": 1.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk", "eggs"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "yogurt-granola",
+      "code": "COL-02",
+      "name": {
+        "it": "Yogurt e granola",
+        "en": "Yogurt and granola",
+        "fr": "Yaourt et granola",
+        "de": "Joghurt und Granola"
+      },
+      "description": {
+        "it": "Yogurt bianco con frutta fresca.",
+        "en": "Plain yogurt with fresh fruit.",
+        "fr": "Yaourt nature avec fruits frais.",
+        "de": "Naturjoghurt mit frischem Obst."
+      },
+      "price": 4.5,
+      "currency": "EUR",
+      "allergens": ["milk", "nuts"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 2
+    }
+  ]
+}

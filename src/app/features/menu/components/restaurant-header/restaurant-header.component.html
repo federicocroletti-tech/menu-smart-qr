@@ -1,0 +1,21 @@
+<header class="restaurant-header">
+  @if (client.coverImageUrl) {
+    <img class="cover-image" [src]="client.coverImageUrl" [alt]="client.name + ' cover'" />
+  }
+
+  <div class="content">
+    <div class="top-row">
+      @if (client.logoUrl) {
+        <img class="logo" [src]="client.logoUrl" [alt]="client.name + ' logo'" />
+      }
+      <span class="digital-badge">{{ translationService.translate('menuDigital') }}</span>
+    </div>
+
+    <h1>{{ client.name }}</h1>
+    <p class="type" aria-label="Venue type">{{ client.type }}</p>
+    <p class="description">{{ client.description | localizedText }}</p>
+    @if (client.contacts.address) {
+      <address class="address">{{ client.contacts.address | localizedText }}</address>
+    }
+  </div>
+</header>

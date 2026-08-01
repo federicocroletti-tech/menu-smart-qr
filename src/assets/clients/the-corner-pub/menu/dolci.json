@@ -1,0 +1,34 @@
+{
+  "id": "dolci",
+  "name": {
+    "it": "Dolci",
+    "en": "Desserts",
+    "fr": "Desserts",
+    "de": "Desserts"
+  },
+  "order": 5,
+  "enabled": true,
+  "items": [
+    {
+      "id": "brownie",
+      "code": "DOL-01",
+      "name": { "it": "Brownie", "en": "Brownie", "fr": "Brownie", "de": "Brownie" },
+      "description": {
+        "it": "Brownie al cioccolato con panna.",
+        "en": "Chocolate brownie with whipped cream.",
+        "fr": "Brownie au chocolat avec crème fouettée.",
+        "de": "Schoko-Brownie mit Schlagsahne."
+      },
+      "price": 5.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "eggs", "milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    }
+  ]
+}

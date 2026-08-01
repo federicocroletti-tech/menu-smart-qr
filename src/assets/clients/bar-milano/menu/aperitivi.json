@@ -1,0 +1,55 @@
+{
+  "id": "aperitivi",
+  "name": {
+    "it": "Aperitivi",
+    "en": "Aperitifs",
+    "fr": "Apéritifs",
+    "de": "Aperitifs"
+  },
+  "order": 4,
+  "enabled": true,
+  "items": [
+    {
+      "id": "spritz",
+      "code": "APE-01",
+      "name": { "it": "Spritz", "en": "Spritz", "fr": "Spritz", "de": "Spritz" },
+      "description": {
+        "it": "Aperol, prosecco e soda.",
+        "en": "Aperol, prosecco and soda water.",
+        "fr": "Aperol, prosecco et soda.",
+        "de": "Aperol, Prosecco und Soda."
+      },
+      "price": 7,
+      "currency": "EUR",
+      "allergens": ["sulfites"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 1
+    },
+    {
+      "id": "negroni",
+      "code": "APE-02",
+      "name": { "it": "Negroni", "en": "Negroni", "fr": "Negroni", "de": "Negroni" },
+      "description": {
+        "it": "Gin, bitter e vermouth rosso.",
+        "en": "Gin, bitter and sweet vermouth.",
+        "fr": "Gin, bitter et vermouth rouge.",
+        "de": "Gin, Bitter und roter Wermut."
+      },
+      "price": 8,
+      "currency": "EUR",
+      "allergens": ["sulfites"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": true,
+      "order": 2
+    }
+  ]
+}

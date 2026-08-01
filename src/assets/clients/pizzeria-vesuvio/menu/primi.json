@@ -1,0 +1,45 @@
+{
+  "id": "primi",
+  "name": {
+    "it": "Primi",
+    "en": "First courses",
+    "fr": "Premiers plats",
+    "de": "Erste Gänge"
+  },
+  "description": {
+    "it": "Categoria non attiva per questa demo.",
+    "en": "Category disabled for this demo.",
+    "fr": "Catégorie désactivée pour cette démo.",
+    "de": "Kategorie für diese Demo deaktiviert."
+  },
+  "order": 2,
+  "enabled": false,
+  "items": [
+    {
+      "id": "paccheri-ragu",
+      "code": "PRI-01",
+      "name": {
+        "it": "Paccheri al ragù",
+        "en": "Paccheri with meat sauce",
+        "fr": "Paccheri au ragoût",
+        "de": "Paccheri mit Ragù"
+      },
+      "description": {
+        "it": "Paccheri di Gragnano con ragù napoletano tradizionale.",
+        "en": "Gragnano paccheri with traditional Neapolitan meat sauce.",
+        "fr": "Paccheri de Gragnano avec ragoût napolitain traditionnel.",
+        "de": "Paccheri aus Gragnano mit traditionellem neapolitanischem Ragù."
+      },
+      "price": 11,
+      "currency": "EUR",
+      "allergens": ["gluten", "celery"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    }
+  ]
+}

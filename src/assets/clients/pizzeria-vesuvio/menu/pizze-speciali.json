@@ -1,0 +1,149 @@
+{
+  "id": "pizze-speciali",
+  "name": {
+    "it": "Pizze speciali",
+    "en": "Special pizzas",
+    "fr": "Pizzas spéciales",
+    "de": "Spezialpizzen"
+  },
+  "description": {
+    "it": "Le creazioni della casa.",
+    "en": "House signature creations.",
+    "fr": "Les créations signature de la maison.",
+    "de": "Die Spezialitäten des Hauses."
+  },
+  "order": 5,
+  "enabled": true,
+  "items": [
+    {
+      "id": "bufalina",
+      "code": "PSP-01",
+      "name": {
+        "it": "Bufalina",
+        "en": "Bufalina",
+        "fr": "Bufalina",
+        "de": "Bufalina"
+      },
+      "description": {
+        "it": "Pomodoro, mozzarella di bufala DOP, basilico fresco.",
+        "en": "Tomato, buffalo mozzarella DOP, fresh basil.",
+        "fr": "Tomate, mozzarella de bufflonne DOP, basilic frais.",
+        "de": "Tomate, Büffelmozzarella DOP, frisches Basilikum."
+      },
+      "price": 11,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": true,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "vesuvio-speciale",
+      "code": "PSP-02",
+      "name": {
+        "it": "Vesuvio Speciale",
+        "en": "Vesuvio Special",
+        "fr": "Vesuvio Spéciale",
+        "de": "Vesuvio Spezial"
+      },
+      "description": {
+        "it": "Pomodoro giallo, provola affumicata, nduja, stracciata e scorza di limone.",
+        "en": "Yellow tomato sauce, smoked provola, nduja, stracciata and lemon zest.",
+        "fr": "Sauce tomate jaune, provola fumée, nduja, stracciata et zeste de citron.",
+        "de": "Gelbe Tomatensauce, geräucherter Provola, Nduja, Stracciata und Zitronenzeste."
+      },
+      "price": 13.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": true,
+      "glutenFree": false,
+      "order": 2
+    },
+    {
+      "id": "salsiccia-friarielli",
+      "code": "PSP-03",
+      "name": {
+        "it": "Salsiccia e Friarielli",
+        "en": "Sausage and Broccoli Rabe",
+        "fr": "Saucisse et Friarielli",
+        "de": "Wurst und Friarielli"
+      },
+      "description": {
+        "it": "Provola affumicata, salsiccia fresca e friarielli saltati.",
+        "en": "Smoked provola, fresh sausage and sauteed broccoli rabe.",
+        "fr": "Provola fumée, saucisse fraîche et friarielli sautés.",
+        "de": "Geräucherter Provola, frische Wurst und sautierte Friarielli."
+      },
+      "price": 12.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 3
+    },
+    {
+      "id": "mortadella-pistacchio",
+      "code": "PSP-04",
+      "name": {
+        "it": "Mortadella e Pistacchio",
+        "en": "Mortadella and Pistachio",
+        "fr": "Mortadelle et Pistache",
+        "de": "Mortadella und Pistazie"
+      },
+      "description": {
+        "it": "Base bianca con fiordilatte, mortadella, granella di pistacchio e crema di ricotta.",
+        "en": "White base with mozzarella, mortadella, crushed pistachios and ricotta cream.",
+        "fr": "Base blanche avec mozzarella, mortadelle, pistaches concassées et crème de ricotta.",
+        "de": "Weiße Basis mit Mozzarella, Mortadella, gehackten Pistazien und Ricottacreme."
+      },
+      "price": 13,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk", "nuts"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 4
+    },
+    {
+      "id": "porcini-speck",
+      "code": "PSP-05",
+      "name": {
+        "it": "Porcini e Speck",
+        "en": "Porcini and Speck",
+        "fr": "Cèpes et Speck",
+        "de": "Steinpilze und Speck"
+      },
+      "description": {
+        "it": "Fiordilatte, funghi porcini, speck croccante e prezzemolo.",
+        "en": "Mozzarella, porcini mushrooms, crispy speck and parsley.",
+        "fr": "Mozzarella, cèpes, speck croustillant et persil.",
+        "de": "Mozzarella, Steinpilze, knuspriger Speck und Petersilie."
+      },
+      "price": 13,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 5
+    }
+  ]
+}

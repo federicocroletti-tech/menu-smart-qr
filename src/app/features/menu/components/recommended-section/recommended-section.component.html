@@ -1,0 +1,19 @@
+@if (recommendedItems.length > 0) {
+  <section class="recommended-section" [attr.aria-label]="translationService.translate('recommended')">
+    <h2>{{ translationService.translate('recommended') }}</h2>
+    <div class="grid" role="list">
+      @for (item of recommendedItems; track item.id) {
+        <app-menu-item-card
+          role="listitem"
+          [item]="item"
+          [showUnavailableItems]="showUnavailableItems"
+          [showAllergens]="showAllergens"
+          [showDishCodes]="showDishCodes"
+          [showPrices]="showPrices"
+          [showDescriptions]="showDescriptions"
+          [allergenMap]="allergenMap"
+        />
+      }
+    </div>
+  </section>
+}

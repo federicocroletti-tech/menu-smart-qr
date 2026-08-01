@@ -1,0 +1,65 @@
+{
+  "id": "burger",
+  "name": {
+    "it": "Burger",
+    "en": "Burgers",
+    "fr": "Burgers",
+    "de": "Burger"
+  },
+  "order": 1,
+  "enabled": true,
+  "items": [
+    {
+      "id": "classic-burger",
+      "code": "BUR-01",
+      "name": {
+        "it": "Classic Burger",
+        "en": "Classic Burger",
+        "fr": "Classic Burger",
+        "de": "Classic Burger"
+      },
+      "description": {
+        "it": "Manzo, cheddar, lattuga, pomodoro e salsa house.",
+        "en": "Beef, cheddar, lettuce, tomato and house sauce.",
+        "fr": "Boeuf, cheddar, laitue, tomate et sauce maison.",
+        "de": "Rindfleisch, Cheddar, Salat, Tomate und Haussauce."
+      },
+      "price": 11.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "milk", "eggs", "mustard"],
+      "available": true,
+      "recommended": true,
+      "vegetarian": false,
+      "vegan": false,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 1
+    },
+    {
+      "id": "veggie-burger",
+      "code": "BUR-02",
+      "name": {
+        "it": "Veggie Burger",
+        "en": "Veggie Burger",
+        "fr": "Burger Végétarien",
+        "de": "Veggie Burger"
+      },
+      "description": {
+        "it": "Burger vegetale con hummus e verdure croccanti.",
+        "en": "Plant-based burger with hummus and crunchy vegetables.",
+        "fr": "Burger végétal avec houmous et légumes croquants.",
+        "de": "Pflanzenbasierter Burger mit Hummus und knackigem Gemüse."
+      },
+      "price": 10.5,
+      "currency": "EUR",
+      "allergens": ["gluten", "sesame"],
+      "available": true,
+      "recommended": false,
+      "vegetarian": true,
+      "vegan": true,
+      "spicy": false,
+      "glutenFree": false,
+      "order": 2
+    }
+  ]
+}
