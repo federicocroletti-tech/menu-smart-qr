@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: menu-smart-qr
+    runtime: static
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist/menu-smart-qr/browser
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
