@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Menu Smart QR</string>
+    <string name="title_activity_main">Menu Smart QR</string>
+    <string name="package_name">com.federicocroletti.menusmartqr</string>
+    <string name="custom_url_scheme">com.federicocroletti.menusmartqr</string>
+</resources>

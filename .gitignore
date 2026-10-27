@@ -9,8 +9,13 @@
 
 # Node modules and dependency files
 /node_modules/
-/package-lock.json
 /yarn.lock
+
+# Capacitor native build artefacts
+/android/.gradle/
+/android/**/build/
+/ios/App/Pods/
+/ios/App/DerivedData/
 
 # Environment files
 /.env

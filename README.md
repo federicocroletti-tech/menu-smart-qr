@@ -18,6 +18,7 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 - Ricerca e filtri menu
 - Sezioni consigliati, categorie dinamiche, contatti e orari
 - Design responsive mobile-first
+- App Android e iOS basate sulla stessa applicazione Angular tramite Capacitor
 
 ## Stack tecnico
 
@@ -26,6 +27,33 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 - SCSS
 - RxJS
 - JSON statici in `src/assets`
+- Capacitor per il packaging cross-platform su Android e iOS
+
+## App mobile cross-platform
+
+L'app mobile riutilizza la stessa UI e logica Angular della web app. Capacitor la
+esegue in una WebView e fornisce i progetti nativi Android e iOS: non viene
+mantenuta una seconda implementazione nativa.
+
+Installa le dipendenze, genera le piattaforme una volta e sincronizza gli asset web:
+
+```bash
+npm ci
+npx cap add android
+npx cap add ios
+npm run build:mobile
+```
+
+Apri il progetto della piattaforma da compilare:
+
+```bash
+npm run cap:open:android
+npm run cap:open:ios
+```
+
+Android richiede Android Studio e Android SDK. Compilazione e firma iOS richiedono
+macOS e Xcode. Dopo aver modificato l'app Angular, esegui `npm run build:mobile`
+per ricostruire gli asset e sincronizzarli nei progetti nativi.
 
 ## Avvio progetto
 
