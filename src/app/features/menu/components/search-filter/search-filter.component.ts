@@ -1,22 +1,23 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { CommonModule } from "@angular/common";
+import { Component, EventEmitter, Output } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { IonInput } from "@ionic/angular/ion-input";
 
-import type { MenuFilter } from '../../../../shared/utils/menu-filter.util';
-import { TranslationService } from '../../../../core/services/translation.service';
+import type { MenuFilter } from "../../../../shared/utils/menu-filter.util";
+import { TranslationService } from "../../../../core/services/translation.service";
 
 @Component({
-  selector: 'app-search-filter',
+  selector: "app-search-filter",
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './search-filter.component.html',
-  styleUrl: './search-filter.component.scss',
+  imports: [CommonModule, FormsModule, IonInput],
+  templateUrl: "./search-filter.component.html",
+  styleUrl: "./search-filter.component.scss",
 })
 export class SearchFilterComponent {
   @Output() filterChange = new EventEmitter<MenuFilter>();
 
   filter: MenuFilter = {
-    query: '',
+    query: "",
     vegetarianOnly: false,
     veganOnly: false,
     glutenFreeOnly: false,

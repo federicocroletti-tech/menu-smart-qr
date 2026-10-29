@@ -18,6 +18,7 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 - Ricerca e filtri menu
 - Sezioni consigliati, categorie dinamiche, contatti e orari
 - Design responsive mobile-first
+- Componenti Ionic per selezione lingua, ricerca e navigazione tra categorie
 - App Android e iOS basate sulla stessa applicazione Angular tramite Capacitor
 
 ## Stack tecnico
@@ -27,6 +28,7 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 - SCSS
 - RxJS
 - JSON statici in `src/assets`
+- Ionic UI per controlli mobile multipiattaforma
 - Capacitor per il packaging cross-platform su Android e iOS
 
 ## App mobile cross-platform
@@ -34,6 +36,9 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 L'app mobile riutilizza la stessa UI e logica Angular della web app. Capacitor la
 esegue in una WebView e fornisce i progetti nativi Android e iOS: non viene
 mantenuta una seconda implementazione nativa.
+
+Ionic fornisce i controlli adattivi per la ricerca, la selezione della lingua e
+le categorie; menu, dati, temi e regole applicative restano condivisi con Angular.
 
 Installa le dipendenze, genera le piattaforme una volta e sincronizza gli asset web:
 

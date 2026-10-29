@@ -1,15 +1,17 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from "@angular/common";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { IonSegment } from "@ionic/angular/ion-segment";
+import { IonSegmentButton } from "@ionic/angular/ion-segment-button";
 
-import type { MenuCategory } from '../../../../core/models/menu.model';
-import { LocalizedTextPipe } from '../../../../shared/pipes/localized-text.pipe';
+import type { MenuCategory } from "../../../../core/models/menu.model";
+import { LocalizedTextPipe } from "../../../../shared/pipes/localized-text.pipe";
 
 @Component({
-  selector: 'app-category-nav',
+  selector: "app-category-nav",
   standalone: true,
-  imports: [CommonModule, LocalizedTextPipe],
-  templateUrl: './category-nav.component.html',
-  styleUrl: './category-nav.component.scss',
+  imports: [CommonModule, IonSegment, IonSegmentButton, LocalizedTextPipe],
+  templateUrl: "./category-nav.component.html",
+  styleUrl: "./category-nav.component.scss",
 })
 export class CategoryNavComponent {
   @Input() categories: MenuCategory[] = [];

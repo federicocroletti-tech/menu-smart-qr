@@ -1,16 +1,18 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { CommonModule } from "@angular/common";
+import { Component } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { IonSelect } from "@ionic/angular/ion-select";
+import { IonSelectOption } from "@ionic/angular/ion-select-option";
 
-import type { SupportedLanguage } from '../../../../core/models/i18n.model';
-import { TranslationService } from '../../../../core/services/translation.service';
+import type { SupportedLanguage } from "../../../../core/models/i18n.model";
+import { TranslationService } from "../../../../core/services/translation.service";
 
 @Component({
-  selector: 'app-language-selector',
+  selector: "app-language-selector",
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './language-selector.component.html',
-  styleUrl: './language-selector.component.scss',
+  imports: [CommonModule, FormsModule, IonSelect, IonSelectOption],
+  templateUrl: "./language-selector.component.html",
+  styleUrl: "./language-selector.component.scss",
 })
 export class LanguageSelectorComponent {
   readonly languages: SupportedLanguage[];

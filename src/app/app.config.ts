@@ -5,6 +5,7 @@ import {
   provideZoneChangeDetection,
 } from "@angular/core";
 import { provideClientHydration } from "@angular/platform-browser";
+import { provideIonicAngular } from "@ionic/angular";
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -12,5 +13,6 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient(),
     provideClientHydration(),
+    provideIonicAngular(),
   ],
 };

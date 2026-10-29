@@ -1,32 +1,41 @@
-import { CommonModule, DOCUMENT } from '@angular/common';
-import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
-import { Subject, finalize, forkJoin, takeUntil, timeout } from 'rxjs';
+import { CommonModule, DOCUMENT } from "@angular/common";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  Input,
+  OnDestroy,
+  OnInit,
+  inject,
+} from "@angular/core";
+import type { IonContent } from "@ionic/angular/ion-content";
+import { Subject, finalize, forkJoin, takeUntil, timeout } from "rxjs";
 
-import type { Allergen } from '../../../../core/models/allergen.model';
-import type { Client } from '../../../../core/models/client.model';
-import type { MenuCategory } from '../../../../core/models/menu.model';
-import { AllergenService } from '../../../../core/services/allergen.service';
-import { ClientService } from '../../../../core/services/client.service';
-import { MenuService } from '../../../../core/services/menu.service';
-import { SeoService } from '../../../../core/services/seo.service';
-import { ThemeService } from '../../../../core/services/theme.service';
-import { TranslationService } from '../../../../core/services/translation.service';
-import { LocalizedTextPipe } from '../../../../shared/pipes/localized-text.pipe';
-import { type MenuFilter } from '../../../../shared/utils/menu-filter.util';
-import { CategoryNavComponent } from '../../components/category-nav/category-nav.component';
-import { ContactBarComponent } from '../../components/contact-bar/contact-bar.component';
-import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
-import { ErrorStateComponent } from '../../components/error-state/error-state.component';
-import { FooterInfoComponent } from '../../components/footer-info/footer-info.component';
-import { LanguageSelectorComponent } from '../../components/language-selector/language-selector.component';
-import { LoadingStateComponent } from '../../components/loading-state/loading-state.component';
-import { MenuSectionComponent } from '../../components/menu-section/menu-section.component';
-import { RecommendedSectionComponent } from '../../components/recommended-section/recommended-section.component';
-import { RestaurantHeaderComponent } from '../../components/restaurant-header/restaurant-header.component';
-import { SearchFilterComponent } from '../../components/search-filter/search-filter.component';
+import type { Allergen } from "../../../../core/models/allergen.model";
+import type { Client } from "../../../../core/models/client.model";
+import type { MenuCategory } from "../../../../core/models/menu.model";
+import { AllergenService } from "../../../../core/services/allergen.service";
+import { ClientService } from "../../../../core/services/client.service";
+import { MenuService } from "../../../../core/services/menu.service";
+import { SeoService } from "../../../../core/services/seo.service";
+import { ThemeService } from "../../../../core/services/theme.service";
+import { TranslationService } from "../../../../core/services/translation.service";
+import { LocalizedTextPipe } from "../../../../shared/pipes/localized-text.pipe";
+import { type MenuFilter } from "../../../../shared/utils/menu-filter.util";
+import { CategoryNavComponent } from "../../components/category-nav/category-nav.component";
+import { ContactBarComponent } from "../../components/contact-bar/contact-bar.component";
+import { EmptyStateComponent } from "../../components/empty-state/empty-state.component";
+import { ErrorStateComponent } from "../../components/error-state/error-state.component";
+import { FooterInfoComponent } from "../../components/footer-info/footer-info.component";
+import { LanguageSelectorComponent } from "../../components/language-selector/language-selector.component";
+import { LoadingStateComponent } from "../../components/loading-state/loading-state.component";
+import { MenuSectionComponent } from "../../components/menu-section/menu-section.component";
+import { RecommendedSectionComponent } from "../../components/recommended-section/recommended-section.component";
+import { RestaurantHeaderComponent } from "../../components/restaurant-header/restaurant-header.component";
+import { SearchFilterComponent } from "../../components/search-filter/search-filter.component";
 
 @Component({
-  selector: 'app-menu-page',
+  selector: "app-menu-page",
   standalone: true,
   imports: [
     CommonModule,
@@ -43,8 +52,8 @@ import { SearchFilterComponent } from '../../components/search-filter/search-fil
     ErrorStateComponent,
     EmptyStateComponent,
   ],
-  templateUrl: './menu-page.component.html',
-  styleUrl: './menu-page.component.scss',
+  templateUrl: "./menu-page.component.html",
+  styleUrl: "./menu-page.component.scss",
 })
 export class MenuPageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
@@ -52,6 +61,7 @@ export class MenuPageComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
 
   client: Client | null = null;
+  @Input() scrollContent: IonContent | null = null;
   categories: MenuCategory[] = [];
   allergens: Allergen[] = [];
 
@@ -96,14 +106,17 @@ export class MenuPageComponent implements OnInit, OnDestroy {
   }
 
   get hasMobileContactBar(): boolean {
-    return Boolean(this.client && this.featureFlags['showContactBar']);
+    return Boolean(this.client && this.featureFlags["showContactBar"]);
   }
 
   get allergenMap(): Record<string, Allergen> {
-    return this.allergens.reduce<Record<string, Allergen>>((accumulator, allergen) => {
-      accumulator[allergen.id] = allergen;
-      return accumulator;
-    }, {});
+    return this.allergens.reduce<Record<string, Allergen>>(
+      (accumulator, allergen) => {
+        accumulator[allergen.id] = allergen;
+        return accumulator;
+      },
+      {},
+    );
   }
 
   onFilterChange(filter: MenuFilter): void {
@@ -119,7 +132,7 @@ export class MenuPageComponent implements OnInit, OnDestroy {
     this.loadPageData();
   }
 
-  @HostListener('window:scroll')
+  @HostListener("window:scroll")
   onWindowScroll(): void {
     if (this.categories.length === 0) {
       return;
@@ -129,7 +142,9 @@ export class MenuPageComponent implements OnInit, OnDestroy {
     let activeCategory: string | null = null;
 
     for (const category of this.categories) {
-      const section = this.document.getElementById(this.toSectionId(category.id));
+      const section = this.document.getElementById(
+        this.toSectionId(category.id),
+      );
       if (!section) {
         continue;
       }
@@ -140,9 +155,7 @@ export class MenuPageComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (activeCategory) {
-      this.activeCategoryId = activeCategory;
-    }
+    this.activeCategoryId = activeCategory ?? this.categories[0].id;
   }
 
   toSectionId(categoryId: string): string {
@@ -179,7 +192,10 @@ export class MenuPageComponent implements OnInit, OnDestroy {
           this.activeCategoryId = categories[0]?.id ?? null;
 
           this.themeService.applyTheme(client.theme);
-          this.seoService.applySeo(client, this.translationService.getCurrentLanguage());
+          this.seoService.applySeo(
+            client,
+            this.translationService.getCurrentLanguage(),
+          );
         },
         error: () => {
           this.hasError = true;
@@ -187,8 +203,23 @@ export class MenuPageComponent implements OnInit, OnDestroy {
       });
   }
 
-  private scrollToCategory(categoryId: string): void {
+  private async scrollToCategory(categoryId: string): Promise<void> {
     const section = this.document.getElementById(this.toSectionId(categoryId));
-    section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!section) {
+      return;
+    }
+
+    if (!this.scrollContent) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    const scrollElement = await this.scrollContent.getScrollElement();
+    const scrollContainerTop = scrollElement.getBoundingClientRect().top;
+    const sectionTop = section.getBoundingClientRect().top;
+    const scrollTop =
+      scrollElement.scrollTop + sectionTop - scrollContainerTop - 88;
+
+    await this.scrollContent.scrollToPoint(0, Math.max(0, scrollTop));
   }
 }

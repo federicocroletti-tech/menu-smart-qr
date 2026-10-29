@@ -1,16 +1,15 @@
 <nav class="category-nav" aria-label="Menu categories">
-  <ul role="list">
+  <ion-segment
+    [value]="activeCategoryId"
+    [scrollable]="true"
+  >
     @for (category of categories; track category.id) {
-      <li>
-        <button
-          type="button"
-          [class.active]="category.id === activeCategoryId"
-          [attr.aria-current]="category.id === activeCategoryId ? 'page' : null"
-          (click)="categorySelect.emit(category.id)"
-        >
-          {{ category.name | localizedText }}
-        </button>
-      </li>
+      <ion-segment-button
+        [value]="category.id"
+        (click)="categorySelect.emit(category.id)"
+      >
+        {{ category.name | localizedText }}
+      </ion-segment-button>
     }
-  </ul>
+  </ion-segment>
 </nav>

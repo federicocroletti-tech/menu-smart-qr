@@ -1,8 +1,16 @@
 <div class="language-selector">
-  <label for="language-select">{{ translationService.translate('language') }}</label>
-  <select id="language-select" name="language" [(ngModel)]="selectedLanguage">
+  <ion-select
+    id="language-select"
+    name="language"
+    [label]="translationService.translate('language')"
+    labelPlacement="start"
+    interface="popover"
+    [(ngModel)]="selectedLanguage"
+  >
     @for (language of languages; track language) {
-      <option [value]="language">{{ language.toUpperCase() }}</option>
+      <ion-select-option [value]="language">{{
+        language.toUpperCase()
+      }}</ion-select-option>
     }
-  </select>
+  </ion-select>
 </div>

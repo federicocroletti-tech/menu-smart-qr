@@ -1,16 +1,22 @@
-<section class="search-filter" [attr.aria-label]="translationService.translate('search')">
-  <label for="menu-search">{{ translationService.translate('search') }}</label>
-  <input
+<section
+  class="search-filter"
+  [attr.aria-label]="translationService.translate('search')"
+>
+  <ion-input
     id="menu-search"
-    type="search"
     name="menu-search"
-    [placeholder]="translationService.translate('search')"
+    type="search"
+    [label]="translationService.translate('search')"
+    labelPlacement="stacked"
+    [clearInput]="true"
     [(ngModel)]="filter.query"
-    (input)="emitChanges()"
-  />
+    (ionInput)="emitChanges()"
+  ></ion-input>
 
   <fieldset class="toggles">
-    <legend class="visually-hidden">{{ translationService.translate('allCategories') }}</legend>
+    <legend class="visually-hidden">
+      {{ translationService.translate("allCategories") }}
+    </legend>
     <label>
       <input
         type="checkbox"
@@ -18,11 +24,16 @@
         [(ngModel)]="filter.vegetarianOnly"
         (change)="emitChanges()"
       />
-      {{ translationService.translate('vegetarian') }}
+      {{ translationService.translate("vegetarian") }}
     </label>
     <label>
-      <input type="checkbox" name="veganOnly" [(ngModel)]="filter.veganOnly" (change)="emitChanges()" />
-      {{ translationService.translate('vegan') }}
+      <input
+        type="checkbox"
+        name="veganOnly"
+        [(ngModel)]="filter.veganOnly"
+        (change)="emitChanges()"
+      />
+      {{ translationService.translate("vegan") }}
     </label>
     <label>
       <input
@@ -31,11 +42,16 @@
         [(ngModel)]="filter.glutenFreeOnly"
         (change)="emitChanges()"
       />
-      {{ translationService.translate('glutenFree') }}
+      {{ translationService.translate("glutenFree") }}
     </label>
     <label>
-      <input type="checkbox" name="spicyOnly" [(ngModel)]="filter.spicyOnly" (change)="emitChanges()" />
-      {{ translationService.translate('spicy') }}
+      <input
+        type="checkbox"
+        name="spicyOnly"
+        [(ngModel)]="filter.spicyOnly"
+        (change)="emitChanges()"
+      />
+      {{ translationService.translate("spicy") }}
     </label>
     <label>
       <input
@@ -44,7 +60,7 @@
         [(ngModel)]="filter.recommendedOnly"
         (change)="emitChanges()"
       />
-      {{ translationService.translate('recommended') }}
+      {{ translationService.translate("recommended") }}
     </label>
   </fieldset>
 </section>

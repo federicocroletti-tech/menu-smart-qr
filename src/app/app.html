@@ -1,1 +1,10 @@
-<app-menu-page />
+<ion-app>
+  <ion-content
+    #content
+    class="menu-content"
+    [scrollEvents]="true"
+    (ionScroll)="menuPage.onWindowScroll()"
+  >
+    <app-menu-page #menuPage [scrollContent]="content" />
+  </ion-content>
+</ion-app>
