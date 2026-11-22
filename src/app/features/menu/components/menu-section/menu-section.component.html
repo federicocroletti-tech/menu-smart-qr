@@ -16,6 +16,7 @@
           [showPrices]="showPrices"
           [showDescriptions]="showDescriptions"
           [allergenMap]="allergenMap"
+          (addToOrder)="addToOrder.emit($event)"
         />
       }
     </div>

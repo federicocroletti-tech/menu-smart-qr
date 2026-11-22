@@ -25,6 +25,9 @@ export class SeoService {
 
     this.title.setTitle(title);
     this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'robots', content: 'index,follow,max-image-preview:large' });
+    this.meta.updateTag({ property: 'og:type', content: 'restaurant.menu' });
+    this.meta.updateTag({ property: 'og:locale', content: this.getLocale(language) });
     this.meta.updateTag({ property: 'og:title', content: title });
     this.meta.updateTag({ property: 'og:description', content: description });
 
@@ -98,6 +101,16 @@ export class SeoService {
     script.type = 'application/ld+json';
     script.text = JSON.stringify(structuredData);
     this.document.head.appendChild(script);
+  }
+
+  private getLocale(language: SupportedLanguage): string {
+    const locales: Record<SupportedLanguage, string> = {
+      it: 'it_IT',
+      en: 'en_US',
+      fr: 'fr_FR',
+      de: 'de_DE',
+    };
+    return locales[language];
   }
 
   private getLocalizedValue(

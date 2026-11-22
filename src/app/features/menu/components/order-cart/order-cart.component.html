@@ -1,0 +1,47 @@
+@let entries = entries$ | async;
+
+@if (entries?.length) {
+  <button type="button" class="cart-trigger" (click)="isOpen = true">
+    {{ translationService.translate('order') }} ({{ entries.length }})
+  </button>
+}
+
+@if (isOpen) {
+  <div class="cart-backdrop" role="presentation" (click)="isOpen = false">
+    <aside
+      class="cart-panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="translationService.translate('order')"
+      (click)="$event.stopPropagation()"
+    >
+      <header>
+        <h2>{{ translationService.translate('order') }}</h2>
+        <button type="button" (click)="isOpen = false" [attr.aria-label]="translationService.translate('close')">×</button>
+      </header>
+
+      @for (entry of entries; track entry.item.id) {
+        <div class="cart-entry">
+          <div>
+            <strong>{{ entry.item.name | localizedText }}</strong>
+            <span>{{ entry.item.price | price: entry.item.currency }}</span>
+          </div>
+          <div class="quantity">
+            <button type="button" (click)="cart.remove(entry.item.id)">−</button>
+            <span>{{ entry.quantity }}</span>
+            <button type="button" (click)="cart.add(entry.item)">+</button>
+          </div>
+        </div>
+      }
+
+      <a
+        class="checkout"
+        [href]="whatsappUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ translationService.translate('sendWhatsAppOrder') }}
+      </a>
+    </aside>
+  </div>
+}

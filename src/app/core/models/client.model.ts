@@ -66,6 +66,21 @@ export interface ClientSettings {
   featureFlags: ClientFeatureFlags;
 }
 
+export interface ClientReservationSettings {
+  enabled?: boolean;
+  minimumPartySize?: number;
+  maximumPartySize?: number;
+}
+
+export interface ClientPromotion {
+  enabled?: boolean;
+  title?: LocalizedText;
+  text?: LocalizedText;
+  linkUrl?: string;
+  imageUrl?: string;
+  label?: LocalizedText;
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -79,4 +94,6 @@ export interface Client {
   seo: ClientSeo;
   settings: ClientSettings;
   notes: LocalizedText;
+  reservations?: ClientReservationSettings;
+  promotion?: ClientPromotion;
 }

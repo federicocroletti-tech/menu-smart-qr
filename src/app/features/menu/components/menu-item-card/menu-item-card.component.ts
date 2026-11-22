@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import type { Allergen } from '../../../../core/models/allergen.model';
 import type { MenuItem } from '../../../../core/models/menu.model';
@@ -23,6 +23,7 @@ export class MenuItemCardComponent {
   @Input() showPrices = true;
   @Input() showDescriptions = true;
   @Input() allergenMap: Record<string, Allergen> = {};
+  @Output() addToOrder = new EventEmitter<MenuItem>();
 
   constructor(public readonly translationService: TranslationService) {}
 

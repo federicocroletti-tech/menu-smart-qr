@@ -83,6 +83,16 @@ h3 {
   letter-spacing: 0.02em;
 }
 
+.add-button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 0.65rem;
+  background: var(--color-primary, #c62828);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 @media (min-width: 900px) {
   .menu-item-card {
     padding: 1.05rem;

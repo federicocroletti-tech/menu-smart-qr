@@ -121,7 +121,24 @@
       "enableLanguageSelector": true,
       "enableDishCodes": true,
       "enablePrices": true,
-      "enableDescriptions": true
+      "enableDescriptions": true,
+      "enableOrders": true,
+      "enableReservations": true,
+      "showPromotion": true
+    }
+  },
+  "reservations": {
+    "enabled": true,
+    "minimumPartySize": 1,
+    "maximumPartySize": 20
+  },
+  "promotion": {
+    "enabled": false,
+    "label": {
+      "it": "Promozione",
+      "en": "Promotion",
+      "fr": "Promotion",
+      "de": "Aktion"
     }
   },
   "notes": {

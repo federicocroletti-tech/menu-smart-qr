@@ -59,5 +59,15 @@
     @if (showAllergens) {
       <app-allergen-list [allergenIds]="item.allergens" [allergenMap]="allergenMap" />
     }
+
+    @if (item.available) {
+      <button
+        type="button"
+        class="add-button"
+        (click)="addToOrder.emit(item)"
+      >
+        {{ translationService.translate('addToOrder') }}
+      </button>
+    }
   </article>
 }

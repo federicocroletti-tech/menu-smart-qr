@@ -1,0 +1,67 @@
+<button type="button" class="reservation-trigger" (click)="isOpen = true">
+  {{ translationService.translate('reservation') }}
+</button>
+
+@if (isOpen) {
+  <div class="reservation-backdrop" role="presentation" (click)="isOpen = false">
+    <form
+      class="reservation-panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="translationService.translate('reservation')"
+      (click)="$event.stopPropagation()"
+      (submit)="isValid && (isOpen = false)"
+    >
+      <header>
+        <h2>{{ translationService.translate('reservation') }}</h2>
+        <button type="button" (click)="isOpen = false" [attr.aria-label]="translationService.translate('close')">×</button>
+      </header>
+
+      <label>
+        {{ translationService.translate('name') }}
+        <input [(ngModel)]="name" name="name" autocomplete="name" required />
+      </label>
+      <label>
+        {{ translationService.translate('phone') }}
+        <input [(ngModel)]="phone" name="phone" type="tel" autocomplete="tel" required />
+      </label>
+      <div class="date-time">
+        <label>
+          {{ translationService.translate('date') }}
+          <input [(ngModel)]="date" name="date" type="date" required />
+        </label>
+        <label>
+          {{ translationService.translate('time') }}
+          <input [(ngModel)]="time" name="time" type="time" required />
+        </label>
+      </div>
+      <label>
+        {{ translationService.translate('partySize') }}
+        <input
+          [(ngModel)]="partySize"
+          name="partySize"
+          type="number"
+          [min]="minimumPartySize"
+          [max]="maximumPartySize"
+          required
+        />
+      </label>
+      <label>
+        {{ translationService.translate('notes') }}
+        <textarea [(ngModel)]="notes" name="notes" rows="3"></textarea>
+      </label>
+
+      <a
+        class="reservation-submit"
+        [class.disabled]="!isValid"
+        [attr.aria-disabled]="!isValid"
+        [attr.tabindex]="isValid ? null : -1"
+        [href]="isValid ? whatsappUrl : null"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ translationService.translate('sendWhatsAppReservation') }}
+      </a>
+    </form>
+  </div>
+}

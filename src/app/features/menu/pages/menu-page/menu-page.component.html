@@ -14,7 +14,14 @@
       @if (featureFlags["enableLanguageSelector"]) {
         <app-language-selector />
       }
+      @if (featureFlags["enableReservations"] && client.reservations?.enabled) {
+        <app-reservation-panel [client]="client" />
+      }
     </div>
+
+    @if (featureFlags["showPromotion"] && client.promotion?.enabled) {
+      <app-promotion-banner [client]="client" />
+    }
 
     @if (isEmpty) {
       <app-empty-state />
@@ -60,6 +67,7 @@
               [showPrices]="featureFlags['enablePrices'] ?? true"
               [showDescriptions]="featureFlags['enableDescriptions'] ?? true"
               [allergenMap]="allergenMap"
+              (addToOrder)="orderCartService.add($event)"
             />
           </section>
         }
@@ -73,6 +81,10 @@
       [client]="client"
       [showOpeningHours]="featureFlags['showOpeningHours'] ?? true"
     />
+
+    @if (featureFlags["enableOrders"]) {
+      <app-order-cart [client]="client" />
+    }
   } @else {
     <app-error-state (retry)="onRetry()" />
   }

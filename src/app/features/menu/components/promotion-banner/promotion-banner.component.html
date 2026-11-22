@@ -1,0 +1,23 @@
+@if (client.promotion?.enabled) {
+  <aside class="promotion-banner" [attr.aria-label]="translationService.translate('promotion')">
+    @if (client.promotion?.imageUrl) {
+      <img [src]="client.promotion!.imageUrl" alt="" />
+    }
+    <div>
+      @if (client.promotion?.label) {
+        <span class="promotion-label">{{ client.promotion!.label | localizedText }}</span>
+      }
+      @if (client.promotion?.title) {
+        <h2>{{ client.promotion!.title | localizedText }}</h2>
+      }
+      @if (client.promotion?.text) {
+        <p>{{ client.promotion!.text | localizedText }}</p>
+      }
+    </div>
+    @if (client.promotion?.linkUrl) {
+      <a [href]="client.promotion!.linkUrl" target="_blank" rel="noopener sponsored noreferrer">
+        {{ translationService.translate('learnMore') }}
+      </a>
+    }
+  </aside>
+}

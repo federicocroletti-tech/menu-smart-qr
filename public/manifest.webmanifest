@@ -1,0 +1,16 @@
+{
+  "name": "Menu Smart QR",
+  "short_name": "Menu QR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF8F2",
+  "theme_color": "#C62828",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

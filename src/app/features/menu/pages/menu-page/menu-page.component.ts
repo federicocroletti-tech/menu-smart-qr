@@ -3,12 +3,10 @@ import {
   ChangeDetectorRef,
   Component,
   HostListener,
-  Input,
   OnDestroy,
   OnInit,
   inject,
 } from "@angular/core";
-import type { IonContent } from "@ionic/angular/ion-content";
 import { Subject, finalize, forkJoin, takeUntil, timeout } from "rxjs";
 
 import type { Allergen } from "../../../../core/models/allergen.model";
@@ -33,6 +31,10 @@ import { MenuSectionComponent } from "../../components/menu-section/menu-section
 import { RecommendedSectionComponent } from "../../components/recommended-section/recommended-section.component";
 import { RestaurantHeaderComponent } from "../../components/restaurant-header/restaurant-header.component";
 import { SearchFilterComponent } from "../../components/search-filter/search-filter.component";
+import { OrderCartComponent } from "../../components/order-cart/order-cart.component";
+import { ReservationPanelComponent } from "../../components/reservation-panel/reservation-panel.component";
+import { PromotionBannerComponent } from "../../components/promotion-banner/promotion-banner.component";
+import { OrderCartService } from "../../../../core/services/order-cart.service";
 
 @Component({
   selector: "app-menu-page",
@@ -44,6 +46,9 @@ import { SearchFilterComponent } from "../../components/search-filter/search-fil
     LanguageSelectorComponent,
     RecommendedSectionComponent,
     SearchFilterComponent,
+    OrderCartComponent,
+    ReservationPanelComponent,
+    PromotionBannerComponent,
     CategoryNavComponent,
     MenuSectionComponent,
     ContactBarComponent,
@@ -61,7 +66,6 @@ export class MenuPageComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
 
   client: Client | null = null;
-  @Input() scrollContent: IonContent | null = null;
   categories: MenuCategory[] = [];
   allergens: Allergen[] = [];
 
@@ -77,6 +81,7 @@ export class MenuPageComponent implements OnInit, OnDestroy {
     private readonly translationService: TranslationService,
     private readonly themeService: ThemeService,
     private readonly seoService: SeoService,
+    public readonly orderCartService: OrderCartService,
   ) {}
 
   ngOnInit(): void {
@@ -203,23 +208,8 @@ export class MenuPageComponent implements OnInit, OnDestroy {
       });
   }
 
-  private async scrollToCategory(categoryId: string): Promise<void> {
+  private scrollToCategory(categoryId: string): void {
     const section = this.document.getElementById(this.toSectionId(categoryId));
-    if (!section) {
-      return;
-    }
-
-    if (!this.scrollContent) {
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-
-    const scrollElement = await this.scrollContent.getScrollElement();
-    const scrollContainerTop = scrollElement.getBoundingClientRect().top;
-    const sectionTop = section.getBoundingClientRect().top;
-    const scrollTop =
-      scrollElement.scrollTop + sectionTop - scrollContainerTop - 88;
-
-    await this.scrollContent.scrollToPoint(0, Math.max(0, scrollTop));
+    section?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
