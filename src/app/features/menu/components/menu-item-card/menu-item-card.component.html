@@ -60,7 +60,7 @@
       <app-allergen-list [allergenIds]="item.allergens" [allergenMap]="allergenMap" />
     }
 
-    @if (item.available) {
+    @if (showOrderButton && item.available) {
       <button
         type="button"
         class="add-button"

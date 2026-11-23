@@ -4,13 +4,12 @@
 
 @if (isOpen) {
   <div class="reservation-backdrop" role="presentation" (click)="isOpen = false">
-    <form
+    <div
       class="reservation-panel"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="translationService.translate('reservation')"
       (click)="$event.stopPropagation()"
-      (submit)="isValid && (isOpen = false)"
     >
       <header>
         <h2>{{ translationService.translate('reservation') }}</h2>
@@ -28,7 +27,7 @@
       <div class="date-time">
         <label>
           {{ translationService.translate('date') }}
-          <input [(ngModel)]="date" name="date" type="date" required />
+          <input [(ngModel)]="date" name="date" type="date" [min]="minimumDate" required />
         </label>
         <label>
           {{ translationService.translate('time') }}
@@ -43,6 +42,7 @@
           type="number"
           [min]="minimumPartySize"
           [max]="maximumPartySize"
+          step="1"
           required
         />
       </label>
@@ -62,6 +62,6 @@
       >
         {{ translationService.translate('sendWhatsAppReservation') }}
       </a>
-    </form>
+    </div>
   </div>
 }

@@ -25,6 +25,7 @@
   "total": "Total",
   "close": "Close",
   "sendWhatsAppOrder": "Send order on WhatsApp",
+  "whatsappUnavailable": "A WhatsApp contact is not configured for this venue.",
   "orderWhatsappIntro": "Hi! I would like to place this order:",
   "reservation": "Book a table",
   "reservationWhatsappIntro": "Hi! I would like to book a table:",

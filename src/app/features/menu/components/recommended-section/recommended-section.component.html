@@ -11,7 +11,9 @@
           [showDishCodes]="showDishCodes"
           [showPrices]="showPrices"
           [showDescriptions]="showDescriptions"
+          [showOrderButton]="showOrderButton"
           [allergenMap]="allergenMap"
+          (addToOrder)="addToOrder.emit($event)"
         />
       }
     </div>

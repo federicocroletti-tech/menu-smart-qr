@@ -34,7 +34,9 @@
           [showDishCodes]="featureFlags['enableDishCodes'] ?? true"
           [showPrices]="featureFlags['enablePrices'] ?? true"
           [showDescriptions]="featureFlags['enableDescriptions'] ?? true"
+          [showOrderButton]="featureFlags['enableOrders'] ?? false"
           [allergenMap]="allergenMap"
+          (addToOrder)="orderCartService.add($event)"
         />
       }
 
@@ -66,6 +68,7 @@
               [showDishCodes]="featureFlags['enableDishCodes'] ?? true"
               [showPrices]="featureFlags['enablePrices'] ?? true"
               [showDescriptions]="featureFlags['enableDescriptions'] ?? true"
+              [showOrderButton]="featureFlags['enableOrders'] ?? false"
               [allergenMap]="allergenMap"
               (addToOrder)="orderCartService.add($event)"
             />
@@ -83,7 +86,10 @@
     />
 
     @if (featureFlags["enableOrders"]) {
-      <app-order-cart [client]="client" />
+      <app-order-cart
+        [client]="client"
+        [hasMobileContactBar]="hasMobileContactBar"
+      />
     }
   } @else {
     <app-error-state (retry)="onRetry()" />

@@ -25,6 +25,7 @@
   "total": "Gesamt",
   "close": "Schließen",
   "sendWhatsAppOrder": "Bestellung über WhatsApp senden",
+  "whatsappUnavailable": "Für diesen Betrieb ist kein WhatsApp-Kontakt konfiguriert.",
   "orderWhatsappIntro": "Hallo! Ich möchte diese Bestellung aufgeben:",
   "reservation": "Tisch reservieren",
   "reservationWhatsappIntro": "Hallo! Ich möchte einen Tisch reservieren:",

@@ -22,6 +22,7 @@ export class MenuItemCardComponent {
   @Input() showDishCodes = true;
   @Input() showPrices = true;
   @Input() showDescriptions = true;
+  @Input() showOrderButton = false;
   @Input() allergenMap: Record<string, Allergen> = {};
   @Output() addToOrder = new EventEmitter<MenuItem>();
 

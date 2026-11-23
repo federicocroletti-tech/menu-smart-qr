@@ -1,6 +1,6 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { map } from 'rxjs';
+import type { Observable } from 'rxjs';
 
 import type { Client } from '../../../../core/models/client.model';
 import type { CartEntry } from '../../../../core/services/order-cart.service';
@@ -18,23 +18,22 @@ import { PricePipe } from '../../../../shared/pipes/price.pipe';
 })
 export class OrderCartComponent {
   @Input({ required: true }) client!: Client;
+  @Input() hasMobileContactBar = false;
   isOpen = false;
 
-  readonly entries$;
+  readonly entries$: Observable<CartEntry[]>;
 
   constructor(
     public readonly cart: OrderCartService,
     public readonly translationService: TranslationService,
   ) {
-    this.entries$ = this.cart.entries$.pipe(
-      map((entries) => entries as CartEntry[]),
-    );
+    this.entries$ = this.cart.entries$;
   }
 
-  get whatsappUrl(): string {
-    const entries = this.cartEntriesSnapshot;
+  get whatsappUrl(): string | null {
+    const entries = this.cart.getEntries();
     const lines = entries.map((entry) =>
-      `${entry.quantity}x ${this.localizedName(entry.item.name)} - ${entry.item.currency} ${entry.item.price * entry.quantity}`,
+      `${entry.quantity}x ${this.localizedName(entry.item.name)} - ${this.formatPrice(entry.item.price * entry.quantity, entry.item.currency)}`,
     );
     const total = entries.reduce(
       (sum, entry) => sum + entry.item.price * entry.quantity,
@@ -45,24 +44,26 @@ export class OrderCartComponent {
       '',
       ...lines,
       '',
-      `${this.translationService.translate('total')}: ${entries[0]?.item.currency ?? 'EUR'} ${total.toFixed(2)}`,
+      `${this.translationService.translate('total')}: ${this.formatPrice(total, entries[0]?.item.currency ?? 'EUR')}`,
     ].join('\n');
 
     const phone = (this.client.contacts.whatsapp ?? this.client.contacts.phone ?? '')
       .replace(/\D/g, '');
+    if (!phone) {
+      return null;
+    }
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-  }
-
-  cartEntriesSnapshot: CartEntry[] = [];
-
-  ngOnInit(): void {
-    this.entries$.subscribe((entries) => {
-      this.cartEntriesSnapshot = entries;
-    });
   }
 
   localizedName(name: CartEntry['item']['name']): string {
     const language = this.translationService.getCurrentLanguage();
     return name[language] ?? name.it ?? name.en ?? '';
+  }
+
+  private formatPrice(value: number, currency: string): string {
+    return new Intl.NumberFormat(
+      this.translationService.getCurrentLanguage(),
+      { style: 'currency', currency },
+    ).format(value);
   }
 }

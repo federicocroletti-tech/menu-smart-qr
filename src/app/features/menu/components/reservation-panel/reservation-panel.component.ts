@@ -48,6 +48,30 @@ export class ReservationPanelComponent {
   }
 
   get isValid(): boolean {
-    return Boolean(this.name.trim() && this.phone.trim() && this.date && this.time);
+    const destination = (
+      this.client.contacts.whatsapp ?? this.client.contacts.phone ?? ''
+    ).replace(/\D/g, '');
+    if (
+      this.name.trim().length < 2 ||
+      this.phone.replace(/\D/g, '').length < 6 ||
+      !destination ||
+      !this.date ||
+      !this.time ||
+      !Number.isInteger(this.partySize) ||
+      this.partySize < this.minimumPartySize ||
+      this.partySize > this.maximumPartySize
+    ) {
+      return false;
+    }
+
+    const reservationDate = new Date(`${this.date}T${this.time}`);
+    return !Number.isNaN(reservationDate.getTime()) &&
+      reservationDate.getTime() > Date.now();
+  }
+
+  get minimumDate(): string {
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+    return localDate.toISOString().slice(0, 10);
   }
 }

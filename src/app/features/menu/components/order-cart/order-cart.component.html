@@ -1,7 +1,12 @@
 @let entries = entries$ | async;
 
 @if (entries?.length) {
-  <button type="button" class="cart-trigger" (click)="isOpen = true">
+  <button
+    type="button"
+    class="cart-trigger"
+    [class.above-contact-bar]="hasMobileContactBar"
+    (click)="isOpen = true"
+  >
     {{ translationService.translate('order') }} ({{ entries.length }})
   </button>
 }
@@ -34,14 +39,18 @@
         </div>
       }
 
-      <a
-        class="checkout"
-        [href]="whatsappUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {{ translationService.translate('sendWhatsAppOrder') }}
-      </a>
+      @if (whatsappUrl; as checkoutUrl) {
+        <a
+          class="checkout"
+          [href]="checkoutUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ translationService.translate('sendWhatsAppOrder') }}
+        </a>
+      } @else {
+        <p role="alert">{{ translationService.translate('whatsappUnavailable') }}</p>
+      }
     </aside>
   </div>
 }

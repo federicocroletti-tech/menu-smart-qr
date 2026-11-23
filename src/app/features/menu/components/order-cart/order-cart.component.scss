@@ -1,6 +1,6 @@
 .cart-trigger {
   position: fixed;
-  z-index: 20;
+  z-index: 45;
   right: 1rem;
   bottom: calc(1rem + env(safe-area-inset-bottom));
   min-height: 48px;
@@ -11,6 +11,10 @@
   color: #fff;
   font-weight: 800;
   box-shadow: 0 10px 25px rgb(15 23 42 / 0.22);
+}
+
+.cart-trigger.above-contact-bar {
+  bottom: calc(5.5rem + env(safe-area-inset-bottom));
 }
 
 .cart-backdrop {
@@ -79,6 +83,12 @@
 @media (min-width: 700px) {
   .cart-backdrop {
     justify-items: end;
+  }
+
+  @media (min-width: 900px) {
+    .cart-trigger.above-contact-bar {
+      bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
   }
 
   .cart-panel {

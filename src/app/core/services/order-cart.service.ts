@@ -15,6 +15,10 @@ export class OrderCartService {
 
   readonly entries$ = this.entriesSubject.asObservable();
 
+  getEntries(): CartEntry[] {
+    return [...this.entriesSubject.value];
+  }
+
   add(item: MenuItem): void {
     const current = this.entries.get(item.id);
     this.entries.set(item.id, {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import type { Allergen } from '../../../../core/models/allergen.model';
 import type { MenuCategory, MenuItem } from '../../../../core/models/menu.model';
@@ -20,7 +20,9 @@ export class RecommendedSectionComponent {
   @Input() showDishCodes = true;
   @Input() showPrices = true;
   @Input() showDescriptions = true;
+  @Input() showOrderButton = false;
   @Input() allergenMap: Record<string, Allergen> = {};
+  @Output() addToOrder = new EventEmitter<MenuItem>();
 
   constructor(public readonly translationService: TranslationService) {}
 

@@ -25,6 +25,7 @@
   "total": "Totale",
   "close": "Chiudi",
   "sendWhatsAppOrder": "Invia ordine su WhatsApp",
+  "whatsappUnavailable": "Contatto WhatsApp non configurato per questo locale.",
   "orderWhatsappIntro": "Ciao! Vorrei effettuare questo ordine:",
   "reservation": "Prenota un tavolo",
   "reservationWhatsappIntro": "Ciao! Vorrei prenotare un tavolo:",

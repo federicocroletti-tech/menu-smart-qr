@@ -25,6 +25,7 @@
   "total": "Total",
   "close": "Fermer",
   "sendWhatsAppOrder": "Envoyer la commande sur WhatsApp",
+  "whatsappUnavailable": "Aucun contact WhatsApp n'est configuré pour cet établissement.",
   "orderWhatsappIntro": "Bonjour ! Je souhaite passer cette commande :",
   "reservation": "Réserver une table",
   "reservationWhatsappIntro": "Bonjour ! Je souhaite réserver une table :",
