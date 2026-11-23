@@ -30,6 +30,11 @@ export class SeoService {
     this.meta.updateTag({ property: 'og:locale', content: this.getLocale(language) });
     this.meta.updateTag({ property: 'og:title', content: title });
     this.meta.updateTag({ property: 'og:description', content: description });
+    if (seo.canonicalUrl) {
+      this.meta.updateTag({ property: 'og:url', content: seo.canonicalUrl });
+    } else {
+      this.meta.removeTag(`property='og:url'`);
+    }
 
     const ogImage = seo.ogImage ?? seo.imageUrl;
     if (ogImage) {

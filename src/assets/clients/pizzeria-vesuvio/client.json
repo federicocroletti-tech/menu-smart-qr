@@ -98,9 +98,7 @@
       "fr": "Découvrez le menu numérique de la Pizzeria Vesuvio avec pizzas classiques, spéciales et desserts maison.",
       "de": "Entdecken Sie die digitale Speisekarte der Pizzeria Vesuvio mit klassischen und besonderen Pizzen sowie hausgemachten Desserts."
     },
-    "ogImage": "https://example.com/pizzeria-vesuvio-og.jpg",
-    "canonicalUrl": "https://menu.pizzeriavesuvio.it",
-    "imageUrl": "https://example.com/pizzeria-vesuvio-og.jpg"
+    "canonicalUrl": ""
   },
   "settings": {
     "defaultLanguage": "it",

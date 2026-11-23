@@ -56,8 +56,12 @@ npm run cap:open:android
 npm run cap:open:ios
 ```
 
-La build pubblica è una SPA statica: `npm run build:mobile` genera i file web
-e li sincronizza nei progetti Android e iOS. Android richiede Android Studio,
+La build pubblica è una SPA statica. `npm run build` inietta nel documento HTML
+iniziale title, description, lingua e Open Graph del cliente selezionato, così
+anche crawler e anteprime social ricevono metadati senza eseguire JavaScript.
+Configura `seo.canonicalUrl` e `seo.ogImage` con URL reali del cliente prima
+della pubblicazione. `npm run build:mobile` genera i file web e li sincronizza
+nei progetti Android e iOS. Android richiede Android Studio,
 Android SDK e JDK 21; da Windows puoi generare l'APK debug con:
 
 ```powershell
