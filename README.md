@@ -212,6 +212,11 @@ Puoi pubblicare la build statica su:
 - GitHub Pages
 - Hosting statico tradizionale (Nginx/Apache/CDN)
 
+La pipeline GitHub Actions esegue i test, sincronizza Capacitor e compila un APK
+debug per ogni push su `main` e pull request verso `main`. L'APK viene allegato
+come artifact al workflow; la firma per Google Play richiede credenziali Android
+protette e va configurata separatamente prima del rilascio pubblico.
+
 ## Generare QR code
 
 1. Pubblica il sito e copia URL finale.
