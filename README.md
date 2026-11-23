@@ -56,9 +56,20 @@ npm run cap:open:android
 npm run cap:open:ios
 ```
 
-Android richiede Android Studio e Android SDK. Compilazione e firma iOS richiedono
-macOS e Xcode. Dopo aver modificato l'app Angular, esegui `npm run build:mobile`
-per ricostruire gli asset e sincronizzarli nei progetti nativi.
+La build pubblica è una SPA statica: `npm run build:mobile` genera i file web
+e li sincronizza nei progetti Android e iOS. Android richiede Android Studio,
+Android SDK e JDK 21; da Windows puoi generare l'APK debug con:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21"
+cd android
+.\gradlew.bat assembleDebug
+```
+
+L'APK è scritto in `android/app/build/outputs/apk/debug/app-debug.apk`.
+Compilazione e firma iOS richiedono macOS e Xcode. Per il web, pubblica
+`dist/menu-smart-qr/browser` su un hosting statico con fallback delle rotte
+verso `index.html` (il file `render.yaml` contiene la configurazione Render).
 
 ## Avvio progetto
 
