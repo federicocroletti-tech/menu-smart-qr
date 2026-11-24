@@ -8,8 +8,7 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 
 ## Funzionalita principali
 
-- Frontend-only (nessun backend nella V1)
-- Nessun login
+- Menu Angular statico, senza login
 - Dati menu, cliente e allergeni da JSON
 - Multi-cliente tramite `app-config.json`
 - Multilingua UI: italiano, inglese, francese, tedesco
@@ -20,6 +19,7 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 - Design responsive mobile-first
 - Componenti Ionic per selezione lingua, ricerca e navigazione tra categorie
 - App Android e iOS basate sulla stessa applicazione Angular tramite Capacitor
+- Fondazione API separata per le prenotazioni con Node.js/Express e schema PostgreSQL; non e ancora collegata al flusso Angular
 
 ## Stack tecnico
 
@@ -30,6 +30,7 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 - JSON statici in `src/assets`
 - Ionic UI per controlli mobile multipiattaforma
 - Capacitor per il packaging cross-platform su Android e iOS
+- Node.js, Express e PostgreSQL per la fondazione API prenotazioni
 
 ## App mobile cross-platform
 
@@ -74,6 +75,31 @@ L'APK è scritto in `android/app/build/outputs/apk/debug/app-debug.apk`.
 Compilazione e firma iOS richiedono macOS e Xcode. Per il web, pubblica
 `dist/menu-smart-qr/browser` su un hosting statico con fallback delle rotte
 verso `index.html` (il file `render.yaml` contiene la configurazione Render).
+
+## API prenotazioni - fondazione tecnica
+
+Il frontend e la pubblicazione Render restano statici. La cartella `server/`
+contiene un'API Express separata, una migrazione PostgreSQL e test del dominio e
+delle richieste HTTP. Il modulo WhatsApp del frontend non usa ancora queste API;
+non sono presenti autenticazione per il personale, dashboard amministrativa,
+notifiche o pagamenti. La migrazione e la concorrenza PostgreSQL devono ancora
+essere verificate su un database reale.
+
+L'API richiede `DATABASE_URL` e `IDEMPOTENCY_SECRET` (almeno 32 caratteri);
+`server/.env.example` elenca anche le altre variabili. Il processo Node non
+carica automaticamente quel file: configurare le variabili nell'ambiente prima
+di avviare i comandi.
+
+```bash
+npm run server:build
+npm run server:migrate
+npm run server:start
+```
+
+Le verifiche disponibili si eseguono con `npm run server:test`. `server:migrate`
+e `server:start` richiedono un PostgreSQL raggiungibile. In produzione, API e
+database necessitano di servizi e configurazione distinti dall'hosting statico
+definito in `render.yaml`.
 
 ## Avvio progetto
 
@@ -225,7 +251,7 @@ protette e va configurata separatamente prima del rilascio pubblico.
 
 ## Roadmap futura (V2+)
 
-- Backend API
+- Collegamento del flusso Angular all'API prenotazioni
 - Pannello admin
 - Gestione dinamica menu
 - Gestione ordini via WhatsApp

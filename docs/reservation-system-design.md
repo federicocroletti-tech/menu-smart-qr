@@ -2,9 +2,11 @@
 
 ## Stato attuale verificato
 
-Menu Smart QR e una SPA Angular standalone, con contenuti caricati da JSON statici tramite `HttpClient`. La pubblicazione configurata in `render.yaml` e statica: il repository non contiene API server, database, autenticazione, ruoli o pannello amministrativo.
+Menu Smart QR e una SPA Angular standalone, con contenuti caricati da JSON statici tramite `HttpClient`. E stata aggiunta una fondazione API Node.js/Express con schema e runner di migrazione PostgreSQL, ma non e ancora collegata alla UI e non e configurata nella pubblicazione statica di `render.yaml`. Non esistono ancora autenticazione per il personale, ruoli o pannello amministrativo.
 
-Il controllo prenotazioni esistente e un modulo di contatto WhatsApp: raccoglie nome, telefono, data, ora, coperti e note, poi compone un messaggio. Non verifica orari o disponibilita e non crea una prenotazione confermata. Questo comportamento si trova in `src/app/features/menu/components/reservation-panel/`.
+Il controllo prenotazioni esistente e un modulo di contatto WhatsApp: raccoglie nome, telefono, data, ora, coperti e note, poi compone un messaggio. Non verifica orari o disponibilita e non crea una prenotazione confermata; si trova in `src/app/features/menu/components/reservation-panel/`. L'API ora implementa ricerca di disponibilita, hold temporaneo, conferma, recupero e cancellazione tramite codice, ma schema e concorrenza non sono stati verificati con un PostgreSQL reale. Build TypeScript e test senza database passano.
+
+Il codice copre solo un primo backend tecnico: il flusso cliente, i dati reali di configurazione del ristorante, API amministrative, ruoli, notifiche e pagamenti non sono implementati.
 
 ## Flusso cliente proposto
 
@@ -13,7 +15,7 @@ Il controllo prenotazioni esistente e un modulo di contatto WhatsApp: raccoglie 
 3. Mostrare solo opzioni disponibili e chiedere come assegnare il posto: scelta del tavolo o assegnazione del ristorante.
 4. Se il cliente sceglie, il server crea un hold atomico di 7 minuti sul tavolo o sulla combinazione selezionata. Per l'assegnazione del ristorante, il server sceglie e blocca una soluzione compatibile.
 5. Raccogliere contatto essenziale e consensi obbligatori espliciti; il consenso marketing e separato, facoltativo e non preselezionato.
-6. Confermare l'hold lato server e generare un codice casuale univoco. Nessuna conferma dipende dal solo frontend.
+6. Confermare l'hold lato server e generare un codice di conferma non enumerabile. Nessuna conferma dipende dal solo frontend.
 7. Consentire modifica o cancellazione in base a termini configurati dal ristorante e registrare ogni transizione.
 8. Solo in una fase successiva avviare un'eventuale garanzia tramite provider esterno; lo stato definitivo deriva dal webhook verificato.
 
@@ -51,21 +53,21 @@ Transizioni ammesse: `draft -> holding -> confirmed`; `holding -> awaiting_guara
 
 Gli stati garanzia previsti sono `not_required`, `pending`, `authorized`, `captured`, `refunded`, `partially_refunded`, `failed`, `expired` e `disputed`. Importi, termini di cancellazione e testo legale restano configurabili e richiedono approvazione del titolare e revisione professionale.
 
-## Contratti API proposti
+## Contratti API e stato implementativo
 
-Le route seguenti sono un progetto, non API gia presenti nel repository.
+Le prime cinque route sono implementate in `server/src/app.ts`; le route amministrative sono ancora proposte. La loro integrazione e validazione PostgreSQL restano da completare.
 
-| Metodo e percorso | Uso | Esito principale |
+| Metodo e percorso | Stato | Uso ed esito principale |
 |---|---|---|
-| `GET /api/v1/restaurants/{restaurantId}/availability?date=&time=&partySize=` | Cerca disponibilita; durata e regole sono risolte dal server. | Slot e soluzioni compatibili, mai autoritativi per la conferma. |
-| `POST /api/v1/restaurants/{restaurantId}/reservation-holds` | Richiede hold per tavoli scelti o assegnazione automatica; richiede chiave idempotente. | Hold con scadenza, tavoli e token opaco. |
-| `POST /api/v1/reservations` | Completa dati guest e consensi per un hold valido. | Codice conferma e stato server. |
-| `GET /api/v1/reservations/{confirmationCode}` | Recupera la prenotazione tramite codice non enumerabile. | Dati minimi e operazioni consentite. |
-| `POST /api/v1/reservations/{confirmationCode}/cancellation` | Richiede cancellazione secondo la policy attiva. | Stato aggiornato o richiesta di gestione manuale. |
-| `GET /api/v1/admin/reservations?date=&status=` | Vista giornaliera per personale autorizzato. | Lista paginata e filtrata. |
-| `POST /api/v1/admin/reservations` | Inserisce prenotazione telefonica/manuale. | Prenotazione con autore di audit. |
-| `PATCH /api/v1/admin/reservations/{id}` | Modifica assegnazione, stato, coperti effettivi o eccezione. | Risorsa aggiornata con evento di audit. |
-| `POST /api/v1/admin/table-blocks` | Blocca tavolo o area per un intervallo. | Blocco registrato e applicato alle ricerche successive. |
+| `GET /api/v1/restaurants/{restaurantId}/availability?date=&time=&partySize=` | Implementata, non verificata con DB | Cerca una data e ora specifiche; durata e regole vengono risolte dal server. L'esito non garantisce il tavolo. |
+| `POST /api/v1/restaurants/{restaurantId}/reservation-holds` | Implementata, non verificata con DB | Richiede un hold per tavoli scelti o assegnazione automatica e una chiave idempotente. Restituisce scadenza, tavoli e token. |
+| `POST /api/v1/reservations` | Implementata, non verificata con DB | Registra dati guest e consensi per un hold valido e restituisce codice/stato. |
+| `GET /api/v1/reservations/{confirmationCode}` | Implementata, non verificata con DB | Recupera dati minimi con il codice di conferma. |
+| `POST /api/v1/reservations/{confirmationCode}/cancellation` | Implementata, non verificata con DB | Cancella la prenotazione e segnala se la richiesta e oltre il termine; non esegue trattenute. |
+| `GET /api/v1/admin/reservations?date=&status=` | Proposta | Vista giornaliera per personale autorizzato. |
+| `POST /api/v1/admin/reservations` | Proposta | Inserisce prenotazione telefonica/manuale. |
+| `PATCH /api/v1/admin/reservations/{id}` | Proposta | Modifica assegnazione, stato, coperti effettivi o eccezione. |
+| `POST /api/v1/admin/table-blocks` | Proposta | Blocca tavolo o area per un intervallo. |
 
 Le API amministrative richiedono identita e autorizzazioni server-side separate da quelle cliente; la SPA non deve contenere segreti amministrativi. Le route del provider di pagamento non fanno parte dell'MVP.
 
@@ -74,8 +76,8 @@ Le API amministrative richiedono identita e autorizzazioni server-side separate 
 - Validare sul server apertura, turno, chiusure, slot configurabili, durata e riassetto. Lo slot di arrivo non equivale alla durata occupata.
 - Calcolare soluzioni da capienza e combinazioni configurate, escludendo prenotazioni attive, prenotazioni manuali e blocchi.
 - L'endpoint di ricerca e informativo; la creazione dell'hold ripete tutte le verifiche in transazione.
-- PostgreSQL serializza la selezione con lock delle righe tavolo in ordine deterministico e un vincolo di esclusione GiST sugli intervalli attivi per tavolo. Una collisione concorrente viene rifiutata e produce un nuovo risultato di disponibilita.
-- Scadenza hold verificata a ogni operazione e pulita da un job periodico. Gli hold scaduti non occupano tavoli anche se il job non e ancora passato.
+- Il servizio implementa lock delle righe tavolo in ordine deterministico e la migrazione definisce un vincolo di esclusione GiST sugli intervalli attivi. Una collisione concorrente e gestita come conflitto; questa proprieta non e stata ancora verificata su PostgreSQL reale.
+- La scadenza viene controllata nel servizio e pulita da un job periodico. La durata e configurabile tra 5 e 10 minuti; lo schema usa 7 minuti come valore iniziale.
 - Chiavi idempotenti per creazione/conferma; nessuna riga per minuto, gli slot sono configurabili a 15 o 30 minuti.
 - Il cambiamento coperti/tavolo dopo conferma richiede una nuova allocazione atomica e genera un evento.
 
@@ -89,10 +91,10 @@ Raccogliere solo nome e recapito necessari; marketing separato. Retention config
 
 ## Migrazione e fasi
 
-1. Mantenere menu JSON e SPA Angular; aggiungere un servizio Node.js API e PostgreSQL separati. La configurazione Render attuale e statica, quindi API e database richiedono servizi e variabili d'ambiente dedicati.
-2. Creare schema e migrazioni senza importare prenotazioni: il repository non contiene prenotazioni persistenti. Configurare ristorante, sale, tavoli, orari e policy con dati approvati dal gestore; non introdurre una pianta dimostrativa in produzione.
-3. MVP: disponibilita server-side, hold atomico, assegnazione cliente/ristorante, dati/consensi, conferma e cancellazione, area personale essenziale e audit.
-4. Successivo: editor pianta, aggiornamenti disponibilita live, esportazione, notifiche e gestione avanzata delle eccezioni.
+1. Completato in parte: aggiunti servizio Node.js API, schema PostgreSQL e runner migrazione. Il menu JSON e la SPA restano indipendenti; la configurazione Render e ancora statica.
+2. Verificare e applicare schema e vincoli su PostgreSQL reale; configurare ristorante, sale, tavoli, orari e policy con dati approvati dal gestore. Non introdurre una pianta dimostrativa in produzione.
+3. MVP successivo: integrazione frontend, dati reali di configurazione, test transazionali su PostgreSQL, area personale essenziale, audit e verifica del flusso completo.
+4. Successivo: autenticazione/ruoli amministrativi, dashboard, editor pianta, aggiornamenti disponibilita live, esportazione, notifiche e gestione avanzata delle eccezioni.
 5. Ultimo: provider pagamenti, webhook e policy economiche approvate. Nessuna integrazione pagamenti prima dei test concorrenza/cancellazione.
 
 ## Verifiche richieste prima del rilascio
