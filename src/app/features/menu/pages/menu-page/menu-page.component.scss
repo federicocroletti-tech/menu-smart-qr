@@ -1,27 +1,37 @@
 .menu-page {
   min-height: 100%;
   width: 100%;
-  max-width: 1280px;
+  max-width: var(--content-max-width, 80rem);
   margin: 0 auto;
-  padding: 0.875rem;
+  padding: var(--space-3, 0.75rem);
   display: grid;
-  gap: 1.125rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(var(--space-3, 0.75rem), 2vw, var(--space-5, 1.25rem));
   background: var(--color-background, #fff8f2);
   color: var(--color-text, #212121);
   overflow-x: clip;
 }
 
+.menu-page > * {
+  min-width: 0;
+}
+
 .top-tools {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: var(--space-2, 0.5rem);
 }
 
 .menu-sections {
   display: grid;
   gap: 1.25rem;
+  min-width: 0;
 }
 
 .menu-sections > section {
+  min-width: 0;
   scroll-margin-top: 5.5rem;
 }
 
@@ -31,14 +41,13 @@
 
 @media (min-width: 600px) {
   .menu-page {
-    padding: 1rem;
+    padding: var(--space-4, 1rem);
   }
 }
 
 @media (min-width: 900px) {
   .menu-page {
-    padding: 1.25rem 1.25rem 2rem;
-    gap: 1.25rem;
+    padding: var(--space-5, 1.25rem) var(--space-5, 1.25rem) 2rem;
   }
 
   .menu-page.has-mobile-contact-bar {
@@ -48,6 +57,6 @@
 
 @media (min-width: 1200px) {
   .menu-page {
-    padding-inline: 1.5rem;
+    padding-inline: var(--space-6, 1.5rem);
   }
 }
