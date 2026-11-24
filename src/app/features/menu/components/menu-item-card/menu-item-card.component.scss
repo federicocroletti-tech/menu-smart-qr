@@ -1,11 +1,12 @@
 .menu-item-card {
+  min-width: 0;
   border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: 1rem;
+  border-radius: var(--radius-card, 1rem);
   padding: 1rem;
   background: var(--color-surface, #fff);
   display: grid;
   gap: 0.8rem;
-  box-shadow: 0 4px 14px rgb(15 23 42 / 0.05);
+  box-shadow: var(--shadow-card, 0 4px 14px rgb(15 23 42 / 0.05));
 }
 
 .menu-item-card.unavailable {
@@ -20,9 +21,14 @@
   gap: 0.8rem;
 }
 
+.title-row h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 h3 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: clamp(1rem, 0.95rem + 0.2vw, 1.05rem);
   line-height: 1.35;
 }
 
@@ -38,6 +44,7 @@ h3 {
   color: var(--color-muted, #4b5563);
   line-height: 1.45;
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 .price {
@@ -63,6 +70,11 @@ h3 {
   color: var(--color-muted, #4b5563);
 }
 
+.variants li span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .badges {
   display: flex;
   flex-wrap: wrap;
@@ -84,13 +96,25 @@ h3 {
 }
 
 .add-button {
-  min-height: 44px;
+  min-height: 48px;
   border: 0;
-  border-radius: 0.65rem;
+  border-radius: var(--radius-control, 0.65rem);
   background: var(--color-primary, #c62828);
   color: #fff;
   font-weight: 700;
   cursor: pointer;
+}
+
+.add-button:hover {
+  filter: brightness(0.92);
+}
+
+.add-button:active {
+  transform: translateY(1px);
+}
+
+.add-button:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 
 @media (min-width: 900px) {
