@@ -1,12 +1,12 @@
 # Data Architecture & Persistence Layer
 
-The frontend menu continues to read restaurant and menu content from static JSON assets. A separate reservation API defines a PostgreSQL persistence layer using SQL through `pg`, with Supabase Auth identity and tenant memberships; the RLS migration and database behavior have not yet been verified against a live Supabase project.
+The frontend menu reads restaurant and menu content from static JSON assets and checks reservation availability through a same-origin API. A separate reservation API defines a PostgreSQL persistence layer using SQL through `pg`, with Supabase Auth identity and tenant memberships; the RLS migration and database behavior have not yet been verified against a live Supabase project.
 
 ## Database Configuration
 
 | Service/Module | DB Type | Profile | Driver | Connection | Migration Tool |
 |---|---|---|---|---|---|
-| Menu Smart QR frontend | None | All | Angular `HttpClient` | Static files under `src/assets` | None |
+| Menu Smart QR frontend | None | All | Angular `HttpClient` | Static files under `src/assets` and same-origin reservation API | None |
 | Reservation API | Supabase PostgreSQL | All configured environments | `pg` Node.js driver | `DATABASE_URL`; pool size 10; optional verified TLS | Custom SQL runner in `server/src/migrate.ts` |
 
 The schema is in `server/migrations/001_reservation_schema.sql` and `server/migrations/002_supabase_tenant_security.sql`; migrations are recorded in `schema_migrations`. Supabase Auth verifies staff access tokens. Membership and read-only tenant RLS policies are defined, but no seed membership exists and neither migration has been verified against a live Supabase project.
@@ -15,7 +15,7 @@ The schema is in `server/migrations/001_reservation_schema.sql` and `server/migr
 
 | Service | Tables Owned | ORM Framework | Caching | Notes |
 |---|---|---|---|---|
-| Menu Smart QR frontend | None; reads `client.json`, `menu/*.json`, and `allergens.json` | None | In-memory RxJS `shareReplay` for loaded assets | The source of truth is the static asset tree. |
+| Menu Smart QR frontend | None; reads `client.json`, `menu/*.json`, and `allergens.json` | None | In-memory RxJS `shareReplay` for loaded assets | Availability is queried from the reservation API; static assets remain the source of menu data. |
 | Reservation API | `restaurants`, `restaurant_memberships`, `dining_areas`, `restaurant_tables`, `table_combinations`, `opening_hours`, `service_shifts`, `availability_rules`, `closures`, `guests`, `reservations`, `reservation_tables`, `table_blocks`, `payment_guarantees`, `reservation_events`, `notifications`, `consent_records` | None; parameterized SQL with `pg` | None | Supabase Auth verification and tenant-scoped read policies are defined; migration application and RLS behavior remain unverified. |
 | Order cart | None | None | In-memory `Map` and `BehaviorSubject` | Cart contents are lost on page reload. |
 
@@ -152,6 +152,7 @@ Client, menu, and allergen relationships in the diagram represent logical JSON r
 | Client data | `ClientService` (`src/app/core/services/client.service.ts`) | `getClient()` | Loads the selected client's static JSON document. |
 | Menu data | `MenuService` (`src/app/core/services/menu.service.ts`) | `getMenuCategories()` | Loads enabled category files and normalizes menu items. |
 | Allergen data | `AllergenService` (`src/app/core/services/allergen.service.ts`) | `getAllergens()`, `getAllergenById()` | Loads and queries the static allergen list. |
+| Reservation availability | `ReservationApiService` (`src/app/core/services/reservation-api.service.ts`) | `getAvailability()` | Checks available table sets for a restaurant, date, time, and party size. |
 | Reservation API | SQL modules (`server/src/availability.ts`, `server/src/reservation-service.ts`, `server/src/tenant-database.ts`) | `resolveReservationTiming()`, `findAvailability()`, `createReservationHold()`, `confirmReservation()`, `cancelReservation()`, `listRestaurantsForUser()`, `listReservationsForRestaurant()` | Resolves schedule and capacity, performs transactional reservation writes, and scopes staff reads to authenticated tenant membership. |
 
 There are no repository interfaces or ORM; database operations are parameterized SQL through `pg`. The API modules compile and unit/HTTP validation tests pass, but SQL and tenant isolation have not been run against Supabase PostgreSQL.
@@ -162,7 +163,7 @@ There are no repository interfaces or ORM; database operations are parameterized
 
 ## Data Ownership Boundaries
 
-The frontend reads public static assets from the active client's directory. The reservation API is a separate module with its own PostgreSQL schema; it does not currently read menu JSON or have a configured production deployment. Staff identity is verified server-side through Supabase Auth; staff reads are scoped by `restaurant_memberships` and RLS in transaction-local `authenticated` sessions. Public guest booking endpoints remain server-side and use unguessable reservation codes; the database credential is not placed in the frontend. Live RLS behavior and deployment configuration remain unverified, and menu and reservation stores are not synchronized.
+The frontend reads public static assets from the active client's directory and sends availability queries to the reservation API. The API is a separate module with its own PostgreSQL schema; it does not read menu JSON or have a verified production deployment. Staff identity is verified server-side through Supabase Auth; staff reads are scoped by `restaurant_memberships` and RLS in transaction-local `authenticated` sessions. Public guest booking endpoints remain server-side and use unguessable reservation codes; the database credential is not placed in the frontend. Live RLS behavior and deployment configuration remain unverified, and menu and reservation stores are not synchronized.
 
 ### Data Classification & Sensitivity
 
@@ -170,7 +171,7 @@ The frontend reads public static assets from the active client's directory. The 
 |---|---|---|---|
 | Client contacts | Phone, email, address | PII | Public client configuration; no field-level encryption or access control. |
 | MenuItem and Allergen | Dish and allergen metadata | None for an identified guest | Static public assets. |
-| Reservation form | Name, phone, date, time, party size, optional note | PII; note content is not constrained | Form constructs a WhatsApp link; the app has no reservation database. WhatsApp is an external recipient. |
+| Reservation form | Name, phone, date, time, party size, optional note | PII when combined with guest contact details | Availability requests send restaurant ID, date, time, and party size to the reservation API. Name, phone, and optional note are sent to WhatsApp only; the UI still creates a request, not a confirmed reservation. WhatsApp is an external recipient. |
 | RestaurantMembership | Supabase Auth user ID, restaurant ID, role | PII-linked identifier | Membership lookup is tenant-scoped by RLS; migration is not yet applied or verified. |
 | Guest | Name, phone, email | PII | Rows are associated with a restaurant and have tenant-scoped read policies; no field-level encryption, masking, or retention automation. RLS is not yet verified on a live project. |
 | Reservation | Confirmation code hash, party sizes, dates, status | PII when linked to Guest | Confirmation code is hashed; tenant-scoped read policy is defined. No database-level field encryption or retention automation; RLS is unverified. |
