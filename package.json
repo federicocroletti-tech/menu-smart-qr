@@ -24,6 +24,7 @@
     "@angular/forms": "22.3.0",
     "@angular/platform-browser": "22.3.0",
     "@angular/router": "22.3.0",
+    "@supabase/supabase-js": "^2.119.2",
     "@capacitor/android": "^8.6.2",
     "@capacitor/core": "^8.6.2",
     "@capacitor/ios": "^8.6.2",

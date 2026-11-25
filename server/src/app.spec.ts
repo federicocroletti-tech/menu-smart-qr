@@ -4,7 +4,12 @@ import type { Server } from "node:http";
 import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import {
+  createSupabaseTokenVerifier,
+  type AccessTokenVerifier,
+} from "./auth";
 import { createApp } from "./app";
+import type { TenantStore } from "./tenant-database";
 
 describe("reservation API request validation", () => {
   const pool = new Pool({
@@ -13,9 +18,30 @@ describe("reservation API request validation", () => {
   });
   let server: Server;
   let baseUrl: string;
+  let queriedUserId: string | null = null;
+  const tokenVerifier: AccessTokenVerifier = {
+    async verify(accessToken) {
+      return accessToken === "valid-token"
+        ? { id: "c84c21a7-bca6-481a-bffd-469db59d18b7" }
+        : null;
+    },
+  };
+  const tenantStore: TenantStore = {
+    async listRestaurantsForUser(userId) {
+      queriedUserId = userId;
+      return [
+        {
+          restaurantId: "restaurant-one",
+          name: "Restaurant One",
+          timeZone: "Europe/Rome",
+          role: "owner",
+        },
+      ];
+    },
+  };
 
   beforeAll(async () => {
-    server = createApp(pool).listen(0);
+    server = createApp(pool, tokenVerifier, tenantStore).listen(0);
     await once(server, "listening");
     const address = server.address();
     if (!address || typeof address === "string") {
@@ -99,5 +125,48 @@ describe("reservation API request validation", () => {
     });
 
     expect(response.status).toBe(400);
+  });
+
+  it("requires a verified access token for restaurant memberships", async () => {
+    const response = await fetch(`${baseUrl}/api/v1/me/restaurants`);
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "Authentication required",
+    });
+  });
+
+  it("returns memberships resolved for the verified user", async () => {
+    queriedUserId = null;
+    const response = await fetch(`${baseUrl}/api/v1/me/restaurants`, {
+      headers: { Authorization: "Bearer valid-token" },
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      restaurants: [
+        {
+          restaurantId: "restaurant-one",
+          name: "Restaurant One",
+          timeZone: "Europe/Rome",
+          role: "owner",
+        },
+      ],
+    });
+    expect(queriedUserId).toBe("c84c21a7-bca6-481a-bffd-469db59d18b7");
+  });
+
+  it("rejects an invalid or expired access token", async () => {
+    const response = await fetch(`${baseUrl}/api/v1/me/restaurants`, {
+      headers: { Authorization: "Bearer invalid-token" },
+    });
+
+    expect(response.status).toBe(401);
+  });
+
+  it("fails startup when Supabase Auth configuration is missing", () => {
+    expect(() => createSupabaseTokenVerifier({})).toThrow(
+      "SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be configured",
+    );
   });
 });

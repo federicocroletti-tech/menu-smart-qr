@@ -410,6 +410,7 @@ export async function confirmReservation(
     await client.query("BEGIN");
     const result = await client.query<{
       id: string;
+      restaurant_id: string;
       status: ReservationStatus;
       hold_expires_at: Date | null;
       starts_at: Date;
@@ -419,6 +420,7 @@ export async function confirmReservation(
       confirmation_code_hash: string | null;
     }>(
       `SELECT r.id,
+              r.restaurant_id,
               r.status,
               r.hold_expires_at,
               r.starts_at,
@@ -474,10 +476,15 @@ export async function confirmReservation(
     }
 
     const guest = await client.query<{ id: string }>(
-      `INSERT INTO guests (name, phone, email)
-       VALUES ($1, $2, $3)
+      `INSERT INTO guests (restaurant_id, name, phone, email)
+       VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [request.guest.name.trim(), request.guest.phone.trim(), request.guest.email ?? null],
+      [
+        reservation.restaurant_id,
+        request.guest.name.trim(),
+        request.guest.phone.trim(),
+        request.guest.email ?? null,
+      ],
     );
     const confirmationCode = createConfirmationCode(request.holdToken);
     await client.query(
