@@ -8,32 +8,38 @@ describe("createPoolOptions", () => {
     const connectionString =
       "postgresql://postgres.project@pooler.example.com:5432/postgres";
 
-    expect(
-      createPoolOptions({
-        DATABASE_URL: connectionString,
-        DATABASE_PASSWORD: password,
-        DATABASE_SSL: "require",
-      }),
-    ).toMatchObject({
-      connectionString,
+    const options = createPoolOptions({
+      DATABASE_URL: connectionString,
+      DATABASE_PASSWORD: password,
+      DATABASE_SSL: "require",
+    });
+
+    expect(options).toMatchObject({
+      host: "pooler.example.com",
+      port: 5432,
+      database: "postgres",
+      user: "postgres.project",
       password,
       ssl: { rejectUnauthorized: false },
     });
+    expect(options).not.toHaveProperty("connectionString");
   });
 
   it("continues to accept a connection URI with its own password", () => {
     const connectionString =
       "postgresql://postgres:encoded%40password@pooler.example.com:5432/postgres";
 
-    expect(
-      createPoolOptions({
-        DATABASE_URL: connectionString,
-      }),
-    ).toMatchObject({ connectionString });
-    expect(
-      createPoolOptions({
-        DATABASE_URL: connectionString,
-      }).password,
-    ).toBeUndefined();
+    const options = createPoolOptions({
+      DATABASE_URL: connectionString,
+    });
+
+    expect(options).toMatchObject({
+      host: "pooler.example.com",
+      port: 5432,
+      database: "postgres",
+      user: "postgres",
+      password: "encoded@password",
+    });
+    expect(options).not.toHaveProperty("connectionString");
   });
 });

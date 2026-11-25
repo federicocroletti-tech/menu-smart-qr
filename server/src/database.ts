@@ -1,3 +1,4 @@
+import { parseIntoClientConfig } from "pg-connection-string";
 import { Pool, type PoolConfig } from "pg";
 
 export function createPoolOptions(
@@ -10,13 +11,19 @@ export function createPoolOptions(
 
   const sslMode = environment["DATABASE_SSL"];
   const databasePassword = environment["DATABASE_PASSWORD"];
+  const connectionOptions = parseIntoClientConfig(connectionString);
   return {
-    connectionString,
+    ...connectionOptions,
     ...(databasePassword ? { password: databasePassword } : {}),
     max: 10,
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 30_000,
-    ssl: sslMode === "require" ? { rejectUnauthorized: false } : undefined,
+    ssl:
+      sslMode === "require"
+        ? { rejectUnauthorized: false }
+        : sslMode === "disable"
+          ? false
+          : connectionOptions.ssl,
   };
 }
 
