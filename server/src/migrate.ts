@@ -3,7 +3,10 @@ import { join } from "node:path";
 
 import { createPool } from "./database";
 
-const migrationName = "001_reservation_schema.sql";
+const migrationNames = [
+  "001_reservation_schema.sql",
+  "002_supabase_tenant_security.sql",
+];
 
 async function migrate(): Promise<void> {
   const pool = createPool();
@@ -15,31 +18,33 @@ async function migrate(): Promise<void> {
       "CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())",
     );
 
-    const applied = await client.query(
-      "SELECT name FROM schema_migrations WHERE name = $1",
-      [migrationName],
-    );
-    if (applied.rowCount) {
-      console.log(`Migration already applied: ${migrationName}`);
-      return;
-    }
+    for (const migrationName of migrationNames) {
+      const applied = await client.query(
+        "SELECT name FROM schema_migrations WHERE name = $1",
+        [migrationName],
+      );
+      if (applied.rowCount) {
+        console.log(`Migration already applied: ${migrationName}`);
+        continue;
+      }
 
-    const sql = await readFile(
-      join(__dirname, "..", "migrations", migrationName),
-      "utf8",
-    );
+      const sql = await readFile(
+        join(__dirname, "..", "migrations", migrationName),
+        "utf8",
+      );
 
-    await client.query("BEGIN");
-    try {
-      await client.query(sql);
-      await client.query("INSERT INTO schema_migrations (name) VALUES ($1)", [
-        migrationName,
-      ]);
-      await client.query("COMMIT");
-      console.log(`Applied migration: ${migrationName}`);
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
+      await client.query("BEGIN");
+      try {
+        await client.query(sql);
+        await client.query("INSERT INTO schema_migrations (name) VALUES ($1)", [
+          migrationName,
+        ]);
+        await client.query("COMMIT");
+        console.log(`Applied migration: ${migrationName}`);
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
     }
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [2_024_112_401]);

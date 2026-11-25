@@ -1,6 +1,8 @@
 import { createApp } from "./app";
+import { createSupabaseTokenVerifier } from "./auth";
 import { createPool } from "./database";
 import { expireExpiredHolds } from "./reservation-service";
+import { createTenantStore } from "./tenant-database";
 
 const port = Number(process.env["PORT"] ?? "3000");
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
@@ -11,8 +13,13 @@ if (!process.env["IDEMPOTENCY_SECRET"] || process.env["IDEMPOTENCY_SECRET"].leng
   throw new Error("IDEMPOTENCY_SECRET must contain at least 32 characters");
 }
 
+const tokenVerifier = createSupabaseTokenVerifier();
 const pool = createPool();
-const app = createApp(pool);
+const app = createApp(
+  pool,
+  tokenVerifier,
+  createTenantStore(pool),
+);
 const server = app.listen(port, () => {
   console.log(`Reservation API listening on port ${port}`);
 });

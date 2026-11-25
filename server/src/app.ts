@@ -10,6 +10,8 @@ import helmet from "helmet";
 import type { Pool } from "pg";
 import { z } from "zod";
 
+import type { AccessTokenVerifier, AuthenticatedUser } from "./auth";
+import type { TenantStore } from "./tenant-database";
 import {
   AvailabilityError,
   findAvailability,
@@ -22,6 +24,14 @@ import {
   hashConfirmationCode,
   ReservationError,
 } from "./reservation-service";
+
+declare global {
+  namespace Express {
+    interface Request {
+      authenticatedUser?: AuthenticatedUser;
+    }
+  }
+}
 
 const localDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 const localTimePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
@@ -88,6 +98,32 @@ function asyncHandler(
   };
 }
 
+function requireAuthentication(
+  tokenVerifier: AccessTokenVerifier,
+): RequestHandler {
+  return (request, response, next) => {
+    const authorization = request.get("authorization");
+    const match = authorization?.match(/^Bearer\s+([^\s]+)$/i);
+    const accessToken = match?.[1];
+    if (!accessToken) {
+      response.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    void tokenVerifier
+      .verify(accessToken)
+      .then((user) => {
+        if (!user) {
+          response.status(401).json({ error: "Invalid or expired access token" });
+          return;
+        }
+        request.authenticatedUser = user;
+        next();
+      })
+      .catch(next);
+  };
+}
+
 function getPathParameter(request: Request, name: string): string | null {
   const value = request.params[name];
   return typeof value === "string" ? value : null;
@@ -113,7 +149,11 @@ function toAvailabilityRequest(
   };
 }
 
-export function createApp(pool: Pool): Express {
+export function createApp(
+  pool: Pool,
+  tokenVerifier: AccessTokenVerifier,
+  tenantStore: TenantStore,
+): Express {
   const app = express();
   const allowedOrigins = new Set(
     (process.env["ALLOWED_ORIGINS"] ?? "")
@@ -141,7 +181,7 @@ export function createApp(pool: Pool): Express {
       response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
       response.setHeader(
         "Access-Control-Allow-Headers",
-        "Content-Type, Idempotency-Key",
+        "Content-Type, Authorization, Idempotency-Key",
       );
     }
 
@@ -172,6 +212,21 @@ export function createApp(pool: Pool): Express {
     asyncHandler(async (_request, response) => {
       await pool.query("SELECT 1");
       response.status(200).json({ status: "ready" });
+    }),
+  );
+
+  app.get(
+    "/api/v1/me/restaurants",
+    requireAuthentication(tokenVerifier),
+    asyncHandler(async (request, response) => {
+      const user = request.authenticatedUser;
+      if (!user) {
+        response.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const memberships = await tenantStore.listRestaurantsForUser(user.id);
+      response.status(200).json({ restaurants: memberships });
     }),
   );
 
