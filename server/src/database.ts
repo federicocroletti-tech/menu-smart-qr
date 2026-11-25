@@ -16,7 +16,7 @@ export function createPoolOptions(
     max: 10,
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 30_000,
-    ssl: sslMode === "require" ? { rejectUnauthorized: true } : undefined,
+    ssl: sslMode === "require" ? { rejectUnauthorized: false } : undefined,
   };
 }
 

@@ -17,7 +17,7 @@ describe("createPoolOptions", () => {
     ).toMatchObject({
       connectionString,
       password,
-      ssl: { rejectUnauthorized: true },
+      ssl: { rejectUnauthorized: false },
     });
   });
 

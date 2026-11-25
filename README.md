@@ -108,7 +108,10 @@ database rimane su Supabase. Nel servizio API Render, imposta queste variabili:
 - `SUPABASE_URL` e `ALLOWED_ORIGINS` sono preconfigurati nel blueprint per i
   servizi correnti; aggiorna `ALLOWED_ORIGINS` se cambia il dominio del sito.
 - `SUPABASE_PUBLISHABLE_KEY`: valore `publishable` dal progetto Supabase.
-- `DATABASE_SSL=require`; `IDEMPOTENCY_SECRET` viene generato dal blueprint.
+- `DATABASE_SSL=require` obbliga la connessione TLS; per il pooler Supabase il
+  driver non verifica la catena del certificato. Per verificare anche
+  l'identità del server, configura nel driver il certificato CA Supabase.
+  `IDEMPOTENCY_SECRET` viene generato dal blueprint.
 - `API_BASE_URL` è collegato automaticamente all'host dell'API Render.
 
 Non inserire credenziali nel repository. Dopo il deploy iniziale, il comando
