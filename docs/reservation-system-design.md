@@ -6,7 +6,7 @@ Menu Smart QR e una SPA Angular standalone, con contenuti caricati da JSON stati
 
 Il controllo prenotazioni esistente e un modulo di contatto WhatsApp: raccoglie nome, telefono, data, ora, coperti e note, poi compone un messaggio. Non verifica orari o disponibilita e non crea una prenotazione confermata; si trova in `src/app/features/menu/components/reservation-panel/`. L'API ora implementa ricerca di disponibilita, hold temporaneo, conferma, recupero e cancellazione tramite codice, ma schema e concorrenza non sono stati verificati con un PostgreSQL reale. Build TypeScript e test senza database passano.
 
-Il codice copre solo un primo backend tecnico: il flusso cliente, i dati reali di configurazione del ristorante, API amministrative, ruoli, notifiche e pagamenti non sono implementati.
+Il codice copre solo un primo backend tecnico: il flusso cliente non e ancora collegato alla UI; i dati reali di configurazione del ristorante, le API amministrative di scrittura, notifiche e pagamenti non sono implementati.
 
 ## Flusso cliente proposto
 
@@ -55,7 +55,7 @@ Gli stati garanzia previsti sono `not_required`, `pending`, `authorized`, `captu
 
 ## Contratti API e stato implementativo
 
-Le route cliente e la route membership sono implementate in `server/src/app.ts`; le route amministrative di prenotazione sono ancora proposte. L'autenticazione Supabase e validazione PostgreSQL restano da completare con un progetto reale.
+Le route cliente, membership e lista giornaliera staff sono implementate in `server/src/app.ts`; le altre route amministrative sono ancora proposte. L'autenticazione Supabase e validazione PostgreSQL restano da completare con un progetto reale.
 
 | Metodo e percorso | Stato | Uso ed esito principale |
 |---|---|---|
@@ -65,12 +65,12 @@ Le route cliente e la route membership sono implementate in `server/src/app.ts`;
 | `GET /api/v1/reservations/{confirmationCode}` | Implementata, non verificata con DB | Recupera dati minimi con il codice di conferma. |
 | `POST /api/v1/reservations/{confirmationCode}/cancellation` | Implementata, non verificata con DB | Cancella la prenotazione e segnala se la richiesta e oltre il termine; non esegue trattenute. |
 | `GET /api/v1/me/restaurants` | Implementata, API testata con verifier/store mock; RLS non verificata su DB reale | Richiede un access token Supabase valido e delega la lettura delle membership alla sessione PostgreSQL con ruolo `authenticated`. |
-| `GET /api/v1/admin/reservations?date=&status=` | Proposta | Vista giornaliera per personale autorizzato. |
+| `GET /api/v1/admin/restaurants/{restaurantId}/reservations?date=&status=&limit=&offset=` | Implementata, API testata con store mock; RLS non verificata su DB reale | Vista giornaliera filtrata e paginata per un membro autenticato del ristorante; restituisce contatto minimo. |
 | `POST /api/v1/admin/reservations` | Proposta | Inserisce prenotazione telefonica/manuale. |
 | `PATCH /api/v1/admin/reservations/{id}` | Proposta | Modifica assegnazione, stato, coperti effettivi o eccezione. |
 | `POST /api/v1/admin/table-blocks` | Proposta | Blocca tavolo o area per un intervallo. |
 
-Le API amministrative richiedono identita e autorizzazioni server-side separate da quelle cliente; la SPA non deve contenere credenziali database o chiavi `service_role`. Il primo accesso staff e in sola lettura e richiede una membership provisionata dal titolare; non esiste ancora un flusso di invito o bootstrap del proprietario. Le route del provider di pagamento non fanno parte dell'MVP.
+Le API amministrative richiedono identita e autorizzazioni server-side separate da quelle cliente; la SPA non deve contenere credenziali database o chiavi `service_role`. L'accesso staff e in sola lettura e richiede una membership provisionata dal titolare; non esiste ancora un flusso di invito o bootstrap del proprietario. Le route di scrittura e il provider di pagamento non fanno parte dell'MVP attuale.
 
 ## Motore di disponibilita e concorrenza
 
@@ -95,7 +95,7 @@ Raccogliere solo nome e recapito necessari; marketing separato. Retention config
 1. Completato in parte: aggiunti servizio Node.js API, schema PostgreSQL, runner migrazione, verifica server-side dei token Supabase e policy RLS di lettura per membership e dati tenant. Il menu JSON e la SPA restano indipendenti; la configurazione Render e ancora statica. Le route pubbliche booking restano sul server e usano i codici casuali; la chiave DB deve rimanere solo nell'ambiente server. Autenticazione, policy e connessione non sono state ancora verificate su un progetto Supabase reale.
 2. Configurare il servizio API e i segreti in un ambiente server; applicare e verificare le migrazioni su Supabase, inclusi test con due utenti e due ristoranti; configurare ristorante, sale, tavoli, orari e policy con dati approvati dal gestore. Non introdurre una pianta dimostrativa in produzione.
 3. MVP successivo: integrazione frontend, dati reali di configurazione, test transazionali su PostgreSQL, area personale essenziale, audit e verifica del flusso completo.
-4. Successivo: autenticazione/ruoli amministrativi, dashboard, editor pianta, aggiornamenti disponibilita live, esportazione, notifiche e gestione avanzata delle eccezioni.
+4. Successivo: UI di accesso/dashboard, API amministrative di scrittura, editor pianta, aggiornamenti disponibilita live, esportazione, notifiche e gestione avanzata delle eccezioni.
 5. Ultimo: provider pagamenti, webhook e policy economiche approvate. Nessuna integrazione pagamenti prima dei test concorrenza/cancellazione.
 
 ## Verifiche richieste prima del rilascio
