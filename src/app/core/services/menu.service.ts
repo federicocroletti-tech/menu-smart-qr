@@ -1,14 +1,13 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, map, of, shareReplay, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, switchMap } from 'rxjs';
 
 import type {
   MenuCategory,
   MenuCategoryConfig,
-  MenuIndex,
   MenuItem,
 } from '../models/menu.model';
 import { AppConfigService } from './app-config.service';
+import { RestaurantContentApiService } from './restaurant-content-api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,37 +16,42 @@ export class MenuService {
   private readonly menuCategories$: Observable<MenuCategory[]>;
 
   constructor(
-    private readonly http: HttpClient,
     private readonly appConfigService: AppConfigService,
+    private readonly contentApi: RestaurantContentApiService,
   ) {
-    this.menuCategories$ = this.appConfigService.getClientAssetsBasePath().pipe(
-      switchMap((basePath) =>
-        this.http.get<MenuIndex>(`${basePath}/menu/index.json`).pipe(
-          switchMap((index) => {
-            const enabledConfigs = (index.categories ?? [])
+    this.menuCategories$ = this.appConfigService.getActiveClient().pipe(
+      switchMap((restaurantId) =>
+        this.contentApi.getRestaurantContent(restaurantId).pipe(
+          map((content) => {
+            const enabledConfigs = (content.menuIndex.categories ?? [])
               .filter((category) => category.enabled)
               .sort((a, b) => a.order - b.order);
 
-            if (enabledConfigs.length === 0) {
-              return of([]);
-            }
+            return enabledConfigs
+              .map((config) => {
+                if (!config.file) {
+                  return null;
+                }
 
-            const categoryRequests = enabledConfigs.map((config) =>
-              this.loadCategory(basePath, config, index.currency),
-            );
+                const rawCategory = content.menuCategories[config.file];
+                if (!rawCategory) {
+                  console.error(`Menu category is missing from restaurant content: ${config.file}`);
+                  return null;
+                }
 
-            return forkJoin(categoryRequests).pipe(
-              map((categories) =>
-                categories
-                  .filter((category): category is MenuCategory => category !== null)
-                  .sort((a, b) => a.order - b.order),
-              ),
-            );
+                return this.toMenuCategory(
+                  config,
+                  rawCategory,
+                  content.menuIndex.currency,
+                );
+              })
+              .filter((category): category is MenuCategory => category !== null)
+              .sort((a, b) => a.order - b.order);
           }),
         ),
       ),
       catchError((error: unknown) => {
-        console.error('Failed to load menu index:', error);
+        console.error('Failed to load restaurant menu:', error);
         return of([]);
       }),
       shareReplay(1),
@@ -56,25 +60,6 @@ export class MenuService {
 
   getMenuCategories(): Observable<MenuCategory[]> {
     return this.menuCategories$;
-  }
-
-  private loadCategory(
-    basePath: string,
-    config: MenuCategoryConfig,
-    defaultCurrency: string,
-  ): Observable<MenuCategory | null> {
-    if (!config.file) {
-      return of(null);
-    }
-
-    const categoryUrl = `${basePath}/menu/${config.file}`;
-    return this.http.get<Partial<MenuCategory>>(categoryUrl).pipe(
-      map((categoryFile) => this.toMenuCategory(config, categoryFile, defaultCurrency)),
-      catchError((error: unknown) => {
-        console.warn(`Menu category file missing or invalid: ${categoryUrl}`, error);
-        return of(null);
-      }),
-    );
   }
 
   private toMenuCategory(

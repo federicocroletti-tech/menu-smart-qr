@@ -2,6 +2,8 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { RuntimeConfigService } from './runtime-config.service';
+
 export type ReservationStatus =
   | 'draft'
   | 'holding'
@@ -51,6 +53,7 @@ export interface ReservationConfirmationRequest {
     name: string;
     phone: string;
     email?: string;
+    notes?: string;
   };
   acceptTerms: true;
   acceptPrivacy: true;
@@ -79,9 +82,10 @@ export interface ReservationCancellation {
   providedIn: 'root',
 })
 export class ReservationApiService {
-  private readonly apiBaseUrl = '/api/v1';
-
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly runtimeConfig: RuntimeConfigService,
+  ) {}
 
   getAvailability(
     restaurantId: string,
@@ -95,7 +99,7 @@ export class ReservationApiService {
       .set('partySize', partySize);
 
     return this.http.get<ReservationAvailability>(
-      `${this.apiBaseUrl}/restaurants/${encodeURIComponent(restaurantId)}/availability`,
+      `${this.runtimeConfig.apiV1BaseUrl}/restaurants/${encodeURIComponent(restaurantId)}/availability`,
       { params },
     );
   }
@@ -106,7 +110,7 @@ export class ReservationApiService {
     idempotencyKey: string,
   ): Observable<ReservationHold> {
     return this.http.post<ReservationHold>(
-      `${this.apiBaseUrl}/restaurants/${encodeURIComponent(restaurantId)}/reservation-holds`,
+      `${this.runtimeConfig.apiV1BaseUrl}/restaurants/${encodeURIComponent(restaurantId)}/reservation-holds`,
       request,
       {
         headers: new HttpHeaders().set('Idempotency-Key', idempotencyKey),
@@ -118,14 +122,14 @@ export class ReservationApiService {
     request: ReservationConfirmationRequest,
   ): Observable<ReservationConfirmation> {
     return this.http.post<ReservationConfirmation>(
-      `${this.apiBaseUrl}/reservations`,
+      `${this.runtimeConfig.apiV1BaseUrl}/reservations`,
       request,
     );
   }
 
   getReservation(confirmationCode: string): Observable<ReservationDetails> {
     return this.http.get<ReservationDetails>(
-      `${this.apiBaseUrl}/reservations/${encodeURIComponent(confirmationCode)}`,
+      `${this.runtimeConfig.apiV1BaseUrl}/reservations/${encodeURIComponent(confirmationCode)}`,
     );
   }
 
@@ -133,7 +137,7 @@ export class ReservationApiService {
     confirmationCode: string,
   ): Observable<ReservationCancellation> {
     return this.http.post<ReservationCancellation>(
-      `${this.apiBaseUrl}/reservations/${encodeURIComponent(confirmationCode)}/cancellation`,
+      `${this.runtimeConfig.apiV1BaseUrl}/reservations/${encodeURIComponent(confirmationCode)}/cancellation`,
       null,
     );
   }

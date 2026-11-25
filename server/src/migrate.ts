@@ -6,6 +6,7 @@ import { createPool } from "./database";
 const migrationNames = [
   "001_reservation_schema.sql",
   "002_supabase_tenant_security.sql",
+  "003_restaurant_content.sql",
 ];
 
 async function migrate(): Promise<void> {

@@ -70,6 +70,10 @@ export interface ClientReservationSettings {
   enabled?: boolean;
   minimumPartySize?: number;
   maximumPartySize?: number;
+  bookingTermsUrl?: string;
+  privacyNoticeUrl?: string;
+  bookingTermsVersion?: string;
+  privacyNoticeVersion?: string;
 }
 
 export interface ClientPromotion {
@@ -84,6 +88,7 @@ export interface ClientPromotion {
 export interface Client {
   id: string;
   name: string;
+  timeZone?: string;
   type: ClientType;
   description: LocalizedText;
   logoUrl?: string;

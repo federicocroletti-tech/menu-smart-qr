@@ -1,5 +1,6 @@
 {
   "id": "pizzeria-vesuvio",
+  "timeZone": "Europe/Rome",
   "name": "Pizzeria Vesuvio",
   "type": "pizzeria",
   "description": {

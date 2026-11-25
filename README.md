@@ -4,12 +4,12 @@ Menu Smart QR e una web app Angular per creare menu digitali consultabili via QR
 
 ## Obiettivo commerciale
 
-Offrire una demo professionale, responsive e multilingua che puo essere personalizzata rapidamente per clienti diversi cambiando solo file JSON.
+Offrire una demo professionale, responsive e multilingua configurabile per più locali, con PostgreSQL come archivio runtime dei dati.
 
 ## Funzionalita principali
 
-- Menu Angular statico, senza login
-- Dati menu, cliente e allergeni da JSON
+- Menu Angular pubblico, senza login
+- Dati menu, cliente e allergeni letti da PostgreSQL; i JSON nel repository sono il seed iniziale
 - Multi-cliente tramite `app-config.json`
 - Multilingua UI: italiano, inglese, francese, tedesco
 - Theme personalizzabile per cliente
@@ -19,7 +19,7 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 - Design responsive mobile-first
 - Componenti Ionic per selezione lingua, ricerca e navigazione tra categorie
 - App Android e iOS basate sulla stessa applicazione Angular tramite Capacitor
-- Fondazione API separata per le prenotazioni con Node.js/Express e schema PostgreSQL; non e ancora collegata al flusso Angular
+- API Node.js/Express per contenuti e prenotazioni, con persistenza PostgreSQL
 
 ## Stack tecnico
 
@@ -27,7 +27,7 @@ Offrire una demo professionale, responsive e multilingua che puo essere personal
 - TypeScript
 - SCSS
 - RxJS
-- JSON statici in `src/assets`
+- JSON in `src/assets` come seed iniziale per PostgreSQL
 - Ionic UI per controlli mobile multipiattaforma
 - Capacitor per il packaging cross-platform su Android e iOS
 - Node.js, Express e PostgreSQL per la fondazione API prenotazioni
@@ -43,10 +43,11 @@ le categorie; menu, dati, temi e regole applicative restano condivisi con Angula
 
 Installa le dipendenze, genera le piattaforme una volta e sincronizza gli asset web:
 
-```bash
+```powershell
 npm ci
 npx cap add android
 npx cap add ios
+$env:API_BASE_URL = "https://menu-smart-qr-api.onrender.com"
 npm run build:mobile
 ```
 
@@ -76,30 +77,57 @@ Compilazione e firma iOS richiedono macOS e Xcode. Per il web, pubblica
 `dist/menu-smart-qr/browser` su un hosting statico con fallback delle rotte
 verso `index.html` (il file `render.yaml` contiene la configurazione Render).
 
-## API prenotazioni - fondazione tecnica
+## PostgreSQL, Supabase e API
 
-Il frontend e la pubblicazione Render restano statici. La cartella `server/`
-contiene un'API Express separata, una migrazione PostgreSQL e test del dominio e
-delle richieste HTTP. Il modulo WhatsApp del frontend non usa ancora queste API;
-non sono presenti autenticazione per il personale, dashboard amministrativa,
-notifiche o pagamenti. La migrazione e la concorrenza PostgreSQL devono ancora
-essere verificate su un database reale.
+Le migrazioni `001`-`003` sono state applicate al progetto Supabase e i dati
+iniziali dei tre locali demo sono stati importati. La connessione dell'API
+pubblica su Render non è ancora verificata: prima di considerare attive le
+prenotazioni configura le variabili indicate qui sotto e inserisci i dati reali
+di turni, tavoli e documenti legali.
 
-L'API richiede `DATABASE_URL` e `IDEMPOTENCY_SECRET` (almeno 32 caratteri);
-`server/.env.example` elenca anche le altre variabili. Il processo Node non
-carica automaticamente quel file: configurare le variabili nell'ambiente prima
-di avviare i comandi.
+L'app legge profilo, allergeni, indice menu e categorie dall'endpoint
+`GET /api/v1/restaurants/:id/content`; l'API Express li legge dalla tabella
+`restaurant_content`. Le prenotazioni sono controllate e confermate tramite
+l'API, che registra hold, ospite, conferma e consensi in PostgreSQL. Il menu e
+il profilo non hanno ancora una schermata di modifica: il seed JSON inserisce
+solo i record mancanti e non sovrascrive i dati esistenti; dopo l'importazione il
+database resta la fonte runtime.
 
-```bash
+Il blueprint `render.yaml` configura il sito statico e l'API Node su Render. Il
+database rimane su Supabase. Prima del deploy, aggiungi nel servizio API Render
+le variabili segrete:
+
+- `DATABASE_URL`: stringa PostgreSQL Supabase, preferibilmente session pooler.
+- `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`: valori dal progetto Supabase.
+- `DATABASE_SSL=require`; `IDEMPOTENCY_SECRET` viene generato dal blueprint.
+- `ALLOWED_ORIGINS`: URL HTTPS del sito statico Render, inserito nel servizio API.
+- `API_BASE_URL` è collegato automaticamente all'host dell'API Render.
+
+Non inserire credenziali nel repository. Dopo il deploy iniziale, il comando
+`server:deploy` applica le migrazioni e importa i dati JSON iniziali. In locale,
+configura le variabili di `server/.env.example` nel tuo ambiente, poi esegui:
+
+```powershell
 npm run server:build
 npm run server:migrate
+npm run server:seed
 npm run server:start
 ```
 
-Le verifiche disponibili si eseguono con `npm run server:test`. `server:migrate`
-e `server:start` richiedono un PostgreSQL raggiungibile. In produzione, API e
-database necessitano di servizi e configurazione distinti dall'hosting statico
-definito in `render.yaml`.
+In un secondo terminale, `npm start` avvia Angular e inoltra `/api` a
+`localhost:3000`. Verifica API e log di deploy; `npm run server:test` esegue i
+test HTTP/unitari e `npm run server:build` controlla la compilazione del server.
+Per creare una build mobile da collegare all'API remota, imposta `API_BASE_URL`
+all'URL HTTPS del servizio API prima di `npm run build:mobile`. Il piano gratuito
+Render è adatto a prove, ma può sospendere il servizio API dopo inattività; per
+prenotazioni in produzione seleziona un piano sempre attivo.
+
+**Le prenotazioni online restano disabilitate finché il ristorante non configura
+in Supabase gli orari/turni, la sala e i tavoli, e in `client_data.reservations`
+i campi `bookingTermsUrl`, `privacyNoticeUrl`, `bookingTermsVersion` e
+`privacyNoticeVersion`.** Questa configurazione è
+necessaria: il repository non contiene una planimetria reale né documenti legali
+da pubblicare. Il form non invia una conferma se i link legali non sono validi.
 
 ## Avvio progetto
 
@@ -155,7 +183,7 @@ Valori demo disponibili:
 - `bar-milano`
 - `the-corner-pub`
 
-## Come modificare dati cliente
+## Dati iniziali dei clienti
 
 Ogni cliente ha la sua cartella:
 
@@ -167,6 +195,11 @@ File principali:
 - `allergens.json`
 - `menu/index.json` (config categorie)
 - `menu/*.json` (dati categoria con items)
+
+`npm run server:seed` importa i contenuti nel database solo quando il record non
+esiste già. L'app legge i dati dal database; non esiste ancora un pannello admin
+per modificarli. Dopo l'import iniziale, aggiorna il contenuto tramite Supabase
+SQL/API amministrativa, non modificando soltanto i JSON locali.
 
 ## Abilitare/disabilitare categorie menu
 

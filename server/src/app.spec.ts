@@ -8,6 +8,7 @@ import {
   createSupabaseTokenVerifier,
   type AccessTokenVerifier,
 } from "./auth";
+import type { RestaurantContentStore } from "./content-database";
 import { createApp } from "./app";
 import type {
   ReservationListFilters,
@@ -68,9 +69,22 @@ describe("reservation API request handling", () => {
       };
     },
   };
+  const contentStore: RestaurantContentStore = {
+    async getRestaurantContent(restaurantId) {
+      if (restaurantId !== "restaurant-one") {
+        return null;
+      }
+      return {
+        client: { id: restaurantId, name: "Restaurant One" },
+        allergens: [{ id: "gluten" }],
+        menuIndex: { currency: "EUR", categories: [] },
+        menuCategories: {},
+      };
+    },
+  };
 
   beforeAll(async () => {
-    server = createApp(pool, tokenVerifier, tenantStore).listen(0);
+    server = createApp(pool, tokenVerifier, tenantStore, contentStore).listen(0);
     await once(server, "listening");
     const address = server.address();
     if (!address || typeof address === "string") {
@@ -95,6 +109,43 @@ describe("reservation API request handling", () => {
     await expect(response.json()).resolves.toEqual({
       error: "Invalid availability request",
     });
+  });
+
+  it("serves restaurant content from the content store", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/restaurants/restaurant-one/content`,
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      client: { id: "restaurant-one", name: "Restaurant One" },
+      allergens: [{ id: "gluten" }],
+      menuIndex: { currency: "EUR", categories: [] },
+      menuCategories: {},
+    });
+  });
+
+  it("returns not found for restaurants without imported content", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/restaurants/unknown/content`,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it("allows the Capacitor origin to call the reservation API", async () => {
+    const response = await fetch(`${baseUrl}/api/v1/reservations`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: "capacitor://localhost",
+        "Access-Control-Request-Method": "POST",
+      },
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "capacitor://localhost",
+    );
   });
 
   it("requires a selected table when the guest chooses allocation", async () => {
