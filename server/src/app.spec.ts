@@ -9,9 +9,12 @@ import {
   type AccessTokenVerifier,
 } from "./auth";
 import { createApp } from "./app";
-import type { TenantStore } from "./tenant-database";
+import type {
+  ReservationListFilters,
+  TenantStore,
+} from "./tenant-database";
 
-describe("reservation API request validation", () => {
+describe("reservation API request handling", () => {
   const pool = new Pool({
     connectionString: "postgres://localhost:5432/not-used-by-validation-tests",
     connectionTimeoutMillis: 100,
@@ -19,10 +22,13 @@ describe("reservation API request validation", () => {
   let server: Server;
   let baseUrl: string;
   let queriedUserId: string | null = null;
+  let queriedRestaurantId: string | null = null;
+  let queriedFilters: ReservationListFilters | null = null;
+  const testUserId = "c84c21a7-bca6-481a-bffd-469db59d18b7";
   const tokenVerifier: AccessTokenVerifier = {
     async verify(accessToken) {
       return accessToken === "valid-token"
-        ? { id: "c84c21a7-bca6-481a-bffd-469db59d18b7" }
+        ? { id: testUserId }
         : null;
     },
   };
@@ -37,6 +43,29 @@ describe("reservation API request validation", () => {
           role: "owner",
         },
       ];
+    },
+    async listReservationsForRestaurant(userId, restaurantId, filters) {
+      queriedUserId = userId;
+      queriedRestaurantId = restaurantId;
+      queriedFilters = filters;
+      if (userId !== testUserId || restaurantId !== "restaurant-one") {
+        return null;
+      }
+      return {
+        reservations: [
+          {
+            id: "reservation-one",
+            status: "confirmed",
+            startsAt: new Date("2030-01-01T18:00:00.000Z"),
+            endsAt: new Date("2030-01-01T20:00:00.000Z"),
+            partySize: 2,
+            guestName: "Ada Guest",
+            guestPhone: "+393331234567",
+            tables: ["A1"],
+          },
+        ],
+        hasMore: false,
+      };
     },
   };
 
@@ -153,7 +182,7 @@ describe("reservation API request validation", () => {
         },
       ],
     });
-    expect(queriedUserId).toBe("c84c21a7-bca6-481a-bffd-469db59d18b7");
+    expect(queriedUserId).toBe(testUserId);
   });
 
   it("rejects an invalid or expired access token", async () => {
@@ -162,6 +191,71 @@ describe("reservation API request validation", () => {
     });
 
     expect(response.status).toBe(401);
+  });
+
+  it("lists reservations only for the authenticated restaurant member", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/reservations?date=2030-01-01&status=confirmed&limit=1`,
+      { headers: { Authorization: "Bearer valid-token" } },
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      restaurantId: "restaurant-one",
+      date: "2030-01-01",
+      reservations: [
+        {
+          id: "reservation-one",
+          status: "confirmed",
+          startsAt: "2030-01-01T18:00:00.000Z",
+          endsAt: "2030-01-01T20:00:00.000Z",
+          partySize: 2,
+          guestName: "Ada Guest",
+          guestPhone: "+393331234567",
+          tables: ["A1"],
+        },
+      ],
+      hasMore: false,
+    });
+    expect(queriedUserId).toBe(testUserId);
+    expect(queriedRestaurantId).toBe("restaurant-one");
+    expect(queriedFilters).toEqual({
+      date: "2030-01-01",
+      status: "confirmed",
+      limit: 1,
+      offset: 0,
+    });
+  });
+
+  it("requires authentication for the admin reservation list", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/reservations?date=2030-01-01`,
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it("hides restaurants for which the authenticated user has no membership", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-two/reservations?date=2030-01-01`,
+      { headers: { Authorization: "Bearer valid-token" } },
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "Restaurant not found",
+    });
+  });
+
+  it("rejects invalid calendar dates for the admin reservation list", async () => {
+    queriedRestaurantId = null;
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/reservations?date=2030-02-31`,
+      { headers: { Authorization: "Bearer valid-token" } },
+    );
+
+    expect(response.status).toBe(400);
+    expect(queriedRestaurantId).toBeNull();
   });
 
   it("fails startup when Supabase Auth configuration is missing", () => {

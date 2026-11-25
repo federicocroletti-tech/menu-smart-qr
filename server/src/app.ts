@@ -24,6 +24,7 @@ import {
   hashConfirmationCode,
   ReservationError,
 } from "./reservation-service";
+import { reservationStatuses } from "./domain/reservations";
 
 declare global {
   namespace Express {
@@ -35,11 +36,19 @@ declare global {
 
 const localDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 const localTimePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const restaurantIdSchema = z.string().min(1).max(128);
 
 const availabilitySchema = z.object({
   date: z.string().regex(localDatePattern),
   time: z.string().regex(localTimePattern),
   partySize: z.coerce.number().int().min(1).max(100),
+});
+
+const adminReservationQuerySchema = z.object({
+  date: z.string().regex(localDatePattern),
+  status: z.enum(reservationStatuses).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).max(10_000).default(0),
 });
 
 const holdSchema = availabilitySchema.extend({
@@ -133,11 +142,7 @@ function toAvailabilityRequest(
   restaurantId: string,
   value: z.infer<typeof availabilitySchema>,
 ): AvailabilityRequest {
-  const parsedDate = new Date(`${value.date}T00:00:00.000Z`);
-  if (
-    Number.isNaN(parsedDate.getTime()) ||
-    parsedDate.toISOString().slice(0, 10) !== value.date
-  ) {
+  if (!isValidLocalDate(value.date)) {
     throw new AvailabilityError(400, "Invalid reservation date");
   }
 
@@ -147,6 +152,14 @@ function toAvailabilityRequest(
     time: value.time,
     partySize: value.partySize,
   };
+}
+
+function isValidLocalDate(value: string): boolean {
+  const parsedDate = new Date(`${value}T00:00:00.000Z`);
+  return (
+    !Number.isNaN(parsedDate.getTime()) &&
+    parsedDate.toISOString().slice(0, 10) === value
+  );
 }
 
 export function createApp(
@@ -227,6 +240,58 @@ export function createApp(
 
       const memberships = await tenantStore.listRestaurantsForUser(user.id);
       response.status(200).json({ restaurants: memberships });
+    }),
+  );
+
+  app.get(
+    "/api/v1/admin/restaurants/:restaurantId/reservations",
+    requireAuthentication(tokenVerifier),
+    asyncHandler(async (request, response) => {
+      const user = request.authenticatedUser;
+      if (!user) {
+        response.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const restaurantId = restaurantIdSchema.safeParse(
+        getPathParameter(request, "restaurantId"),
+      );
+      if (!restaurantId.success) {
+        response.status(400).json({ error: "Invalid restaurant identifier" });
+        return;
+      }
+
+      const parsed = adminReservationQuerySchema.safeParse(request.query);
+      if (!parsed.success) {
+        response.status(400).json({ error: "Invalid reservation list request" });
+        return;
+      }
+      if (!isValidLocalDate(parsed.data.date)) {
+        response.status(400).json({ error: "Invalid reservation list request" });
+        return;
+      }
+
+      const result = await tenantStore.listReservationsForRestaurant(
+        user.id,
+        restaurantId.data,
+        {
+          date: parsed.data.date,
+          status: parsed.data.status,
+          limit: parsed.data.limit,
+          offset: parsed.data.offset,
+        },
+      );
+      if (!result) {
+        response.status(404).json({ error: "Restaurant not found" });
+        return;
+      }
+
+      response.status(200).json({
+        restaurantId: restaurantId.data,
+        date: parsed.data.date,
+        reservations: result.reservations,
+        hasMore: result.hasMore,
+      });
     }),
   );
 
