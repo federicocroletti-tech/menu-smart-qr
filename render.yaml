@@ -9,6 +9,8 @@ services:
     healthCheckPath: /health/ready
     envVars:
       - key: DATABASE_URL
+        value: "postgresql://postgres.vfsxocefazuwoszibjxq@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+      - key: DATABASE_PASSWORD
         sync: false
       - key: DATABASE_SSL
         value: require

@@ -99,10 +99,12 @@ l'API è configurata ma non raggiungibile, il sito mostra l'errore senza
 ripiegare silenziosamente sui dati demo.
 
 Il blueprint `render.yaml` configura il sito statico e l'API Node su Render. Il
-database rimane su Supabase. Prima del deploy, aggiungi nel servizio API Render
-le variabili segrete:
+database rimane su Supabase. Nel servizio API Render, imposta queste variabili:
 
-- `DATABASE_URL`: stringa PostgreSQL Supabase, preferibilmente session pooler.
+- `DATABASE_URL` è preconfigurato con l'endpoint Session Pooler Supabase senza
+  password.
+- `DATABASE_PASSWORD`: password PostgreSQL Supabase, inserita come segreto Render
+  separato. Non richiede percent-encoding.
 - `SUPABASE_URL` e `ALLOWED_ORIGINS` sono preconfigurati nel blueprint per i
   servizi correnti; aggiorna `ALLOWED_ORIGINS` se cambia il dominio del sito.
 - `SUPABASE_PUBLISHABLE_KEY`: valore `publishable` dal progetto Supabase.
