@@ -6,6 +6,8 @@ import type { Client } from '../../../../core/models/client.model';
 import {
   ReservationApiService,
   type ReservationAvailability,
+  type ReservationConfirmation,
+  type ReservationHold,
 } from '../../../../core/services/reservation-api.service';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { ReservationPanelComponent } from './reservation-panel.component';
@@ -25,7 +27,12 @@ const client: Client = {
     featureFlags: {},
   },
   notes: { it: '' },
-  reservations: { minimumPartySize: 1, maximumPartySize: 8 },
+  reservations: {
+    minimumPartySize: 1,
+    maximumPartySize: 8,
+    bookingTermsUrl: 'https://example.test/booking-terms',
+    privacyNoticeUrl: 'https://example.test/privacy',
+  },
 };
 
 const availableResponse: ReservationAvailability = {
@@ -45,16 +52,35 @@ const availableResponse: ReservationAvailability = {
 
 describe('ReservationPanelComponent', () => {
   const getAvailability = vi.fn<ReservationApiService['getAvailability']>();
+  const createReservationHold =
+    vi.fn<ReservationApiService['createReservationHold']>();
+  const confirmReservation =
+    vi.fn<ReservationApiService['confirmReservation']>();
 
   beforeEach(async () => {
     getAvailability.mockReset();
     getAvailability.mockReturnValue(of(availableResponse));
+    createReservationHold.mockReset();
+    createReservationHold.mockReturnValue(of({
+      holdToken: 'hold-token-value-that-is-long-enough',
+      expiresAt: '2099-12-31T19:07:00.000Z',
+      tableIds: ['table-1'],
+    } satisfies ReservationHold));
+    confirmReservation.mockReset();
+    confirmReservation.mockReturnValue(of({
+      confirmationCode: 'confirmation-code',
+      status: 'confirmed',
+    } satisfies ReservationConfirmation));
     await TestBed.configureTestingModule({
       imports: [ReservationPanelComponent],
       providers: [
         {
           provide: ReservationApiService,
-          useValue: { getAvailability },
+          useValue: {
+            getAvailability,
+            createReservationHold,
+            confirmReservation,
+          },
         },
         {
           provide: TranslationService,
@@ -103,7 +129,7 @@ describe('ReservationPanelComponent', () => {
     expect(component.isValid).toBe(false);
   });
 
-  it('checks availability before enabling the WhatsApp request', () => {
+  it('requires availability, contact details, and both consents before confirming', () => {
     const component = createComponent();
     component.client = client;
     component.date = '2099-12-31';
@@ -111,7 +137,7 @@ describe('ReservationPanelComponent', () => {
     component.partySize = 2;
 
     expect(component.canCheckAvailability).toBe(true);
-    expect(component.canSendWhatsApp).toBe(false);
+    expect(component.canSubmitReservation).toBe(false);
 
     component.checkAvailability();
 
@@ -122,15 +148,79 @@ describe('ReservationPanelComponent', () => {
       2,
     );
     expect(component.availability?.available).toBe(true);
-    expect(component.canSendWhatsApp).toBe(false);
+    expect(component.canSubmitReservation).toBe(false);
 
     component.name = 'Ada Lovelace';
     component.phone = '+39 333 1234567';
-    expect(component.canSendWhatsApp).toBe(true);
+    expect(component.canSubmitReservation).toBe(false);
+    component.acceptBookingTerms = true;
+    component.acceptPrivacyNotice = true;
+    expect(component.canSubmitReservation).toBe(true);
 
     component.resetAvailability();
     expect(component.availability).toBeNull();
-    expect(component.canSendWhatsApp).toBe(false);
+    expect(component.canSubmitReservation).toBe(false);
+  });
+
+  it('creates a hold and confirms it in the reservation database flow', () => {
+    const component = createComponent();
+    component.client = client;
+    component.date = '2099-12-31';
+    component.time = '20:00';
+    component.partySize = 2;
+    component.name = 'Ada Lovelace';
+    component.phone = '+39 333 1234567';
+    component.notes = 'Window seat';
+    component.acceptBookingTerms = true;
+    component.acceptPrivacyNotice = true;
+    component.availability = availableResponse;
+
+    component.submitReservation();
+
+    expect(createReservationHold).toHaveBeenCalledWith(
+      'demo',
+      {
+        date: '2099-12-31',
+        time: '20:00',
+        partySize: 2,
+        allocationMode: 'restaurant_assigned',
+      },
+      expect.any(String),
+    );
+    expect(confirmReservation).toHaveBeenCalledWith({
+      holdToken: 'hold-token-value-that-is-long-enough',
+      guest: {
+        name: 'Ada Lovelace',
+        phone: '+39 333 1234567',
+        notes: 'Window seat',
+      },
+      acceptTerms: true,
+      acceptPrivacy: true,
+      marketingConsent: false,
+    });
+    expect(component.confirmationCode).toBe('confirmation-code');
+    expect(component.canSubmitReservation).toBe(false);
+  });
+
+  it('does not submit until both legal documents are configured', () => {
+    const component = createComponent();
+    component.client = {
+      ...client,
+      reservations: { minimumPartySize: 1, maximumPartySize: 8 },
+    };
+    component.date = '2099-12-31';
+    component.time = '20:00';
+    component.partySize = 2;
+    component.name = 'Ada Lovelace';
+    component.phone = '+39 333 1234567';
+    component.acceptBookingTerms = true;
+    component.acceptPrivacyNotice = true;
+    component.availability = availableResponse;
+
+    component.submitReservation();
+
+    expect(component.canSubmitReservation).toBe(false);
+    expect(createReservationHold).not.toHaveBeenCalled();
   });
 
   it('does not request availability for an invalid party size', () => {
@@ -145,7 +235,7 @@ describe('ReservationPanelComponent', () => {
     expect(getAvailability).not.toHaveBeenCalled();
   });
 
-  it('does not allow a WhatsApp request when no tables are available', () => {
+  it('does not allow a database reservation when no tables are available', () => {
     getAvailability.mockReturnValue(of({
       ...availableResponse,
       available: false,
@@ -163,6 +253,6 @@ describe('ReservationPanelComponent', () => {
     component.checkAvailability();
 
     expect(component.availabilityErrorKey).toBe('availabilityNotFound');
-    expect(component.canSendWhatsApp).toBe(false);
+    expect(component.canSubmitReservation).toBe(false);
   });
 });

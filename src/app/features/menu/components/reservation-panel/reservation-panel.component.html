@@ -16,88 +16,138 @@
         <button type="button" (click)="isOpen = false" [attr.aria-label]="translationService.translate('close')">×</button>
       </header>
 
-      <div class="date-time">
+      @if (!confirmationCode) {
+        <div class="date-time">
+          <label>
+            {{ translationService.translate('date') }}
+            <input
+              [(ngModel)]="date"
+              (ngModelChange)="resetAvailability()"
+              name="date"
+              type="date"
+              [min]="minimumDate"
+              required
+            />
+          </label>
+          <label>
+            {{ translationService.translate('time') }}
+            <input
+              [(ngModel)]="time"
+              (ngModelChange)="resetAvailability()"
+              name="time"
+              type="time"
+              required
+            />
+          </label>
+        </div>
         <label>
-          {{ translationService.translate('date') }}
+          {{ translationService.translate('partySize') }}
           <input
-            [(ngModel)]="date"
+            [(ngModel)]="partySize"
             (ngModelChange)="resetAvailability()"
-            name="date"
-            type="date"
-            [min]="minimumDate"
+            name="partySize"
+            type="number"
+            [min]="minimumPartySize"
+            [max]="maximumPartySize"
+            step="1"
             required
           />
         </label>
-        <label>
-          {{ translationService.translate('time') }}
-          <input
-            [(ngModel)]="time"
-            (ngModelChange)="resetAvailability()"
-            name="time"
-            type="time"
-            required
-          />
-        </label>
-      </div>
-      <label>
-        {{ translationService.translate('partySize') }}
-        <input
-          [(ngModel)]="partySize"
-          (ngModelChange)="resetAvailability()"
-          name="partySize"
-          type="number"
-          [min]="minimumPartySize"
-          [max]="maximumPartySize"
-          step="1"
-          required
-        />
-      </label>
-      <button
-        class="availability-check"
-        type="button"
-        [disabled]="!canCheckAvailability || isCheckingAvailability"
-        (click)="checkAvailability()"
-      >
-        {{
-          translationService.translate(
-            isCheckingAvailability ? 'checkingAvailability' : 'checkAvailability'
-          )
-        }}
-      </button>
+        <button
+          class="availability-check"
+          type="button"
+          [disabled]="!canCheckAvailability || isCheckingAvailability"
+          (click)="checkAvailability()"
+        >
+          {{
+            translationService.translate(
+              isCheckingAvailability ? 'checkingAvailability' : 'checkAvailability'
+            )
+          }}
+        </button>
 
-      @if (availability?.available) {
+        @if (availability?.available) {
+          <p class="availability-message" role="status" aria-live="polite">
+            {{ translationService.translate('availabilityFound') }}
+          </p>
+        } @else if (availabilityErrorKey) {
+          <p class="availability-message availability-message--error" role="status" aria-live="polite">
+            {{ translationService.translate(availabilityErrorKey) }}
+          </p>
+        }
+
+        <label>
+          {{ translationService.translate('name') }}
+          <input [(ngModel)]="name" name="name" autocomplete="name" required />
+        </label>
+        <label>
+          {{ translationService.translate('phone') }}
+          <input [(ngModel)]="phone" name="phone" type="tel" autocomplete="tel" required />
+        </label>
+        <label>
+          {{ translationService.translate('notes') }}
+          <textarea [(ngModel)]="notes" name="notes" rows="3"></textarea>
+        </label>
+
+        @if (!hasLegalDocuments) {
+          <p class="availability-message availability-message--error" role="status">
+            {{ translationService.translate('reservationLegalDocumentsMissing') }}
+          </p>
+        }
+        <label class="reservation-consent">
+          <input
+            [(ngModel)]="acceptBookingTerms"
+            name="acceptBookingTerms"
+            type="checkbox"
+          />
+          <span>
+            {{ translationService.translate('bookingTermsConsent') }}
+            @if (bookingTermsUrl) {
+              <a [href]="bookingTermsUrl" target="_blank" rel="noopener noreferrer">
+                {{ translationService.translate('readDocument') }}
+              </a>
+            }
+          </span>
+        </label>
+        <label class="reservation-consent">
+          <input
+            [(ngModel)]="acceptPrivacyNotice"
+            name="acceptPrivacyNotice"
+            type="checkbox"
+          />
+          <span>
+            {{ translationService.translate('privacyNoticeConsent') }}
+            @if (privacyNoticeUrl) {
+              <a [href]="privacyNoticeUrl" target="_blank" rel="noopener noreferrer">
+                {{ translationService.translate('readDocument') }}
+              </a>
+            }
+          </span>
+        </label>
+
+        @if (submissionErrorKey) {
+          <p class="availability-message availability-message--error" role="alert">
+            {{ translationService.translate(submissionErrorKey) }}
+          </p>
+        }
+        <button
+          class="reservation-submit"
+          type="button"
+          [disabled]="!canSubmitReservation"
+          (click)="submitReservation()"
+        >
+          {{
+            translationService.translate(
+              isSubmitting ? 'savingReservation' : 'confirmReservation'
+            )
+          }}
+        </button>
+      } @else {
         <p class="availability-message" role="status" aria-live="polite">
-          {{ translationService.translate('availabilityFound') }}
+          {{ translationService.translate('reservationConfirmed') }}
         </p>
-      } @else if (availabilityErrorKey) {
-        <p class="availability-message availability-message--error" role="status" aria-live="polite">
-          {{ translationService.translate(availabilityErrorKey) }}
-        </p>
+        <p class="reservation-confirmation-code">{{ confirmationCode }}</p>
       }
-
-      <label>
-        {{ translationService.translate('name') }}
-        <input [(ngModel)]="name" name="name" autocomplete="name" required />
-      </label>
-      <label>
-        {{ translationService.translate('phone') }}
-        <input [(ngModel)]="phone" name="phone" type="tel" autocomplete="tel" required />
-      </label>
-      <label>
-        {{ translationService.translate('notes') }}
-        <textarea [(ngModel)]="notes" name="notes" rows="3"></textarea>
-      </label>
-      <a
-        class="reservation-submit"
-        [class.disabled]="!canSendWhatsApp"
-        [attr.aria-disabled]="!canSendWhatsApp"
-        [attr.tabindex]="canSendWhatsApp ? null : -1"
-        [href]="canSendWhatsApp ? whatsappUrl : null"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {{ translationService.translate('sendWhatsAppReservationRequest') }}
-      </a>
     </div>
   </div>
 }

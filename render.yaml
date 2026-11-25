@@ -1,10 +1,38 @@
 services:
   - type: web
+    name: menu-smart-qr-api
+    runtime: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm ci && npm run server:build
+    startCommand: npm run server:deploy
+    healthCheckPath: /health/ready
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: require
+      - key: TRUST_PROXY
+        value: "true"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: IDEMPOTENCY_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        sync: false
+  - type: web
     name: menu-smart-qr
     runtime: static
-    plan: free
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci && npm run build && npm run configure:runtime
     staticPublishPath: ./dist/menu-smart-qr/browser
+    envVars:
+      - key: API_BASE_URL
+        fromService:
+          type: web
+          name: menu-smart-qr-api
+          property: host
     routes:
       - type: rewrite
         source: /*

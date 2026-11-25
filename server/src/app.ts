@@ -11,6 +11,7 @@ import type { Pool } from "pg";
 import { z } from "zod";
 
 import type { AccessTokenVerifier, AuthenticatedUser } from "./auth";
+import type { RestaurantContentStore } from "./content-database";
 import type { TenantStore } from "./tenant-database";
 import {
   AvailabilityError,
@@ -37,6 +38,17 @@ declare global {
 const localDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 const localTimePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const restaurantIdSchema = z.string().min(1).max(128);
+
+function normalizeOrigin(value: string): string {
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  if (url.protocol === "capacitor:") {
+    return `${url.protocol}//${url.host}`;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("ALLOWED_ORIGINS entries must use HTTP or HTTPS");
+  }
+  return url.origin;
+}
 
 const availabilitySchema = z.object({
   date: z.string().regex(localDatePattern),
@@ -93,6 +105,7 @@ const confirmationSchema = z.object({
     name: z.string().trim().min(2).max(120),
     phone: z.string().trim().min(6).max(32),
     email: z.string().trim().email().max(254).optional(),
+    notes: z.string().trim().max(1000).optional(),
   }).strict(),
   acceptTerms: z.literal(true),
   acceptPrivacy: z.literal(true),
@@ -166,14 +179,18 @@ export function createApp(
   pool: Pool,
   tokenVerifier: AccessTokenVerifier,
   tenantStore: TenantStore,
+  contentStore: RestaurantContentStore,
 ): Express {
   const app = express();
-  const allowedOrigins = new Set(
-    (process.env["ALLOWED_ORIGINS"] ?? "")
+  const allowedOrigins = new Set([
+    "capacitor://localhost",
+    "http://localhost",
+    ...(process.env["ALLOWED_ORIGINS"] ?? "")
       .split(",")
       .map((origin) => origin.trim())
-      .filter(Boolean),
-  );
+      .filter(Boolean)
+      .map(normalizeOrigin),
+  ]);
 
   if (process.env["TRUST_PROXY"] === "true") {
     app.set("trust proxy", 1);
@@ -292,6 +309,27 @@ export function createApp(
         reservations: result.reservations,
         hasMore: result.hasMore,
       });
+    }),
+  );
+
+  app.get(
+    "/api/v1/restaurants/:restaurantId/content",
+    asyncHandler(async (request, response) => {
+      const restaurantId = restaurantIdSchema.safeParse(
+        getPathParameter(request, "restaurantId"),
+      );
+      if (!restaurantId.success) {
+        response.status(400).json({ error: "Invalid restaurant identifier" });
+        return;
+      }
+
+      const content = await contentStore.getRestaurantContent(restaurantId.data);
+      if (!content) {
+        response.status(404).json({ error: "Restaurant not found" });
+        return;
+      }
+
+      response.status(200).json(content);
     }),
   );
 

@@ -1,5 +1,6 @@
 {
   "id": "bar-milano",
+  "timeZone": "Europe/Rome",
   "name": "Bar Milano",
   "type": "bar",
   "description": {

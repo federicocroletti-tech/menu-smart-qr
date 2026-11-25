@@ -29,10 +29,4 @@ export class AppConfigService {
   getActiveClient(): Observable<string> {
     return this.appConfig$.pipe(map((config) => config.activeClient));
   }
-
-  getClientAssetsBasePath(): Observable<string> {
-    return this.getActiveClient().pipe(
-      map((activeClient) => `assets/clients/${activeClient}`),
-    );
-  }
 }

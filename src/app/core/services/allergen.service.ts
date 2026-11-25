@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, shareReplay, switchMap } from 'rxjs';
 
 import type { Allergen } from '../models/allergen.model';
 import { AppConfigService } from './app-config.service';
+import { RestaurantContentApiService } from './restaurant-content-api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,12 +12,15 @@ export class AllergenService {
   private readonly allergens$: Observable<Allergen[]>;
 
   constructor(
-    private readonly http: HttpClient,
     private readonly appConfigService: AppConfigService,
+    private readonly contentApi: RestaurantContentApiService,
   ) {
-    this.allergens$ = this.appConfigService.getClientAssetsBasePath().pipe(
-      switchMap((basePath) => this.http.get<Allergen[]>(`${basePath}/allergens.json`)),
-      map((allergens) => allergens ?? []),
+    this.allergens$ = this.appConfigService.getActiveClient().pipe(
+      switchMap((restaurantId) =>
+        this.contentApi
+          .getRestaurantContent(restaurantId)
+          .pipe(map((content) => content.allergens)),
+      ),
       catchError((error: unknown) => {
         console.error('Failed to load allergens:', error);
         return of([]);

@@ -40,6 +40,7 @@ export interface ConfirmationRequest {
     name: string;
     phone: string;
     email?: string;
+    notes?: string;
   };
   acceptTerms: true;
   acceptPrivacy: true;
@@ -492,6 +493,7 @@ export async function confirmReservation(
        SET guest_id = $2,
            status = 'confirmed',
            confirmation_code_hash = $3,
+           guest_notes = $5,
            hold_expires_at = NULL,
            cancellation_deadline = CASE
              WHEN $4::integer IS NULL THEN NULL
@@ -504,6 +506,7 @@ export async function confirmReservation(
         guest.rows[0].id,
         hashToken(confirmationCode),
         reservation.cancellation_notice_minutes,
+        request.guest.notes ?? null,
       ],
     );
     await client.query(

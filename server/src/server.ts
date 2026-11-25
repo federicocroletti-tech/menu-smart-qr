@@ -1,5 +1,6 @@
 import { createApp } from "./app";
 import { createSupabaseTokenVerifier } from "./auth";
+import { createRestaurantContentStore } from "./content-database";
 import { createPool } from "./database";
 import { expireExpiredHolds } from "./reservation-service";
 import { createTenantStore } from "./tenant-database";
@@ -19,6 +20,7 @@ const app = createApp(
   pool,
   tokenVerifier,
   createTenantStore(pool),
+  createRestaurantContentStore(pool),
 );
 const server = app.listen(port, () => {
   console.log(`Reservation API listening on port ${port}`);
