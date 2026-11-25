@@ -16,6 +16,16 @@
   min-width: 0;
 }
 
+.demo-mode-notice {
+  margin: 0;
+  border: 1px solid #f59e0b;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.875rem;
+}
+
 .top-tools {
   display: flex;
   flex-wrap: wrap;

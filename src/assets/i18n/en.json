@@ -16,6 +16,7 @@
   "updatedMenu": "Updated menu",
   "noItems": "No items available in this category.",
   "loading": "Loading...",
+  "demoModeNotice": "Demo mode: sample content; orders and reservations are disabled until the API is configured.",
   "error": "An error occurred. Please try again later.",
   "retry": "Retry",
   "language": "Language",

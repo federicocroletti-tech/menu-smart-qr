@@ -16,6 +16,7 @@
   "updatedMenu": "Aktualisierte Speisekarte",
   "noItems": "Keine Elemente in dieser Kategorie verfügbar.",
   "loading": "Wird geladen...",
+  "demoModeNotice": "Demomodus: Beispieldaten; Bestellungen und Reservierungen sind deaktiviert, bis die API konfiguriert ist.",
   "error": "Ein Fehler ist aufgetreten. Bitte später erneut versuchen.",
   "retry": "Erneut versuchen",
   "language": "Sprache",

@@ -10,6 +10,10 @@
   } @else if (client) {
     <app-restaurant-header [client]="client" />
 
+    @if (isBundledContentMode) {
+      <p class="demo-mode-notice" role="status">{{ demoModeNotice }}</p>
+    }
+
     <div class="top-tools">
       @if (featureFlags["enableLanguageSelector"]) {
         <app-language-selector />

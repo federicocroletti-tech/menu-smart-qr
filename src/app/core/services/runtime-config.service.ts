@@ -12,10 +12,18 @@ declare global {
   providedIn: 'root',
 })
 export class RuntimeConfigService {
-  get apiV1BaseUrl(): string {
+  get apiBaseUrl(): string {
     const configuredUrl = typeof window === 'undefined'
       ? ''
       : window.menuSmartQrRuntime?.apiBaseUrl?.trim() ?? '';
-    return `${configuredUrl.replace(/\/+$/, '')}/api/v1`;
+    return configuredUrl.replace(/\/+$/, '');
+  }
+
+  get apiV1BaseUrl(): string {
+    return `${this.apiBaseUrl}/api/v1`;
+  }
+
+  get isApiConfigured(): boolean {
+    return Boolean(this.apiBaseUrl);
   }
 }

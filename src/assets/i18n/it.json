@@ -16,6 +16,7 @@
   "updatedMenu": "Menu aggiornato",
   "noItems": "Nessun elemento disponibile in questa categoria.",
   "loading": "Caricamento in corso...",
+  "demoModeNotice": "Modalità demo: contenuti di esempio; ordini e prenotazioni sono disabilitati finché l'API non è configurata.",
   "error": "Si è verificato un errore. Riprova più tardi.",
   "retry": "Riprova",
   "language": "Lingua",

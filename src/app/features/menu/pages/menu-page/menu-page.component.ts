@@ -15,6 +15,7 @@ import type { MenuCategory } from "../../../../core/models/menu.model";
 import { AllergenService } from "../../../../core/services/allergen.service";
 import { ClientService } from "../../../../core/services/client.service";
 import { MenuService } from "../../../../core/services/menu.service";
+import { RestaurantContentApiService } from "../../../../core/services/restaurant-content-api.service";
 import { SeoService } from "../../../../core/services/seo.service";
 import { ThemeService } from "../../../../core/services/theme.service";
 import { TranslationService } from "../../../../core/services/translation.service";
@@ -81,6 +82,7 @@ export class MenuPageComponent implements OnInit, OnDestroy {
     private readonly translationService: TranslationService,
     private readonly themeService: ThemeService,
     private readonly seoService: SeoService,
+    private readonly restaurantContentApiService: RestaurantContentApiService,
     public readonly orderCartService: OrderCartService,
   ) {}
 
@@ -112,6 +114,14 @@ export class MenuPageComponent implements OnInit, OnDestroy {
 
   get hasMobileContactBar(): boolean {
     return Boolean(this.client && this.featureFlags["showContactBar"]);
+  }
+
+  get isBundledContentMode(): boolean {
+    return this.restaurantContentApiService.isBundledContentMode;
+  }
+
+  get demoModeNotice(): string {
+    return this.translationService.translate("demoModeNotice");
   }
 
   get allergenMap(): Record<string, Allergen> {

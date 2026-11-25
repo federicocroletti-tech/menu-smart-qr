@@ -93,6 +93,11 @@ il profilo non hanno ancora una schermata di modifica: il seed JSON inserisce
 solo i record mancanti e non sovrascrive i dati esistenti; dopo l'importazione il
 database resta la fonte runtime.
 
+Se `API_BASE_URL` non è configurato, il sito mostra i contenuti JSON inclusi in
+modalità demo e disabilita ordini e prenotazioni, con un avviso visibile. Se
+l'API è configurata ma non raggiungibile, il sito mostra l'errore senza
+ripiegare silenziosamente sui dati demo.
+
 Il blueprint `render.yaml` configura il sito statico e l'API Node su Render. Il
 database rimane su Supabase. Prima del deploy, aggiungi nel servizio API Render
 le variabili segrete:

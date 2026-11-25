@@ -6,7 +6,10 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { RestaurantContentApiService } from './restaurant-content-api.service';
+import {
+  RestaurantContentApiService,
+  type RestaurantContent,
+} from './restaurant-content-api.service';
 
 describe('RestaurantContentApiService', () => {
   let service: RestaurantContentApiService;
@@ -55,5 +58,80 @@ describe('RestaurantContentApiService', () => {
       menuIndex: { currency: 'EUR', categories: [] },
       menuCategories: {},
     });
+  });
+
+  it('uses bundled menu content as a marked demo with orders and reservations disabled when no API is configured', () => {
+    window.menuSmartQrRuntime = { apiBaseUrl: '' };
+    let response: RestaurantContent | undefined;
+
+    service
+      .getRestaurantContent('pizzeria-vesuvio')
+      .subscribe((content) => (response = content));
+
+    httpTestingController
+      .expectOne('assets/clients/pizzeria-vesuvio/client.json')
+      .flush({
+        id: 'pizzeria-vesuvio',
+        settings: {
+          featureFlags: {
+            enableOrders: true,
+            enableReservations: true,
+          },
+        },
+        reservations: { enabled: true },
+      });
+    httpTestingController
+      .expectOne('assets/clients/pizzeria-vesuvio/allergens.json')
+      .flush([]);
+    httpTestingController
+      .expectOne('assets/clients/pizzeria-vesuvio/menu/index.json')
+      .flush({
+        currency: 'EUR',
+        categories: [
+          {
+            id: 'pizzas',
+            name: { it: 'Pizze' },
+            order: 1,
+            enabled: true,
+            file: 'pizzas.json',
+          },
+        ],
+      });
+    httpTestingController
+      .expectOne('assets/clients/pizzeria-vesuvio/menu/pizzas.json')
+      .flush({ id: 'pizzas', name: { it: 'Pizze' }, items: [] });
+
+    expect(service.isBundledContentMode).toBe(true);
+    expect(response?.menuCategories['pizzas.json']).toEqual({
+      id: 'pizzas',
+      name: { it: 'Pizze' },
+      items: [],
+    });
+    expect(response?.client.settings.featureFlags['enableOrders']).toBe(false);
+    expect(response?.client.settings.featureFlags['enableReservations']).toBe(
+      false,
+    );
+    expect(response?.client.reservations?.enabled).toBe(false);
+  });
+
+  it('does not use bundled content when a configured API request fails', () => {
+    let requestFailed = false;
+    service.getRestaurantContent('pizzeria-vesuvio').subscribe({
+      error: () => (requestFailed = true),
+    });
+
+    httpTestingController
+      .expectOne(
+        'https://api.example.test/api/v1/restaurants/pizzeria-vesuvio/content',
+      )
+      .flush('API unavailable', {
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
+
+    expect(requestFailed).toBe(true);
+    httpTestingController.expectNone((request) =>
+      request.url.startsWith('assets/clients/'),
+    );
   });
 });
