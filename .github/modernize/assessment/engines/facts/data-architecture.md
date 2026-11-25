@@ -7,7 +7,7 @@ The frontend menu reads restaurant and menu content from static JSON assets and 
 | Service/Module | DB Type | Profile | Driver | Connection | Migration Tool |
 |---|---|---|---|---|---|
 | Menu Smart QR frontend | None | All | Angular `HttpClient` | Static files under `src/assets` and same-origin reservation API | None |
-| Reservation API | Supabase PostgreSQL | All configured environments | `pg` Node.js driver | `DATABASE_URL`; pool size 10; optional verified TLS | Custom SQL runner in `server/src/migrate.ts` |
+| Reservation API | PostgreSQL; hosting provider not configured | Not configured | `pg` Node.js driver | `DATABASE_URL` is required but absent from the local setup; pool size 10; optional verified TLS | Custom SQL runner in `server/src/migrate.ts` |
 
 The schema is in `server/migrations/001_reservation_schema.sql` and `server/migrations/002_supabase_tenant_security.sql`; migrations are recorded in `schema_migrations`. Supabase Auth verifies staff access tokens. Membership and read-only tenant RLS policies are defined, but no seed membership exists and neither migration has been verified against a live Supabase project.
 
@@ -155,7 +155,7 @@ Client, menu, and allergen relationships in the diagram represent logical JSON r
 | Reservation availability | `ReservationApiService` (`src/app/core/services/reservation-api.service.ts`) | `getAvailability()` | Checks available table sets for a restaurant, date, time, and party size. |
 | Reservation API | SQL modules (`server/src/availability.ts`, `server/src/reservation-service.ts`, `server/src/tenant-database.ts`) | `resolveReservationTiming()`, `findAvailability()`, `createReservationHold()`, `confirmReservation()`, `cancelReservation()`, `listRestaurantsForUser()`, `listReservationsForRestaurant()` | Resolves schedule and capacity, performs transactional reservation writes, and scopes staff reads to authenticated tenant membership. |
 
-There are no repository interfaces or ORM; database operations are parameterized SQL through `pg`. The API modules compile and unit/HTTP validation tests pass, but SQL and tenant isolation have not been run against Supabase PostgreSQL.
+There are no repository interfaces or ORM; database operations are parameterized SQL through `pg`. The API modules compile and unit/HTTP validation tests pass, but SQL and tenant isolation have not been run against a live PostgreSQL database.
 
 ## Caching Strategy
 
