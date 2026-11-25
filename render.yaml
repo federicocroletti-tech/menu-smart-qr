@@ -15,13 +15,13 @@ services:
       - key: TRUST_PROXY
         value: "true"
       - key: SUPABASE_URL
-        sync: false
+        value: https://vfsxocefazuwoszibjxq.supabase.co
       - key: SUPABASE_PUBLISHABLE_KEY
         sync: false
       - key: IDEMPOTENCY_SECRET
         generateValue: true
       - key: ALLOWED_ORIGINS
-        sync: false
+        value: https://menu-smart-qr.onrender.com
   - type: web
     name: menu-smart-qr
     runtime: static
