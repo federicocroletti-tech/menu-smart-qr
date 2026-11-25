@@ -7,7 +7,7 @@
     [class.above-contact-bar]="hasMobileContactBar"
     (click)="isOpen = true"
   >
-    {{ translationService.translate('order') }} ({{ entries.length }})
+    {{ translationService.translate("order") }} ({{ entries.length }})
   </button>
 }
 
@@ -21,36 +21,50 @@
       (click)="$event.stopPropagation()"
     >
       <header>
-        <h2>{{ translationService.translate('order') }}</h2>
-        <button type="button" (click)="isOpen = false" [attr.aria-label]="translationService.translate('close')">×</button>
+        <h2>{{ translationService.translate("order") }}</h2>
+        <button
+          type="button"
+          (click)="isOpen = false"
+          [attr.aria-label]="translationService.translate('close')"
+        >
+          ×
+        </button>
       </header>
 
-      @for (entry of entries; track entry.item.id) {
-        <div class="cart-entry">
-          <div>
-            <strong>{{ entry.item.name | localizedText }}</strong>
-            <span>{{ entry.item.price | price: entry.item.currency }}</span>
+      <div class="cart-items">
+        @for (entry of entries; track entry.item.id) {
+          <div class="cart-entry">
+            <div>
+              <strong>{{ entry.item.name | localizedText }}</strong>
+              <span>{{ entry.item.price | price: entry.item.currency }}</span>
+            </div>
+            <div class="quantity">
+              <button type="button" (click)="cart.remove(entry.item.id)">
+                −
+              </button>
+              <span>{{ entry.quantity }}</span>
+              <button type="button" (click)="cart.add(entry.item)">+</button>
+            </div>
           </div>
-          <div class="quantity">
-            <button type="button" (click)="cart.remove(entry.item.id)">−</button>
-            <span>{{ entry.quantity }}</span>
-            <button type="button" (click)="cart.add(entry.item)">+</button>
-          </div>
-        </div>
-      }
+        }
+      </div>
 
-      @if (whatsappUrl; as checkoutUrl) {
-        <a
-          class="checkout"
-          [href]="checkoutUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {{ translationService.translate('sendWhatsAppOrder') }}
-        </a>
-      } @else {
-        <p role="alert">{{ translationService.translate('whatsappUnavailable') }}</p>
-      }
+      <div class="cart-footer">
+        @if (whatsappUrl; as checkoutUrl) {
+          <a
+            class="checkout"
+            [href]="checkoutUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ translationService.translate("sendWhatsAppOrder") }}
+          </a>
+        } @else {
+          <p role="alert">
+            {{ translationService.translate("whatsappUnavailable") }}
+          </p>
+        }
+      </div>
     </aside>
   </div>
 }
