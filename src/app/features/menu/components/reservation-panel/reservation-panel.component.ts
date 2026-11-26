@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Input } from '@angular/core';
+import { Component, Input, NgZone } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { switchMap } from 'rxjs';
 
@@ -41,6 +41,7 @@ export class ReservationPanelComponent {
   constructor(
     public readonly translationService: TranslationService,
     private readonly reservationApiService: ReservationApiService,
+    private readonly ngZone: NgZone,
   ) {}
 
   get minimumPartySize(): number {
@@ -121,26 +122,30 @@ export class ReservationPanelComponent {
       .getAvailability(this.client.id, this.date, this.time, this.partySize)
       .subscribe({
         next: (availability) => {
-          if (requestId !== this.availabilityRequestId) {
-            return;
-          }
-          this.availability = availability;
-          this.isCheckingAvailability = false;
-          if (!availability.available) {
-            this.availabilityErrorKey = 'availabilityNotFound';
-          }
+          this.ngZone.run(() => {
+            if (requestId !== this.availabilityRequestId) {
+              return;
+            }
+            this.availability = availability;
+            this.isCheckingAvailability = false;
+            if (!availability.available) {
+              this.availabilityErrorKey = 'availabilityNotFound';
+            }
+          });
         },
         error: (error: unknown) => {
-          if (requestId !== this.availabilityRequestId) {
-            return;
-          }
-          if (error instanceof HttpErrorResponse && error.status === 404) {
-            this.availabilityErrorKey = 'availabilityNotFound';
-          } else {
-            console.error('Failed to check reservation availability:', error);
-            this.availabilityErrorKey = 'availabilityError';
-          }
-          this.isCheckingAvailability = false;
+          this.ngZone.run(() => {
+            if (requestId !== this.availabilityRequestId) {
+              return;
+            }
+            if (error instanceof HttpErrorResponse && error.status === 404) {
+              this.availabilityErrorKey = 'availabilityNotFound';
+            } else {
+              console.error('Failed to check reservation availability:', error);
+              this.availabilityErrorKey = 'availabilityError';
+            }
+            this.isCheckingAvailability = false;
+          });
         },
       });
   }
@@ -182,13 +187,17 @@ export class ReservationPanelComponent {
       )
       .subscribe({
         next: (confirmation) => {
-          this.confirmationCode = confirmation.confirmationCode;
-          this.isSubmitting = false;
+          this.ngZone.run(() => {
+            this.confirmationCode = confirmation.confirmationCode;
+            this.isSubmitting = false;
+          });
         },
         error: (error: unknown) => {
-          console.error('Failed to save reservation:', error);
-          this.submissionErrorKey = 'reservationSubmitError';
-          this.isSubmitting = false;
+          this.ngZone.run(() => {
+            console.error('Failed to save reservation:', error);
+            this.submissionErrorKey = 'reservationSubmitError';
+            this.isSubmitting = false;
+          });
         },
       });
   }
