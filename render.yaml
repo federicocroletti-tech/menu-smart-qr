@@ -31,10 +31,7 @@ services:
     staticPublishPath: ./dist/menu-smart-qr/browser
     envVars:
       - key: API_BASE_URL
-        fromService:
-          type: web
-          name: menu-smart-qr-api
-          property: host
+        value: https://menu-smart-qr-api.onrender.com
     routes:
       - type: rewrite
         source: /*
