@@ -134,11 +134,12 @@ export class ReservationPanelComponent {
           if (requestId !== this.availabilityRequestId) {
             return;
           }
-          console.error('Failed to check reservation availability:', error);
-          this.availabilityErrorKey =
-            error instanceof HttpErrorResponse && error.status === 404
-              ? 'availabilityNotFound'
-              : 'availabilityError';
+          if (error instanceof HttpErrorResponse && error.status === 404) {
+            this.availabilityErrorKey = 'availabilityNotFound';
+          } else {
+            console.error('Failed to check reservation availability:', error);
+            this.availabilityErrorKey = 'availabilityError';
+          }
           this.isCheckingAvailability = false;
         },
       });

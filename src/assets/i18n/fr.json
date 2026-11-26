@@ -23,6 +23,7 @@
   "allCategories": "Toutes les catégories",
   "addToOrder": "Ajouter",
   "order": "Commande",
+  "emptyCart": "Votre panier est vide.",
   "total": "Total",
   "close": "Fermer",
   "sendWhatsAppOrder": "Envoyer la commande sur WhatsApp",

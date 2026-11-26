@@ -47,6 +47,12 @@
   overscroll-behavior: contain;
 }
 
+.cart-empty {
+  margin: 0;
+  padding: 1rem 0;
+  color: var(--color-muted, #6b7280);
+}
+
 .cart-footer {
   padding-top: 0.25rem;
 }

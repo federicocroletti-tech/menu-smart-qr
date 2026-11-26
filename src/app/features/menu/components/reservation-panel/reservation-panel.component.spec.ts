@@ -1,5 +1,6 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import type { Client } from '../../../../core/models/client.model';
@@ -233,6 +234,25 @@ describe('ReservationPanelComponent', () => {
     expect(component.canCheckAvailability).toBe(false);
     component.checkAvailability();
     expect(getAvailability).not.toHaveBeenCalled();
+  });
+
+  it('treats a 404 availability response as no availability, not an unexpected error', () => {
+    getAvailability.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 404 })),
+    );
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const component = createComponent();
+    component.client = client;
+    component.date = '2099-12-31';
+    component.time = '20:00';
+    component.partySize = 2;
+
+    component.checkAvailability();
+
+    expect(component.availabilityErrorKey).toBe('availabilityNotFound');
+    expect(component.isCheckingAvailability).toBe(false);
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it('does not allow a database reservation when no tables are available', () => {

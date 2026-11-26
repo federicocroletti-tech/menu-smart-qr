@@ -23,6 +23,7 @@
   "allCategories": "All categories",
   "addToOrder": "Add",
   "order": "Order",
+  "emptyCart": "Your cart is empty.",
   "total": "Total",
   "close": "Close",
   "sendWhatsAppOrder": "Send order on WhatsApp",
