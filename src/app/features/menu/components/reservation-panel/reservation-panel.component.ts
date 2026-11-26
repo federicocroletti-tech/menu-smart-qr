@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Input, NgZone } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, NgZone } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { switchMap } from 'rxjs';
 
@@ -42,6 +42,7 @@ export class ReservationPanelComponent {
     public readonly translationService: TranslationService,
     private readonly reservationApiService: ReservationApiService,
     private readonly ngZone: NgZone,
+    private readonly changeDetector: ChangeDetectorRef,
   ) {}
 
   get minimumPartySize(): number {
@@ -131,6 +132,7 @@ export class ReservationPanelComponent {
             if (!availability.available) {
               this.availabilityErrorKey = 'availabilityNotFound';
             }
+            this.changeDetector.detectChanges();
           });
         },
         error: (error: unknown) => {
@@ -145,6 +147,7 @@ export class ReservationPanelComponent {
               this.availabilityErrorKey = 'availabilityError';
             }
             this.isCheckingAvailability = false;
+            this.changeDetector.detectChanges();
           });
         },
       });
@@ -190,6 +193,7 @@ export class ReservationPanelComponent {
           this.ngZone.run(() => {
             this.confirmationCode = confirmation.confirmationCode;
             this.isSubmitting = false;
+            this.changeDetector.detectChanges();
           });
         },
         error: (error: unknown) => {
@@ -197,6 +201,7 @@ export class ReservationPanelComponent {
             console.error('Failed to save reservation:', error);
             this.submissionErrorKey = 'reservationSubmitError';
             this.isSubmitting = false;
+            this.changeDetector.detectChanges();
           });
         },
       });
