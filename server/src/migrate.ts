@@ -7,6 +7,7 @@ const migrationNames = [
   "001_reservation_schema.sql",
   "002_supabase_tenant_security.sql",
   "003_restaurant_content.sql",
+  "004_demo_whatsapp_recipient.sql",
 ];
 
 async function migrate(): Promise<void> {
