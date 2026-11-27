@@ -2,6 +2,9 @@
   #trigger
   type="button"
   class="reservation-trigger"
+  aria-haspopup="dialog"
+  [attr.aria-expanded]="isOpen"
+  [attr.aria-controls]="isOpen ? 'reservation-dialog' : null"
   (click)="openPanel(trigger)"
 >
   {{ translationService.translate('reservation') }}
@@ -10,16 +13,19 @@
 @if (isOpen) {
   <div class="reservation-backdrop" role="presentation" (click)="closePanel()">
     <div
+      id="reservation-dialog"
       class="reservation-panel"
       role="dialog"
       aria-modal="true"
-      [attr.aria-label]="translationService.translate('reservation')"
+      aria-labelledby="reservation-dialog-title"
       #dialog
       (keydown)="onDialogKeydown($event)"
       (click)="$event.stopPropagation()"
     >
       <header>
-        <h2>{{ translationService.translate(isManaging ? 'manageReservation' : 'reservation') }}</h2>
+        <h2 id="reservation-dialog-title">
+          {{ translationService.translate(isManaging ? 'manageReservation' : 'reservation') }}
+        </h2>
         <button
           type="button"
           (click)="closePanel()"
@@ -28,7 +34,13 @@
       </header>
 
       @if (isManaging) {
-        <app-reservation-management [timeZone]="client.timeZone ?? 'UTC'" />
+        @defer (when isManaging) {
+          <app-reservation-management [timeZone]="client.timeZone ?? 'UTC'" />
+        } @placeholder {
+          <p role="status" aria-live="polite">
+            {{ translationService.translate('loading') }}
+          </p>
+        }
         <button type="button" class="availability-check" (click)="closeManagement()">
           {{ translationService.translate('backToReservation') }}
         </button>

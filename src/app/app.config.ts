@@ -4,9 +4,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
 } from "@angular/core";
-import { provideClientHydration } from "@angular/platform-browser";
 import { provideRouter } from "@angular/router";
-import { provideIonicAngular } from "@ionic/angular";
 
 import { appRoutes } from "./app.routes";
 
@@ -15,8 +13,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient(withFetch()),
-    provideClientHydration(),
     provideRouter(appRoutes),
-    provideIonicAngular(),
   ],
 };

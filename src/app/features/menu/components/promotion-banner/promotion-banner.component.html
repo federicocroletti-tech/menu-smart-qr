@@ -1,7 +1,12 @@
 @if (client.promotion?.enabled) {
   <aside class="promotion-banner" [attr.aria-label]="translationService.translate('promotion')">
     @if (client.promotion?.imageUrl) {
-      <img [src]="client.promotion!.imageUrl" alt="" />
+      <img
+        [src]="client.promotion!.imageUrl"
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
     }
     <div>
       @if (client.promotion?.label) {

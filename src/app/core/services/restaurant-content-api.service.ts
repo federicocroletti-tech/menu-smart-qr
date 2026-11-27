@@ -1,6 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin, map, of, shareReplay, switchMap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  forkJoin,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  throwError,
+} from 'rxjs';
 
 import type { Allergen } from '../models/allergen.model';
 import type { Client } from '../models/client.model';
@@ -44,7 +53,13 @@ export class RestaurantContentApiService {
         : this.http.get<RestaurantContent>(
             `${this.runtimeConfig.apiV1BaseUrl}/restaurants/${encodeURIComponent(restaurantId)}/content`,
           )
-    ).pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    ).pipe(
+      catchError((error: unknown) => {
+        this.contentByRestaurantId.delete(restaurantId);
+        return throwError(() => error);
+      }),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
     this.contentByRestaurantId.set(restaurantId, request);
     return request;
   }

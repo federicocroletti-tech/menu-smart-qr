@@ -42,4 +42,14 @@ describe("createPoolOptions", () => {
     });
     expect(options).not.toHaveProperty("connectionString");
   });
+
+  it("verifies the server certificate when strict TLS is requested", () => {
+    const options = createPoolOptions({
+      DATABASE_URL:
+        "postgresql://postgres@ep-test.neon.tech:5432/postgres?sslmode=verify-full",
+      DATABASE_SSL: "verify-full",
+    });
+
+    expect(options.ssl).toEqual({ rejectUnauthorized: true });
+  });
 });

@@ -12,6 +12,25 @@ permissions:
 jobs:
   test-and-android:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/menu_smart_qr_test
+      RESERVATION_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/menu_smart_qr_test
+      IDEMPOTENCY_SECRET: ci-only-reservation-tests-secret-at-least-32-chars
+      REQUIRE_RESERVATION_TEST_DATABASE: "true"
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: menu_smart_qr_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d menu_smart_qr_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -42,6 +61,12 @@ jobs:
       - name: Build reservation API
         run: npm run server:build
 
+      - name: Prepare local Supabase-compatible PostgreSQL test schema
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f server/test/postgres-bootstrap.sql
+
+      - name: Apply reservation API migrations
+        run: npm run server:migrate
+
       - name: Test reservation API
         run: npm run server:test
 
@@ -63,3 +88,24 @@ jobs:
           name: menu-smart-qr-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+  browser-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npx --yes npm@11.6.2 ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser E2E tests
+        run: npm run test:e2e

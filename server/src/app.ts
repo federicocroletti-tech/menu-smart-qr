@@ -1175,9 +1175,17 @@ export function createApp(
       return;
     }
 
+    const errorCode =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      typeof error.code === "string"
+        ? error.code
+        : undefined;
     console.error("Reservation API request failed", {
       method: request.method,
       path: request.path,
+      ...(errorCode ? { errorCode } : {}),
     });
     response.status(500).json({ error: "Internal server error" });
   };
