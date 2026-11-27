@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -19,6 +20,7 @@ export type ReservationStatus =
 export interface AvailableTableSet {
   id: string;
   tableIds: string[];
+  tableNames?: string[];
   minCapacity: number;
   standardCapacity: number;
   maxCapacity: number;
@@ -43,8 +45,9 @@ export interface ReservationHoldRequest {
 
 export interface ReservationHold {
   holdToken: string;
-  expiresAt: string;
+  expiresAt: string | null;
   tableIds: string[];
+  tableNames?: string[];
 }
 
 export interface ReservationConfirmationRequest {
@@ -82,6 +85,8 @@ export interface ReservationCancellation {
   providedIn: 'root',
 })
 export class ReservationApiService {
+  private static readonly requestTimeoutMs = 15_000;
+
   constructor(
     private readonly http: HttpClient,
     private readonly runtimeConfig: RuntimeConfigService,
@@ -101,7 +106,7 @@ export class ReservationApiService {
     return this.http.get<ReservationAvailability>(
       `${this.runtimeConfig.apiV1BaseUrl}/restaurants/${encodeURIComponent(restaurantId)}/availability`,
       { params },
-    );
+    ).pipe(timeout(ReservationApiService.requestTimeoutMs));
   }
 
   createReservationHold(
@@ -115,7 +120,7 @@ export class ReservationApiService {
       {
         headers: new HttpHeaders().set('Idempotency-Key', idempotencyKey),
       },
-    );
+    ).pipe(timeout(ReservationApiService.requestTimeoutMs));
   }
 
   confirmReservation(
@@ -124,13 +129,20 @@ export class ReservationApiService {
     return this.http.post<ReservationConfirmation>(
       `${this.runtimeConfig.apiV1BaseUrl}/reservations`,
       request,
-    );
+    ).pipe(timeout(ReservationApiService.requestTimeoutMs));
+  }
+
+  releaseReservationHold(holdToken: string): Observable<{ status: ReservationStatus }> {
+    return this.http.post<{ status: ReservationStatus }>(
+      `${this.runtimeConfig.apiV1BaseUrl}/reservation-holds/release`,
+      { holdToken },
+    ).pipe(timeout(ReservationApiService.requestTimeoutMs));
   }
 
   getReservation(confirmationCode: string): Observable<ReservationDetails> {
     return this.http.get<ReservationDetails>(
       `${this.runtimeConfig.apiV1BaseUrl}/reservations/${encodeURIComponent(confirmationCode)}`,
-    );
+    ).pipe(timeout(ReservationApiService.requestTimeoutMs));
   }
 
   cancelReservation(
@@ -139,6 +151,6 @@ export class ReservationApiService {
     return this.http.post<ReservationCancellation>(
       `${this.runtimeConfig.apiV1BaseUrl}/reservations/${encodeURIComponent(confirmationCode)}/cancellation`,
       null,
-    );
+    ).pipe(timeout(ReservationApiService.requestTimeoutMs));
   }
 }

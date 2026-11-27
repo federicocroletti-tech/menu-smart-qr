@@ -27,6 +27,23 @@ ion-input {
   gap: 0.5rem;
 }
 
+.toggles legend {
+  width: 100%;
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+}
+
+.clear-filters {
+  min-height: 44px;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 999px;
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #212121);
+  font: inherit;
+  cursor: pointer;
+}
+
 label {
   display: inline-flex;
   align-items: center;

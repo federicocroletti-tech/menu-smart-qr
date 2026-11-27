@@ -4,6 +4,7 @@ import { IonSegment } from "@ionic/angular/ion-segment";
 import { IonSegmentButton } from "@ionic/angular/ion-segment-button";
 
 import type { MenuCategory } from "../../../../core/models/menu.model";
+import { TranslationService } from "../../../../core/services/translation.service";
 import { LocalizedTextPipe } from "../../../../shared/pipes/localized-text.pipe";
 
 @Component({
@@ -17,4 +18,6 @@ export class CategoryNavComponent {
   @Input() categories: MenuCategory[] = [];
   @Input() activeCategoryId: string | null = null;
   @Output() categorySelect = new EventEmitter<string>();
+
+  constructor(public readonly translationService: TranslationService) {}
 }

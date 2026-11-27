@@ -1,0 +1,154 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  color: #1f2937;
+  background: #f8fafc;
+}
+
+.admin-page {
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.admin-header {
+  display: flex;
+  max-width: 64rem;
+  margin: 0 auto 2rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-card {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid #d1d5db;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 4px 14px rgb(15 23 42 / 5%);
+}
+
+h1,
+h2 {
+  margin-top: 0;
+}
+
+.login-form,
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+input,
+select,
+button {
+  min-height: 2.75rem;
+  border: 1px solid #9ca3af;
+  border-radius: 0.55rem;
+  padding: 0.6rem 0.75rem;
+  color: inherit;
+  font: inherit;
+}
+
+button {
+  align-self: end;
+  border-color: #c62828;
+  background: #c62828;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+button.secondary-button {
+  border-color: #d1d5db;
+  background: #fff;
+  color: #1f2937;
+}
+
+:is(a, input, select, button):focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.signed-in {
+  color: #4b5563;
+}
+
+.reservations {
+  margin-top: 2rem;
+}
+
+.reservations ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reservations li {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr) minmax(8rem, auto);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+}
+
+.reservation-time {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.reservation-details {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.reservation-details span,
+.reservation-tables {
+  color: #4b5563;
+}
+
+.reservation-details a {
+  width: fit-content;
+}
+
+.notice {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.6rem;
+  background: #f3f4f6;
+}
+
+.notice--error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+@media (max-width: 40rem) {
+  .reservations li {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+}

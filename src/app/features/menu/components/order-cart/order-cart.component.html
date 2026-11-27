@@ -5,48 +5,67 @@
     type="button"
     class="cart-trigger"
     [class.above-contact-bar]="hasMobileContactBar"
-    (click)="isOpen = true"
+    #trigger
+    (click)="openPanel(trigger)"
   >
-    {{ translationService.translate("order") }} ({{ entries.length }})
+    {{ translationService.translate("order") }} ({{ itemCount }})
   </button>
 }
 
 @if (isOpen) {
-  <div class="cart-backdrop" role="presentation" (click)="isOpen = false">
+  <div class="cart-backdrop" role="presentation" (click)="closePanel()">
     <aside
       class="cart-panel"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="translationService.translate('order')"
+      #dialog
+      (keydown)="onDialogKeydown($event)"
       (click)="$event.stopPropagation()"
     >
       <header>
         <h2>{{ translationService.translate("order") }}</h2>
         <button
           type="button"
-          (click)="isOpen = false"
+          (click)="closePanel()"
           [attr.aria-label]="translationService.translate('close')"
         >
           ×
         </button>
       </header>
 
-      <div class="cart-items">
+      @if (cart.persistenceError) {
+        <p class="cart-persistence-warning" role="status" aria-live="polite">
+          {{ translationService.translate('cartNotSaved') }}
+        </p>
+      }
+
+      <div class="cart-items" aria-live="polite">
         @if (entries?.length) {
           @for (entry of entries; track entry.item.id) {
-            <div class="cart-entry">
+            <article class="cart-entry" [attr.aria-label]="entry.item.name | localizedText">
               <div>
                 <strong>{{ entry.item.name | localizedText }}</strong>
                 <span>{{ entry.item.price | price: entry.item.currency }}</span>
               </div>
               <div class="quantity">
-                <button type="button" (click)="cart.remove(entry.item.id)">
+                <button
+                  type="button"
+                  [attr.aria-label]="translationService.translate('decreaseQuantity') + ' ' + (entry.item.name | localizedText)"
+                  (click)="cart.remove(entry.item.id)"
+                >
                   −
                 </button>
-                <span>{{ entry.quantity }}</span>
-                <button type="button" (click)="cart.add(entry.item)">+</button>
+                <span [attr.aria-label]="entry.quantity + ' ' + translationService.translate('items')">
+                  {{ entry.quantity }}
+                </span>
+                <button
+                  type="button"
+                  [attr.aria-label]="translationService.translate('increaseQuantity') + ' ' + (entry.item.name | localizedText)"
+                  (click)="cart.add(entry.item)"
+                >+</button>
               </div>
-            </div>
+            </article>
           }
         } @else {
           <p class="cart-empty">
@@ -57,6 +76,10 @@
 
       <div class="cart-footer">
         @if (entries?.length) {
+          <p class="cart-total">
+            <span>{{ translationService.translate('total') }}</span>
+            <strong>{{ totalPrice | price: totalCurrency }}</strong>
+          </p>
           @if (whatsappUrl; as checkoutUrl) {
             <a
               class="checkout"
@@ -71,6 +94,14 @@
               {{ translationService.translate("whatsappUnavailable") }}
             </p>
           }
+          <button
+            type="button"
+            class="clear-cart"
+            [attr.aria-label]="translationService.translate('clearCart')"
+            (click)="cart.clear()"
+          >
+            {{ translationService.translate('clearCart') }}
+          </button>
         }
       </div>
     </aside>

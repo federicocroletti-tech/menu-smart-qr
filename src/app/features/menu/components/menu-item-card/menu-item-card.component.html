@@ -4,6 +4,22 @@
     [class.unavailable]="!item.available"
     [attr.aria-label]="item.name | localizedText"
   >
+    @if (safeImageUrl; as imageUrl) {
+      <img
+        class="dish-image"
+        [class.dish-image--loading]="imageLoading"
+        [src]="imageUrl"
+        [alt]="imageAlt"
+        loading="lazy"
+        decoding="async"
+        (load)="onImageLoad()"
+        (error)="onImageError()"
+      />
+    } @else if (showImages && item.imageUrl) {
+      <p class="dish-image-error" role="status">
+        {{ translationService.translate('dishImageUnavailable') }}
+      </p>
+    }
     <header>
       <div class="title-row">
         <h3>

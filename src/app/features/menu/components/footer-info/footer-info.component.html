@@ -9,6 +9,46 @@
           <span>{{ client.contacts.address | localizedText }}</span>
         </p>
       }
+      @if (showMap && directionsUrl) {
+        <div class="map-actions">
+          <a
+            class="directions-link"
+            [href]="directionsUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ translationService.translate('takeMeThere') }}
+          </a>
+          @if (mapEmbedUrl) {
+            <button
+              class="map-toggle"
+              type="button"
+              [attr.aria-expanded]="mapExpanded"
+              (click)="toggleEmbeddedMap()"
+            >
+              {{ translationService.translate(mapExpanded ? 'hideMap' : 'showMap') }}
+            </button>
+          }
+        </div>
+        @if (mapExpanded && mapEmbedUrl) {
+          <div class="map-preview">
+            @if (mapLoading) {
+              <p role="status">{{ translationService.translate('mapLoading') }}</p>
+            }
+            @if (mapError) {
+              <p role="status">{{ translationService.translate('mapError') }}</p>
+            }
+            <iframe
+              [src]="mapEmbedUrl"
+              [title]="translationService.translate('mapTitle')"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              (load)="onMapLoad()"
+              (error)="onMapError()"
+            ></iframe>
+          </div>
+        }
+      }
       @if (client.contacts.phone) {
         <p>
           <strong>Phone:</strong>

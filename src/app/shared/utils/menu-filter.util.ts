@@ -8,13 +8,14 @@ export interface MenuFilter {
   glutenFreeOnly?: boolean;
   spicyOnly?: boolean;
   availableOnly?: boolean;
+  includeUnavailable?: boolean;
 }
 
 export function filterMenuItems(
   items: MenuItem[],
   filter: MenuFilter,
 ): MenuItem[] {
-  const normalizedQuery = filter.query?.trim().toLowerCase();
+  const normalizedQuery = normalizeSearchText(filter.query ?? '');
 
   return items.filter((item) => {
     if (filter.recommendedOnly && !item.recommended) {
@@ -37,7 +38,7 @@ export function filterMenuItems(
       return false;
     }
 
-    if (filter.availableOnly && !item.available) {
+    if (filter.availableOnly && !item.available && !filter.includeUnavailable) {
       return false;
     }
 
@@ -45,16 +46,28 @@ export function filterMenuItems(
       return true;
     }
 
-    const names = Object.values(item.name).filter(
-      (value): value is string => !!value,
-    );
-    const descriptions = Object.values(item.description).filter(
-      (value): value is string => !!value,
-    );
-    return [...names, ...descriptions].some((entry) =>
-      entry.toLowerCase().includes(normalizedQuery),
+    const searchableFields = [
+      ...Object.values(item.name),
+      ...Object.values(item.description),
+      ...(item.ingredients ?? []).flatMap((ingredient) => Object.values(ingredient)),
+      ...(item.tags ?? []).flatMap((tag) => Object.values(tag)),
+      ...Object.values(item.notes ?? {}),
+      item.code ?? '',
+    ];
+    return searchableFields.some(
+      (entry) =>
+        typeof entry === 'string' &&
+        normalizeSearchText(entry).includes(normalizedQuery),
     );
   });
+}
+
+export function normalizeSearchText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase()
+    .trim();
 }
 
 export function sortMenuItemsByOrder(items: MenuItem[]): MenuItem[] {

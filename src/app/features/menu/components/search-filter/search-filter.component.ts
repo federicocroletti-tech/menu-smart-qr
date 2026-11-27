@@ -27,6 +27,19 @@ export class SearchFilterComponent {
 
   constructor(public readonly translationService: TranslationService) {}
 
+  clearFilters(): void {
+    this.filter = {
+      query: '',
+      vegetarianOnly: false,
+      veganOnly: false,
+      glutenFreeOnly: false,
+      spicyOnly: false,
+      recommendedOnly: false,
+      availableOnly: false,
+    };
+    this.emitChanges();
+  }
+
   emitChanges(): void {
     this.filterChange.emit({ ...this.filter });
   }

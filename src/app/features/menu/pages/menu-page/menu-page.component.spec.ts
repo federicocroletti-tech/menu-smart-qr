@@ -102,4 +102,58 @@ describe('MenuPageComponent', () => {
     expect(fixture.componentInstance.loading).toBe(false);
     expect(fixture.componentInstance.hasError).toBe(true);
   });
+
+  it('keeps categories visible when the search matches their localized name', async () => {
+    const language$ = new BehaviorSubject<'it' | 'en' | 'fr' | 'de'>('it');
+    await TestBed.configureTestingModule({
+      imports: [MenuPageComponent],
+      providers: [
+        { provide: ClientService, useValue: { getClient: () => of(createClient()) } },
+        { provide: MenuService, useValue: { getMenuCategories: () => of([]) } },
+        { provide: AllergenService, useValue: { getAllergens: () => of([]) } },
+        {
+          provide: TranslationService,
+          useValue: {
+            currentLanguage: language$.asObservable(),
+            getCurrentLanguage: () => 'it',
+            translate: (value: string) => value,
+            getLocalizedValue: (value?: Record<string, string>) => value?.['it'] ?? '',
+            getSupportedLanguages: () => ['it', 'en', 'fr', 'de'],
+            setLanguage: () => {},
+          },
+        },
+        { provide: ThemeService, useValue: { applyTheme: () => {} } },
+        { provide: SeoService, useValue: { applySeo: () => {} } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(MenuPageComponent);
+    const component = fixture.componentInstance;
+    component.client = createClient();
+    component.categories = [{
+      id: 'desserts',
+      name: { it: 'Dolci artigianali' },
+      order: 1,
+      enabled: true,
+      items: [{
+        id: 'cake',
+        name: { it: 'Torta' },
+        description: { it: 'Torta del giorno' },
+        price: 5,
+        currency: 'EUR',
+        allergens: [],
+        available: true,
+        recommended: false,
+        vegetarian: false,
+        vegan: false,
+        spicy: false,
+        glutenFree: false,
+        order: 1,
+      }],
+    }];
+    component.filter = { query: 'dolci' };
+
+    expect(component.visibleCategories.map(({ id }) => id)).toEqual(['desserts']);
+    expect(component.filterForCategory(component.categories[0]).query).toBe('');
+  });
 });

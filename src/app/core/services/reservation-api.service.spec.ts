@@ -73,6 +73,7 @@ describe('ReservationApiService', () => {
       holdToken: 'hold-token',
       expiresAt: '2099-12-31T19:05:00.000Z',
       tableIds: ['table-1'],
+      tableNames: ['Table 1'],
     };
     let result: typeof response | undefined;
 
@@ -121,6 +122,22 @@ describe('ReservationApiService', () => {
     expect(request.request.body).toEqual(confirmationRequest);
     request.flush(response);
     expect(result).toEqual(response);
+    httpTestingController.verify();
+  });
+
+  it('releases a temporary hold using its capability token', () => {
+    let result: { status: string } | undefined;
+    service.releaseReservationHold('hold-token').subscribe((value) => {
+      result = value;
+    });
+
+    const request = httpTestingController.expectOne(
+      '/api/v1/reservation-holds/release',
+    );
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ holdToken: 'hold-token' });
+    request.flush({ status: 'cancelled_by_guest' });
+    expect(result).toEqual({ status: 'cancelled_by_guest' });
     httpTestingController.verify();
   });
 

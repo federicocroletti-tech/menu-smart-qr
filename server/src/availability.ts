@@ -23,6 +23,7 @@ interface ScheduleRow extends QueryResultRow {
 
 interface TableRow extends QueryResultRow {
   id: string;
+  name: string;
   min_capacity: number;
   standard_capacity: number;
   max_capacity: number;
@@ -49,6 +50,10 @@ export interface AvailabilityRequest {
   partySize: number;
 }
 
+export type AvailableTableSet = ReturnType<typeof findAvailableTableSets>[number] & {
+  tableNames: string[];
+};
+
 export interface ReservationTiming {
   startsAt: Date;
   endsAt: Date;
@@ -63,7 +68,7 @@ export interface ReservationTiming {
 
 export interface AvailabilityResult {
   timing: ReservationTiming;
-  tableSets: ReturnType<typeof findAvailableTableSets>;
+  tableSets: AvailableTableSet[];
 }
 
 export class AvailabilityError extends Error {
@@ -109,14 +114,40 @@ export async function resolveReservationTiming(
        AND ar.online_booking_enabled
        AND $4::smallint <= ar.maximum_party_size
        AND (($2::date + $3::time) AT TIME ZONE r.time_zone) > now()
-       AND EXISTS (
+       AND (
+         EXISTS (
+           SELECT 1
+           FROM availability_exceptions exception
+           WHERE exception.restaurant_id = r.id
+             AND exception.service_date = $2::date
+             AND NOT exception.closed
+             AND $3::time >= exception.opens_at
+             AND $3::time < exception.closes_at
+         )
+         OR (
+           NOT EXISTS (
+             SELECT 1
+             FROM availability_exceptions exception
+             WHERE exception.restaurant_id = r.id
+               AND exception.service_date = $2::date
+           )
+           AND EXISTS (
+             SELECT 1
+             FROM opening_hours oh
+             WHERE oh.restaurant_id = r.id
+               AND oh.day_of_week = s.day_of_week
+               AND NOT oh.closed
+               AND $3::time >= oh.opens_at
+               AND $3::time < oh.closes_at
+           )
+         )
+       )
+       AND NOT EXISTS (
          SELECT 1
-         FROM opening_hours oh
-         WHERE oh.restaurant_id = r.id
-           AND oh.day_of_week = s.day_of_week
-           AND NOT oh.closed
-           AND $3::time >= oh.opens_at
-           AND $3::time < oh.closes_at
+         FROM availability_exceptions exception
+         WHERE exception.restaurant_id = r.id
+           AND exception.service_date = $2::date
+           AND exception.closed
        )
        AND NOT EXISTS (
          SELECT 1
@@ -163,10 +194,12 @@ export async function findAvailability(
   queryable: Queryable,
   request: AvailabilityRequest,
   now: Date = new Date(),
+  excludeReservationId?: string,
 ): Promise<AvailabilityResult> {
   const timing = await resolveReservationTiming(queryable, request);
   const tablesResult = await queryable.query<TableRow>(
     `SELECT t.id,
+            t.name,
             t.min_capacity,
             t.standard_capacity,
             t.max_capacity,
@@ -208,6 +241,7 @@ export async function findAvailability(
        WHERE rt.table_id = ANY($1::uuid[])
          AND rt.starts_at < $3
          AND rt.ends_at > $2
+         AND r.id IS DISTINCT FROM $4::uuid
          AND r.status IN ('holding', 'awaiting_guarantee', 'confirmed', 'seated')
          AND (
            r.status NOT IN ('holding', 'awaiting_guarantee')
@@ -223,7 +257,7 @@ export async function findAvailability(
        WHERE b.table_id = ANY($1::uuid[])
          AND b.starts_at < $3
          AND b.ends_at > $2`,
-      [tableIds, timing.startsAt, timing.endsAt],
+      [tableIds, timing.startsAt, timing.endsAt, excludeReservationId ?? null],
     ),
     queryable.query<CombinationRow>(
       `SELECT c.id,
@@ -259,6 +293,9 @@ export async function findAvailability(
     status: occupancy.status,
     holdExpiresAt: occupancy.hold_expires_at,
   }));
+  const tableNames = new Map(
+    tablesResult.rows.map((table) => [table.id, table.name]),
+  );
 
   return {
     timing,
@@ -270,6 +307,11 @@ export async function findAvailability(
       timing.startsAt,
       timing.endsAt,
       now,
-    ),
+    ).map((tableSet) => ({
+      ...tableSet,
+      tableNames: tableSet.tableIds.map(
+        (tableId) => tableNames.get(tableId) ?? tableId,
+      ),
+    })),
   };
 }

@@ -41,6 +41,7 @@ const item: MenuItem = {
 
 describe('OrderCartComponent', () => {
   beforeEach(async () => {
+    localStorage.removeItem('menu-smart-qr:order-cart:demo');
     await TestBed.configureTestingModule({
       imports: [OrderCartComponent],
       providers: [
@@ -62,6 +63,7 @@ describe('OrderCartComponent', () => {
     const cart = TestBed.inject(OrderCartService);
     fixture.componentInstance.client = client;
     fixture.componentInstance.isOpen = true;
+    fixture.detectChanges();
     cart.add(item);
     fixture.detectChanges();
 
@@ -74,5 +76,55 @@ describe('OrderCartComponent', () => {
     expect(fixture.nativeElement.querySelector('.cart-empty')?.textContent)
       .toContain('emptyCart');
     expect(fixture.nativeElement.textContent).not.toContain('whatsappUnavailable');
+  });
+
+  it('shows the computed order total and clears the cart from its action button', () => {
+    const fixture = TestBed.createComponent(OrderCartComponent);
+    const cart = TestBed.inject(OrderCartService);
+    fixture.componentInstance.client = client;
+    fixture.componentInstance.isOpen = true;
+    fixture.detectChanges();
+    cart.add(item);
+    cart.add(item);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('10,00');
+    fixture.nativeElement.querySelector('.clear-cart').click();
+    fixture.detectChanges();
+
+    expect(cart.getEntries()).toEqual([]);
+    expect(fixture.nativeElement.querySelector('.cart-empty')?.textContent)
+      .toContain('emptyCart');
+  });
+
+  it('traps keyboard focus and restores it to the cart trigger on Escape', async () => {
+    const fixture = TestBed.createComponent(OrderCartComponent);
+    const cart = TestBed.inject(OrderCartService);
+    fixture.componentInstance.client = client;
+    fixture.detectChanges();
+    cart.add(item);
+    fixture.detectChanges();
+
+    const trigger = fixture.nativeElement.querySelector('.cart-trigger') as HTMLButtonElement;
+    trigger.focus();
+    trigger.click();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const dialog = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href]',
+    );
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    focusable[focusable.length - 1]?.focus();
+    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement).toBe(focusable[0]);
+
+    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
   });
 });

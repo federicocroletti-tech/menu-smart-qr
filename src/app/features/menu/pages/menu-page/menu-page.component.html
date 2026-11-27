@@ -19,7 +19,14 @@
         <app-language-selector />
       }
       @if (featureFlags["enableReservations"] && client.reservations?.enabled) {
-        <app-reservation-panel [client]="client" />
+        <app-reservation-panel
+          [client]="client"
+          [onlineBookingEnabled]="!isBundledContentMode"
+          [enableWhatsappFallback]="
+            (client.reservations?.whatsappFallbackEnabled ?? true) &&
+            (featureFlags['enableReservationWhatsappFallback'] ?? true)
+          "
+        />
       }
     </div>
 
@@ -33,12 +40,14 @@
       @if (featureFlags["showRecommendedSection"]) {
         <app-recommended-section
           [categories]="categories"
+          [filter]="filter"
           [showUnavailableItems]="featureFlags['showUnavailableItems'] ?? true"
           [showAllergens]="featureFlags['showAllergens'] ?? true"
           [showDishCodes]="featureFlags['enableDishCodes'] ?? true"
           [showPrices]="featureFlags['enablePrices'] ?? true"
           [showDescriptions]="featureFlags['enableDescriptions'] ?? true"
           [showOrderButton]="featureFlags['enableOrders'] ?? false"
+          [showImages]="featureFlags['showImages'] ?? false"
           [allergenMap]="allergenMap"
           (addToOrder)="orderCartService.add($event)"
         />
@@ -48,23 +57,23 @@
         <app-search-filter (filterChange)="onFilterChange($event)" />
       }
 
-      @if (featureFlags["showCategoryNav"]) {
+      @if (featureFlags["showCategoryNav"] && visibleCategories.length > 0) {
         <app-category-nav
-          [categories]="categories"
+          [categories]="visibleCategories"
           [activeCategoryId]="activeCategoryId"
           (categorySelect)="onCategorySelect($event)"
         />
       }
 
       <div class="menu-sections">
-        @for (category of categories; track category.id) {
+        @for (category of visibleCategories; track category.id) {
           <section
             [id]="toSectionId(category.id)"
             [attr.aria-label]="category.name | localizedText"
           >
             <app-menu-section
               [category]="category"
-              [filter]="filter"
+              [filter]="filterForCategory(category)"
               [showUnavailableItems]="
                 featureFlags['showUnavailableItems'] ?? true
               "
@@ -73,12 +82,18 @@
               [showPrices]="featureFlags['enablePrices'] ?? true"
               [showDescriptions]="featureFlags['enableDescriptions'] ?? true"
               [showOrderButton]="featureFlags['enableOrders'] ?? false"
+              [showImages]="featureFlags['showImages'] ?? false"
               [allergenMap]="allergenMap"
               (addToOrder)="orderCartService.add($event)"
             />
           </section>
         }
       </div>
+      @if (visibleCategories.length === 0) {
+        <p class="menu-filter-empty" role="status" aria-live="polite">
+          {{ translationService.translate("noSearchResults") }}
+        </p>
+      }
     }
 
     @if (featureFlags["showContactBar"]) {
@@ -87,6 +102,7 @@
     <app-footer-info
       [client]="client"
       [showOpeningHours]="featureFlags['showOpeningHours'] ?? true"
+      [showMap]="featureFlags['showMap'] ?? true"
     />
 
     @if (featureFlags["enableOrders"]) {

@@ -16,6 +16,11 @@ Offrire una demo professionale, responsive e multilingua configurabile per più 
 - SEO base (title, description, Open Graph, canonical, JSON-LD)
 - Ricerca e filtri menu
 - Sezioni consigliati, categorie dinamiche, contatti e orari
+- Mappa Google Maps nel footer, caricata su richiesta e configurabile per cliente con `contacts.mapsUrl` e il flag `showMap` (attiva se omesso, disattivata con `false`)
+- Immagini dei piatti lazy e opzionali tramite `imageUrl`, `imageAlt` e `showImages`
+- Ricerca senza distinzione di accenti in nomi, descrizioni, ingredienti, tag, note e codici; filtri disponibilità/categorie e ripristino filtri
+- Carrello per ristorante persistito localmente, con totale, quantità accessibili e invio WhatsApp
+- Prenotazioni con richiesta WhatsApp di fallback, scelta/assegnazione tavolo, scadenza hold visibile e gestione tramite codice di conferma
 - Design responsive mobile-first
 - Componenti Ionic per selezione lingua, ricerca e navigazione tra categorie
 - App Android e iOS basate sulla stessa applicazione Angular tramite Capacitor
@@ -79,11 +84,12 @@ verso `index.html` (il file `render.yaml` contiene la configurazione Render).
 
 ## PostgreSQL, Supabase e API
 
-Le migrazioni `001`-`003` sono state applicate al progetto Supabase e i dati
-iniziali dei tre locali demo sono stati importati. La connessione dell'API
-pubblica su Render non è ancora verificata: prima di considerare attive le
-prenotazioni configura le variabili indicate qui sotto e inserisci i dati reali
-di turni, tavoli e documenti legali.
+Le migrazioni `001`-`005` sono state applicate al progetto Supabase e i dati
+iniziali dei tre locali demo sono stati importati. L'API pubblica su Render e
+la verifica disponibilità del demo Pizzeria Vesuvio sono state provate live.
+La migrazione `005` aggiunge configurazione dimostrativa di turni e tavoli solo
+per Pizzeria Vesuvio; non costituisce una planimetria o disponibilità reale di
+un locale operativo.
 
 L'app legge profilo, allergeni, indice menu e categorie dall'endpoint
 `GET /api/v1/restaurants/:id/content`; l'API Express li legge dalla tabella
@@ -108,6 +114,11 @@ database rimane su Supabase. Nel servizio API Render, imposta queste variabili:
 - `SUPABASE_URL` e `ALLOWED_ORIGINS` sono preconfigurati nel blueprint per i
   servizi correnti; aggiorna `ALLOWED_ORIGINS` se cambia il dominio del sito.
 - `SUPABASE_PUBLISHABLE_KEY`: valore `publishable` dal progetto Supabase.
+- Per il sito statico, `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` sono
+  utilizzati solo dal login del backoffice. La chiave `publishable` è destinata
+  al browser; non inserire mai `service_role` o credenziali database nel sito.
+  Configura la chiave anche nel servizio statico Render: il blueprint la
+  dichiara senza un valore predefinito.
 - `DATABASE_SSL=require` obbliga la connessione TLS; per il pooler Supabase il
   driver non verifica la catena del certificato. Per verificare anche
   l'identità del server, configura nel driver il certificato CA Supabase.
@@ -116,7 +127,8 @@ database rimane su Supabase. Nel servizio API Render, imposta queste variabili:
 
 Non inserire credenziali nel repository. Dopo il deploy iniziale, il comando
 `server:deploy` applica le migrazioni e importa i dati JSON iniziali. In locale,
-configura le variabili di `server/.env.example` nel tuo ambiente, poi esegui:
+configura le variabili di `server/.env.example` nel tuo ambiente (il file è un
+modello e non viene caricato automaticamente), poi esegui:
 
 ```powershell
 npm run server:build
@@ -133,12 +145,29 @@ all'URL HTTPS del servizio API prima di `npm run build:mobile`. Il piano gratuit
 Render è adatto a prove, ma può sospendere il servizio API dopo inattività; per
 prenotazioni in produzione seleziona un piano sempre attivo.
 
-**Le prenotazioni online restano disabilitate finché il ristorante non configura
-in Supabase gli orari/turni, la sala e i tavoli, e in `client_data.reservations`
-i campi `bookingTermsUrl`, `privacyNoticeUrl`, `bookingTermsVersion` e
-`privacyNoticeVersion`.** Questa configurazione è
-necessaria: il repository non contiene una planimetria reale né documenti legali
-da pubblicare. Il form non invia una conferma se i link legali non sono validi.
+**Il demo Pizzeria Vesuvio restituisce disponibilità per gli orari configurati,
+ma la conferma dal sito resta disabilitata finché non vengono pubblicati URL
+validi per `bookingTermsUrl` e `privacyNoticeUrl` nel profilo del ristorante.**
+Le tabelle attuali sono dimostrative e non descrivono una sala reale. Bar Milano
+e The Corner Pub non hanno ancora una configurazione di prenotazione equivalente.
+
+Il backoffice non include ancora funzioni per modificare menu, orari, tavoli,
+regole o documenti. Per il piano multi-ristorante, i limiti attuali e la
+gestione prudente degli ambienti, vedere
+[il piano operativo SaaS multi-tenant](./docs/saas-multitenant-rollout.md).
+La pagina di accesso del backoffice è disponibile su `/admin`; nella prima
+versione consente accesso e consultazione delle prenotazioni per le membership
+già provisionate, non la modifica dei contenuti.
+
+Il pannello cliente consente di recuperare una prenotazione con il codice di
+conferma e, se ancora cancellabile, di richiederne la cancellazione. Durante la
+prenotazione online, la UI mostra il timer dell'hold e i nomi dei tavoli
+restituiti dall'API; il cliente può scegliere una combinazione disponibile o
+lasciare l'assegnazione al ristorante. Se l'API o i documenti legali non
+consentono la prenotazione online, il pannello può aprire una richiesta
+WhatsApp, controllata dal flag `enableReservationWhatsappFallback` e
+`reservations.whatsappFallbackEnabled`. La richiesta WhatsApp non è una
+prenotazione confermata: il locale deve rispondere e confermare.
 
 ## Avvio progetto
 

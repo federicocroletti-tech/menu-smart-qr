@@ -14,9 +14,7 @@
   ></ion-input>
 
   <fieldset class="toggles">
-    <legend class="visually-hidden">
-      {{ translationService.translate("allCategories") }}
-    </legend>
+    <legend>{{ translationService.translate("filterOptions") }}</legend>
     <label>
       <input
         type="checkbox"
@@ -62,5 +60,17 @@
       />
       {{ translationService.translate("recommended") }}
     </label>
+    <label>
+      <input
+        type="checkbox"
+        name="availableOnly"
+        [(ngModel)]="filter.availableOnly"
+        (change)="emitChanges()"
+      />
+      {{ translationService.translate("availableOnly") }}
+    </label>
+    <button type="button" class="clear-filters" (click)="clearFilters()">
+      {{ translationService.translate("clearFilters") }}
+    </button>
   </fieldset>
 </section>

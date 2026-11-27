@@ -1,0 +1,84 @@
+<form class="reservation-lookup" [attr.aria-busy]="isLookingUp" (ngSubmit)="lookupReservation()">
+  <label>
+    {{ translationService.translate('reservationCode') }}
+    <input
+      [(ngModel)]="confirmationCode"
+      name="confirmationCode"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      [disabled]="isLookingUp || isCancelling"
+      required
+    />
+  </label>
+  <button type="submit" [disabled]="!canLookup">
+    {{
+      translationService.translate(
+        isLookingUp ? 'retrievingReservation' : 'retrieveReservation'
+      )
+    }}
+  </button>
+</form>
+
+@if (lookupErrorKey) {
+  <p class="reservation-message reservation-message--error" role="alert">
+    {{ translationService.translate(lookupErrorKey) }}
+  </p>
+}
+
+@if (reservation; as details) {
+  <section class="reservation-details" [attr.aria-label]="translationService.translate('reservationDetails')">
+    <h3>{{ translationService.translate('reservationDetails') }}</h3>
+    <dl>
+      <dt>{{ translationService.translate('reservationStatusLabel') }}</dt>
+      <dd>{{ translationService.translate(reservationStatusKey) }}</dd>
+      <dt>{{ translationService.translate('date') }}</dt>
+      <dd>{{ formatDateTime(details.startsAt) }}</dd>
+      <dt>{{ translationService.translate('reservationEnd') }}</dt>
+      <dd>{{ formatDateTime(details.endsAt) }}</dd>
+      <dt>{{ translationService.translate('partySize') }}</dt>
+      <dd>{{ details.partySize }}</dd>
+      <dt>{{ translationService.translate('reservationTables') }}</dt>
+      <dd>
+        @if (details.tables.length) {
+          {{ details.tables.join(', ') }}
+        } @else {
+          {{ translationService.translate('reservationNoTableAssigned') }}
+        }
+      </dd>
+    </dl>
+
+    @if (canCancel && !confirmCancellation) {
+      <button type="button" class="cancel-button" (click)="confirmCancellation = true">
+        {{ translationService.translate('cancelReservation') }}
+      </button>
+    }
+
+    @if (canCancel && confirmCancellation) {
+      <div class="cancellation-confirmation" role="group" [attr.aria-label]="translationService.translate('confirmCancellation')">
+        <p>{{ translationService.translate('confirmCancellation') }}</p>
+        <button type="button" class="cancel-button" [disabled]="isCancelling" (click)="cancelReservation()">
+          {{
+            translationService.translate(
+              isCancelling ? 'cancellingReservation' : 'confirmCancellation'
+            )
+          }}
+        </button>
+        <button type="button" [disabled]="isCancelling" (click)="confirmCancellation = false">
+          {{ translationService.translate('keepReservation') }}
+        </button>
+      </div>
+    }
+  </section>
+}
+
+@if (cancellationNoticeKey) {
+  <p class="reservation-message" role="status" aria-live="polite">
+    {{ translationService.translate(cancellationNoticeKey) }}
+  </p>
+}
+@if (cancellationErrorKey) {
+  <p class="reservation-message reservation-message--error" role="alert">
+    {{ translationService.translate(cancellationErrorKey) }}
+  </p>
+}

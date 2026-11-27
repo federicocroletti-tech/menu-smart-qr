@@ -29,6 +29,59 @@ a {
   text-underline-offset: 2px;
 }
 
+.map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.directions-link,
+.map-toggle {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--color-primary, #1d4ed8);
+  border-radius: 0.5rem;
+  color: var(--color-text, #212121);
+  background: var(--color-surface, #ffffff);
+  font: inherit;
+  font-weight: 600;
+}
+
+.directions-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.map-toggle {
+  cursor: pointer;
+}
+
+.directions-link:focus-visible,
+.map-toggle:focus-visible {
+  outline: 3px solid var(--color-text, #212121);
+  outline-offset: 3px;
+}
+
+.map-preview {
+  margin: 0.75rem 0 1rem;
+}
+
+.map-preview p {
+  margin-bottom: 0.5rem;
+}
+
+.map-preview iframe {
+  display: block;
+  width: 100%;
+  min-height: 14rem;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+}
+
 .social-links,
 .notes ul {
   margin: 0.5rem 0 0;

@@ -1,1 +1,5 @@
-window.menuSmartQrRuntime = Object.freeze({ apiBaseUrl: '' });
+window.menuSmartQrRuntime = Object.freeze({
+  apiBaseUrl: '',
+  supabaseUrl: '',
+  supabasePublishableKey: '',
+});

@@ -1,22 +1,99 @@
-<button type="button" class="reservation-trigger" (click)="isOpen = true">
+<button
+  #trigger
+  type="button"
+  class="reservation-trigger"
+  (click)="openPanel(trigger)"
+>
   {{ translationService.translate('reservation') }}
 </button>
 
 @if (isOpen) {
-  <div class="reservation-backdrop" role="presentation" (click)="isOpen = false">
+  <div class="reservation-backdrop" role="presentation" (click)="closePanel()">
     <div
       class="reservation-panel"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="translationService.translate('reservation')"
+      #dialog
+      (keydown)="onDialogKeydown($event)"
       (click)="$event.stopPropagation()"
     >
       <header>
-        <h2>{{ translationService.translate('reservation') }}</h2>
-        <button type="button" (click)="isOpen = false" [attr.aria-label]="translationService.translate('close')">×</button>
+        <h2>{{ translationService.translate(isManaging ? 'manageReservation' : 'reservation') }}</h2>
+        <button
+          type="button"
+          (click)="closePanel()"
+          [attr.aria-label]="translationService.translate('close')"
+        >×</button>
       </header>
 
-      @if (!confirmationCode) {
+      @if (isManaging) {
+        <app-reservation-management [timeZone]="client.timeZone ?? 'UTC'" />
+        <button type="button" class="availability-check" (click)="closeManagement()">
+          {{ translationService.translate('backToReservation') }}
+        </button>
+      } @else if (confirmationCode) {
+        <p class="availability-message" role="status" aria-live="polite">
+          {{ translationService.translate('reservationConfirmed') }}
+        </p>
+        <p class="reservation-confirmation-code">{{ confirmationCode }}</p>
+        <button type="button" class="availability-check" (click)="openManagement()">
+          {{ translationService.translate('manageReservation') }}
+        </button>
+      } @else if (hold) {
+        <section class="reservation-hold" aria-live="polite">
+          <p class="availability-message" role="status">
+            {{ translationService.translate('reservationHoldActive') }}
+          </p>
+          <p class="hold-expiry" [class.hold-expiry--urgent]="remainingHoldSeconds < 60">
+            {{ translationService.translate('reservationHoldExpiresIn') }}
+            <strong>{{ holdCountdownLabel }}</strong>
+            @if (holdExpirationTime) {
+              · {{ translationService.translate('reservationHoldUntil') }} {{ holdExpirationTime }}
+            }
+          </p>
+          <p class="hold-table">
+            {{ translationService.translate('reservationTables') }}:
+            {{ hold.tableNames?.join(', ') || translationService.translate('reservationNoTableAssigned') }}
+          </p>
+          @if (submissionErrorKey) {
+            <p class="availability-message availability-message--error" role="alert">
+              {{ translationService.translate(submissionErrorKey) }}
+            </p>
+          }
+          <button
+            class="reservation-submit"
+            type="button"
+            [disabled]="!canConfirmHeldReservation"
+            (click)="confirmHeldReservation()"
+          >
+            {{ translationService.translate(isSubmitting ? 'savingReservation' : 'confirmReservation') }}
+          </button>
+          <button
+            class="availability-check"
+            type="button"
+            [disabled]="isSubmitting || isReleasingHold"
+            (click)="releaseHeldReservation()"
+          >
+            {{
+              translationService.translate(
+                isReleasingHold ? 'releasingReservationHold' : 'releaseReservationHold'
+              )
+            }}
+          </button>
+        </section>
+      } @else {
+        @if (holdReleased) {
+          <p class="availability-message" role="status" aria-live="polite">
+            {{ translationService.translate('reservationHoldReleased') }}
+          </p>
+        }
+        @if (!onlineBookingEnabled) {
+          <p class="availability-message" role="status">
+            {{ translationService.translate('onlineReservationUnavailable') }}
+          </p>
+        }
+
         <div class="date-time">
           <label>
             {{ translationService.translate('date') }}
@@ -26,6 +103,7 @@
               name="date"
               type="date"
               [min]="minimumDate"
+              [disabled]="isSubmitting"
               required
             />
           </label>
@@ -36,6 +114,7 @@
               (ngModelChange)="resetAvailability()"
               name="time"
               type="time"
+              [disabled]="isSubmitting"
               required
             />
           </label>
@@ -50,20 +129,18 @@
             [min]="minimumPartySize"
             [max]="maximumPartySize"
             step="1"
+            [disabled]="isSubmitting"
             required
           />
         </label>
+
         <button
           class="availability-check"
           type="button"
-          [disabled]="!canCheckAvailability || isCheckingAvailability"
+          [disabled]="!canCheckAvailability || isCheckingAvailability || isSubmitting"
           (click)="checkAvailability()"
         >
-          {{
-            translationService.translate(
-              isCheckingAvailability ? 'checkingAvailability' : 'checkAvailability'
-            )
-          }}
+          {{ translationService.translate(isCheckingAvailability ? 'checkingAvailability' : 'checkAvailability') }}
         </button>
 
         @if (availability?.available) {
@@ -76,20 +153,75 @@
           </p>
         }
 
+        @if (availability?.available && availability.tableSets.length) {
+          <fieldset class="table-assignment">
+            <legend>{{ translationService.translate('tableAssignment') }}</legend>
+            <label>
+              <input
+                type="radio"
+                name="allocationMode"
+                value="restaurant_assigned"
+                [(ngModel)]="allocationMode"
+              />
+              {{ translationService.translate('restaurantAssigned') }}
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="allocationMode"
+                value="guest_selected"
+                [(ngModel)]="allocationMode"
+              />
+              {{ translationService.translate('guestSelectedTable') }}
+            </label>
+            @if (allocationMode === 'guest_selected') {
+              <label>
+                {{ translationService.translate('reservationTables') }}
+                <select [(ngModel)]="selectedTableSetId" name="selectedTableSetId">
+                  @for (tableSet of availability.tableSets; track tableSet.id) {
+                    <option [value]="tableSet.id">
+                      {{ tableSet.tableNames?.join(', ') || tableSet.tableIds.join(', ') }}
+                      · {{ tableSet.minCapacity }}–{{ tableSet.maxCapacity }}
+                    </option>
+                  }
+                </select>
+              </label>
+            }
+          </fieldset>
+        }
+
         <label>
           {{ translationService.translate('name') }}
-          <input [(ngModel)]="name" name="name" autocomplete="name" required />
+          <input
+            [(ngModel)]="name"
+            name="name"
+            autocomplete="name"
+            [disabled]="isSubmitting"
+            required
+          />
         </label>
         <label>
           {{ translationService.translate('phone') }}
-          <input [(ngModel)]="phone" name="phone" type="tel" autocomplete="tel" required />
+          <input
+            [(ngModel)]="phone"
+            name="phone"
+            type="tel"
+            autocomplete="tel"
+            [disabled]="isSubmitting"
+            required
+          />
         </label>
         <label>
           {{ translationService.translate('notes') }}
-          <textarea [(ngModel)]="notes" name="notes" rows="3"></textarea>
+          <textarea
+            [(ngModel)]="notes"
+            name="notes"
+            rows="3"
+            [disabled]="isSubmitting"
+          ></textarea>
         </label>
 
-        @if (!hasLegalDocuments) {
+        @if (!hasLegalDocuments && onlineBookingEnabled) {
           <p class="availability-message availability-message--error" role="status">
             {{ translationService.translate('reservationLegalDocumentsMissing') }}
           </p>
@@ -99,6 +231,7 @@
             [(ngModel)]="acceptBookingTerms"
             name="acceptBookingTerms"
             type="checkbox"
+            [disabled]="isSubmitting"
           />
           <span>
             {{ translationService.translate('bookingTermsConsent') }}
@@ -114,6 +247,7 @@
             [(ngModel)]="acceptPrivacyNotice"
             name="acceptPrivacyNotice"
             type="checkbox"
+            [disabled]="isSubmitting"
           />
           <span>
             {{ translationService.translate('privacyNoticeConsent') }}
@@ -130,23 +264,26 @@
             {{ translationService.translate(submissionErrorKey) }}
           </p>
         }
+        @if (showWhatsappFallbackAction) {
+          <a class="reservation-whatsapp" [href]="whatsappReservationUrl" target="_blank" rel="noopener noreferrer">
+            {{ translationService.translate('reserveViaWhatsapp') }}
+          </a>
+        } @else if (showWhatsappFallbackUnavailable) {
+          <p class="availability-message availability-message--error" role="status">
+            {{ translationService.translate('reservationWhatsappUnavailable') }}
+          </p>
+        }
         <button
           class="reservation-submit"
           type="button"
           [disabled]="!canSubmitReservation"
           (click)="submitReservation()"
         >
-          {{
-            translationService.translate(
-              isSubmitting ? 'savingReservation' : 'confirmReservation'
-            )
-          }}
+          {{ translationService.translate('reserveOnline') }}
         </button>
-      } @else {
-        <p class="availability-message" role="status" aria-live="polite">
-          {{ translationService.translate('reservationConfirmed') }}
-        </p>
-        <p class="reservation-confirmation-code">{{ confirmationCode }}</p>
+        <button type="button" class="manage-reservation-trigger" (click)="openManagement()">
+          {{ translationService.translate('manageExistingReservation') }}
+        </button>
       }
     </div>
   </div>

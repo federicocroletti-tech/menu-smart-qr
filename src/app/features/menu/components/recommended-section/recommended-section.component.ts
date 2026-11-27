@@ -4,6 +4,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import type { Allergen } from '../../../../core/models/allergen.model';
 import type { MenuCategory, MenuItem } from '../../../../core/models/menu.model';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { filterMenuItems, type MenuFilter } from '../../../../shared/utils/menu-filter.util';
 import { MenuItemCardComponent } from '../menu-item-card/menu-item-card.component';
 
 @Component({
@@ -15,21 +16,24 @@ import { MenuItemCardComponent } from '../menu-item-card/menu-item-card.componen
 })
 export class RecommendedSectionComponent {
   @Input() categories: MenuCategory[] = [];
+  @Input() filter: MenuFilter = {};
   @Input() showUnavailableItems = true;
   @Input() showAllergens = true;
   @Input() showDishCodes = true;
   @Input() showPrices = true;
   @Input() showDescriptions = true;
   @Input() showOrderButton = false;
+  @Input() showImages = false;
   @Input() allergenMap: Record<string, Allergen> = {};
   @Output() addToOrder = new EventEmitter<MenuItem>();
 
   constructor(public readonly translationService: TranslationService) {}
 
   get recommendedItems(): MenuItem[] {
-    return this.categories
+    const items = this.categories
       .flatMap((category) => category.items)
       .filter((item) => item.recommended)
       .filter((item) => this.showUnavailableItems || item.available);
+    return filterMenuItems(items, this.filter);
   }
 }

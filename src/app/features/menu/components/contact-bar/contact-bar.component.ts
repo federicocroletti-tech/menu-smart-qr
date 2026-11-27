@@ -3,6 +3,7 @@ import { Component, Input } from '@angular/core';
 
 import type { Client } from '../../../../core/models/client.model';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { createWhatsAppUrl } from '../../../../core/utils/whatsapp.util';
 
 @Component({
   selector: 'app-contact-bar',
@@ -17,16 +18,10 @@ export class ContactBarComponent {
   constructor(public readonly translationService: TranslationService) {}
 
   get whatsappUrl(): string | null {
-    const whatsapp = this.client.contacts.whatsapp;
-    if (!whatsapp) {
-      return null;
-    }
-
-    const message = encodeURIComponent(
+    return createWhatsAppUrl(
+      this.client.contacts,
       this.translationService.translate('infoRequestWhatsappMessage'),
     );
-    const phone = whatsapp.replace(/\D/g, '');
-    return `https://wa.me/${phone}?text=${message}`;
   }
 
   get phoneUrl(): string | null {

@@ -70,3 +70,11 @@
     padding-inline: var(--space-6, 1.5rem);
   }
 }
+.menu-filter-empty {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px dashed var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  color: var(--color-muted, #4b5563);
+  text-align: center;
+}

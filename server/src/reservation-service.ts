@@ -5,6 +5,7 @@ import type { Pool, PoolClient } from "pg";
 import {
   AvailabilityError,
   findAvailability,
+  resolveReservationTiming,
   type AvailabilityRequest,
 } from "./availability";
 import {
@@ -29,8 +30,9 @@ export interface HoldRequest extends AvailabilityRequest {
 
 export interface HoldResult {
   holdToken: string;
-  expiresAt: Date;
+  expiresAt: Date | null;
   tableIds: string[];
+  tableNames: string[];
   reused: boolean;
 }
 
@@ -68,6 +70,7 @@ interface ExistingHold {
   ends_at: Date;
   party_size_current: number;
   hold_expires_at: Date | null;
+  hold_active: boolean;
   allocation_mode: HoldRequest["allocationMode"];
 }
 
@@ -178,7 +181,8 @@ export async function createReservationHold(
 
     const existing = await client.query<ExistingHold>(
       `SELECT id, status, starts_at, ends_at, party_size_current,
-              hold_expires_at, allocation_mode
+              hold_expires_at, hold_expires_at > now() AS hold_active,
+              allocation_mode
        FROM reservations
        WHERE restaurant_id = $1 AND idempotency_key = $2
        FOR UPDATE`,
@@ -187,9 +191,9 @@ export async function createReservationHold(
     if (existing.rowCount) {
       const hold = existing.rows[0];
       if (
-        hold.status !== "holding" ||
-        !hold.hold_expires_at ||
-        hold.hold_expires_at.getTime() <= Date.now() ||
+        (hold.status !== "holding" && hold.status !== "confirmed") ||
+        (hold.status === "holding" && !hold.hold_active) ||
+        (hold.status === "confirmed" && hold.hold_expires_at !== null) ||
         hold.allocation_mode !== request.allocationMode ||
         hold.party_size_current !== request.partySize
       ) {
@@ -199,10 +203,15 @@ export async function createReservationHold(
         );
       }
 
-      const currentTiming = await findAvailability(client, request);
+      const requestStart = await client.query<{ starts_at: Date }>(
+        `SELECT ($2::date + $3::time) AT TIME ZONE r.time_zone AS starts_at
+         FROM restaurants r
+         WHERE r.id = $1`,
+        [request.restaurantId, request.date, request.time],
+      );
       if (
-        hold.starts_at.toISOString() !== currentTiming.timing.startsAt.toISOString() ||
-        hold.ends_at.toISOString() !== currentTiming.timing.endsAt.toISOString()
+        !requestStart.rows[0] ||
+        hold.starts_at.toISOString() !== requestStart.rows[0].starts_at.toISOString()
       ) {
         throw new ReservationError(
           409,
@@ -210,8 +219,15 @@ export async function createReservationHold(
         );
       }
 
-      const tableRows = await client.query<{ table_id: string }>(
-        `SELECT table_id FROM reservation_tables WHERE reservation_id = $1`,
+      const tableRows = await client.query<{
+        table_id: string;
+        table_name: string;
+      }>(
+        `SELECT rt.table_id, t.name AS table_name
+         FROM reservation_tables rt
+         JOIN restaurant_tables t ON t.id = rt.table_id
+         WHERE rt.reservation_id = $1
+         ORDER BY t.name`,
         [hold.id],
       );
       if (
@@ -231,6 +247,7 @@ export async function createReservationHold(
         holdToken: token,
         expiresAt: hold.hold_expires_at,
         tableIds: tableRows.rows.map((row) => row.table_id).sort(),
+        tableNames: tableRows.rows.map((row) => row.table_name),
         reused: true,
       };
     }
@@ -319,6 +336,7 @@ export async function createReservationHold(
       holdToken: token,
       expiresAt: hold.rows[0].hold_expires_at,
       tableIds: selected.tableIds,
+      tableNames: selected.tableNames,
       reused: false,
     };
   } catch (error) {
@@ -336,23 +354,31 @@ export async function createReservationHold(
     if (isUniqueViolation(error)) {
       const existing = await pool.query<ExistingHold>(
         `SELECT id, status, starts_at, ends_at, party_size_current,
-                hold_expires_at, allocation_mode
+                hold_expires_at, hold_expires_at > now() AS hold_active,
+                allocation_mode
          FROM reservations
          WHERE restaurant_id = $1 AND idempotency_key = $2`,
         [request.restaurantId, request.idempotencyKey],
       );
       const hold = existing.rows[0];
-      if (hold?.status === "holding" && hold.hold_expires_at) {
-        const currentTiming = await findAvailability(pool, request);
-        const tableRows = await pool.query<{ table_id: string }>(
-          "SELECT table_id FROM reservation_tables WHERE reservation_id = $1",
+      if (hold?.status === "holding" && hold.hold_active && hold.hold_expires_at) {
+        const currentTiming = await resolveReservationTiming(pool, request);
+        const tableRows = await pool.query<{
+          table_id: string;
+          table_name: string;
+        }>(
+          `SELECT rt.table_id, t.name AS table_name
+           FROM reservation_tables rt
+           JOIN restaurant_tables t ON t.id = rt.table_id
+           WHERE rt.reservation_id = $1
+           ORDER BY t.name`,
           [hold.id],
         );
         if (
           hold.allocation_mode !== request.allocationMode ||
           hold.party_size_current !== request.partySize ||
-          hold.starts_at.toISOString() !== currentTiming.timing.startsAt.toISOString() ||
-          hold.ends_at.toISOString() !== currentTiming.timing.endsAt.toISOString() ||
+          hold.starts_at.toISOString() !== currentTiming.startsAt.toISOString() ||
+          hold.ends_at.toISOString() !== currentTiming.endsAt.toISOString() ||
           (request.allocationMode === "guest_selected" &&
             !matchesRequestedTables(
               tableRows.rows.map((row) => row.table_id),
@@ -368,6 +394,7 @@ export async function createReservationHold(
           holdToken: token,
           expiresAt: hold.hold_expires_at,
           tableIds: tableRows.rows.map((row) => row.table_id).sort(),
+          tableNames: tableRows.rows.map((row) => row.table_name),
           reused: true,
         };
       }
@@ -414,6 +441,7 @@ export async function confirmReservation(
       restaurant_id: string;
       status: ReservationStatus;
       hold_expires_at: Date | null;
+      hold_is_active: boolean;
       starts_at: Date;
       cancellation_notice_minutes: number | null;
       booking_terms_version: string;
@@ -424,6 +452,7 @@ export async function confirmReservation(
               r.restaurant_id,
               r.status,
               r.hold_expires_at,
+              r.hold_expires_at > now() AS hold_is_active,
               r.starts_at,
               ar.cancellation_notice_minutes,
               ar.booking_terms_version,
@@ -456,7 +485,7 @@ export async function confirmReservation(
     }
     if (
       !reservation.hold_expires_at ||
-      reservation.hold_expires_at.getTime() <= Date.now()
+      !reservation.hold_is_active
     ) {
       await client.query(
         `UPDATE reservations SET status = 'expired', updated_at = now() WHERE id = $1`,
@@ -552,6 +581,64 @@ export async function confirmReservation(
   }
 }
 
+export async function releaseReservationHold(
+  pool: Pool,
+  holdToken: string,
+): Promise<{ status: ReservationStatus }> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query<{
+      id: string;
+      status: ReservationStatus;
+    }>(
+      `SELECT id, status
+       FROM reservations
+       WHERE hold_token_hash = $1
+       FOR UPDATE`,
+      [hashToken(holdToken)],
+    );
+    const reservation = result.rows[0];
+    if (!reservation) {
+      throw new ReservationError(404, "Reservation hold not found");
+    }
+
+    if (reservation.status === "cancelled_by_guest") {
+      await client.query("COMMIT");
+      return { status: reservation.status };
+    }
+    if (reservation.status !== "holding") {
+      throw new ReservationError(409, "Reservation hold is no longer active");
+    }
+
+    await client.query(
+      `UPDATE reservations
+       SET status = 'cancelled_by_guest', hold_expires_at = NULL, updated_at = now()
+       WHERE id = $1`,
+      [reservation.id],
+    );
+    await client.query(
+      `UPDATE reservation_tables
+       SET status = 'cancelled_by_guest'
+       WHERE reservation_id = $1`,
+      [reservation.id],
+    );
+    await client.query(
+      `INSERT INTO reservation_events
+         (reservation_id, actor_type, previous_status, new_status, reason)
+       VALUES ($1, 'guest', 'holding', 'cancelled_by_guest', 'Guest released reservation hold')`,
+      [reservation.id],
+    );
+    await client.query("COMMIT");
+    return { status: "cancelled_by_guest" };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function cancelReservation(
   pool: Pool,
   confirmationCode: string,
@@ -563,8 +650,10 @@ export async function cancelReservation(
       id: string;
       status: ReservationStatus;
       cancellation_deadline: Date | null;
+      cancellation_is_late: boolean;
     }>(
-      `SELECT id, status, cancellation_deadline
+      `SELECT id, status, cancellation_deadline,
+              cancellation_deadline < now() AS cancellation_is_late
        FROM reservations
        WHERE confirmation_code_hash = $1
        FOR UPDATE`,
@@ -578,9 +667,7 @@ export async function cancelReservation(
       throw new ReservationError(409, "Reservation cannot be cancelled");
     }
 
-    const late =
-      reservation.cancellation_deadline !== null &&
-      reservation.cancellation_deadline.getTime() < Date.now();
+    const late = reservation.cancellation_is_late;
     await client.query(
       `UPDATE reservations
        SET status = 'cancelled_by_guest', updated_at = now()

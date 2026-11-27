@@ -20,7 +20,11 @@ import { SeoService } from "../../../../core/services/seo.service";
 import { ThemeService } from "../../../../core/services/theme.service";
 import { TranslationService } from "../../../../core/services/translation.service";
 import { LocalizedTextPipe } from "../../../../shared/pipes/localized-text.pipe";
-import { type MenuFilter } from "../../../../shared/utils/menu-filter.util";
+import {
+  filterMenuItems,
+  normalizeSearchText,
+  type MenuFilter,
+} from "../../../../shared/utils/menu-filter.util";
 import { CategoryNavComponent } from "../../components/category-nav/category-nav.component";
 import { ContactBarComponent } from "../../components/contact-bar/contact-bar.component";
 import { EmptyStateComponent } from "../../components/empty-state/empty-state.component";
@@ -112,6 +116,22 @@ export class MenuPageComponent implements OnInit, OnDestroy {
     return !this.loading && !this.hasError && this.categories.length === 0;
   }
 
+  get visibleCategories(): MenuCategory[] {
+    const showUnavailable = this.featureFlags['showUnavailableItems'] ?? true;
+    return this.categories.filter((category) =>
+      this.matchesCategorySearch(category) ||
+      filterMenuItems(category.items, this.filter).some(
+          (item) => showUnavailable || item.available,
+        ),
+    );
+  }
+
+  filterForCategory(category: MenuCategory): MenuFilter {
+    return this.matchesCategorySearch(category)
+      ? { ...this.filter, query: '' }
+      : this.filter;
+  }
+
   get hasMobileContactBar(): boolean {
     return Boolean(this.client && this.featureFlags["showContactBar"]);
   }
@@ -136,6 +156,12 @@ export class MenuPageComponent implements OnInit, OnDestroy {
 
   onFilterChange(filter: MenuFilter): void {
     this.filter = filter;
+    if (
+      this.activeCategoryId &&
+      !this.visibleCategories.some((category) => category.id === this.activeCategoryId)
+    ) {
+      this.activeCategoryId = this.visibleCategories[0]?.id ?? null;
+    }
   }
 
   onCategorySelect(categoryId: string): void {
@@ -149,14 +175,14 @@ export class MenuPageComponent implements OnInit, OnDestroy {
 
   @HostListener("window:scroll")
   onWindowScroll(): void {
-    if (this.categories.length === 0) {
+    if (this.visibleCategories.length === 0) {
       return;
     }
 
     const viewportOffset = 140;
     let activeCategory: string | null = null;
 
-    for (const category of this.categories) {
+    for (const category of this.visibleCategories) {
       const section = this.document.getElementById(
         this.toSectionId(category.id),
       );
@@ -170,7 +196,7 @@ export class MenuPageComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.activeCategoryId = activeCategory ?? this.categories[0].id;
+    this.activeCategoryId = activeCategory ?? this.visibleCategories[0].id;
   }
 
   toSectionId(categoryId: string): string {
@@ -221,5 +247,20 @@ export class MenuPageComponent implements OnInit, OnDestroy {
   private scrollToCategory(categoryId: string): void {
     const section = this.document.getElementById(this.toSectionId(categoryId));
     section?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  private matchesCategorySearch(category: MenuCategory): boolean {
+    const query = normalizeSearchText(this.filter.query ?? '');
+    const categoryTexts = category.description
+      ? [category.name, category.description]
+      : [category.name];
+    return Boolean(query) &&
+      categoryTexts.some((value) =>
+        Object.values(value).some(
+            (text) =>
+              typeof text === 'string' &&
+              normalizeSearchText(text).includes(query),
+          ),
+        );
   }
 }

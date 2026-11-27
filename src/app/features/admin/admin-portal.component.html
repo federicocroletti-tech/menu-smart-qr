@@ -1,0 +1,119 @@
+<main class="admin-page">
+  <header class="admin-header">
+    <a class="brand" href="/">Menu Smart QR</a>
+    @if (session) {
+      <button type="button" class="secondary-button" (click)="signOut()">
+        Esci
+      </button>
+    }
+  </header>
+
+  <section class="admin-card" aria-labelledby="admin-title">
+    <h1 id="admin-title">Area ristoratore</h1>
+
+    @if (!isAuthConfigured) {
+      <p class="notice notice--error" role="alert">
+        Accesso non configurato. Imposta SUPABASE_URL e
+        SUPABASE_PUBLISHABLE_KEY per questo ambiente.
+      </p>
+    } @else if (isLoading && !session) {
+      <p role="status">Caricamento sessione...</p>
+    } @else if (!session) {
+      <form class="login-form" (ngSubmit)="signIn()">
+        <label>
+          Email
+          <input
+            [(ngModel)]="email"
+            name="email"
+            type="email"
+            autocomplete="username"
+            required
+          />
+        </label>
+        <label>
+          Password
+          <input
+            [(ngModel)]="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+        <button type="submit" [disabled]="isSigningIn">
+          {{ isSigningIn ? 'Accesso in corso...' : 'Accedi' }}
+        </button>
+      </form>
+    } @else {
+      <p class="signed-in">Accesso: {{ session.user.email }}</p>
+
+      @if (restaurants.length === 0 && !isLoading) {
+        <p class="notice" role="status">
+          Questo account non è ancora associato a un ristorante. Contatta
+          l’amministratore della piattaforma per il provisioning.
+        </p>
+      } @else if (restaurants.length > 0) {
+        <div class="filters">
+          <label>
+            Ristorante
+            <select
+              [(ngModel)]="selectedRestaurantId"
+              name="restaurant"
+              (ngModelChange)="selectRestaurant()"
+            >
+              @for (restaurant of restaurants; track restaurant.restaurantId) {
+                <option [value]="restaurant.restaurantId">
+                  {{ restaurant.name }} · {{ restaurant.role }}
+                </option>
+              }
+            </select>
+          </label>
+          <label>
+            Data
+            <input
+              [(ngModel)]="date"
+              name="date"
+              type="date"
+              (ngModelChange)="refreshReservations()"
+            />
+          </label>
+        </div>
+
+        <section class="reservations" aria-labelledby="reservations-title">
+          <h2 id="reservations-title">Prenotazioni</h2>
+          @if (isLoading) {
+            <p role="status">Caricamento prenotazioni...</p>
+          } @else if (reservations.length === 0) {
+            <p role="status">Nessuna prenotazione per la data selezionata.</p>
+          } @else {
+            <ul>
+              @for (reservation of reservations; track reservation.id) {
+                <li>
+                  <div class="reservation-time">
+                    {{ reservation.startsAt | date: 'shortTime' }}
+                  </div>
+                  <div class="reservation-details">
+                    <strong>{{ reservation.guestName || 'Cliente' }}</strong>
+                    <span>{{ reservation.partySize }} persone · {{ reservationStatus(reservation.status) }}</span>
+                    @if (reservation.guestPhone) {
+                      <a [href]="'tel:' + reservation.guestPhone">
+                        {{ reservation.guestPhone }}
+                      </a>
+                    }
+                  </div>
+                  <div class="reservation-tables">
+                    {{ reservation.tables.join(', ') || 'Tavolo da assegnare' }}
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    }
+
+    @if (errorMessage) {
+      <p class="notice notice--error" role="alert">{{ errorMessage }}</p>
+    }
+  </section>
+</main>

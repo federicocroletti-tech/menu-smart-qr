@@ -57,6 +57,7 @@ export interface ClientFeatureFlags {
   enableRecommended?: boolean;
   enableCategoryNav?: boolean;
   enableAllergenList?: boolean;
+  showMap?: boolean;
   [flag: string]: boolean | undefined;
 }
 
@@ -68,6 +69,7 @@ export interface ClientSettings {
 
 export interface ClientReservationSettings {
   enabled?: boolean;
+  whatsappFallbackEnabled?: boolean;
   minimumPartySize?: number;
   maximumPartySize?: number;
   bookingTermsUrl?: string;

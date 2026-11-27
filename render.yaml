@@ -32,6 +32,10 @@ services:
     envVars:
       - key: API_BASE_URL
         value: https://menu-smart-qr-api.onrender.com
+      - key: SUPABASE_URL
+        value: https://vfsxocefazuwoszibjxq.supabase.co
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
     routes:
       - type: rewrite
         source: /*

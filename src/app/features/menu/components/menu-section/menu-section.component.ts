@@ -24,6 +24,7 @@ export class MenuSectionComponent {
   @Input() showPrices = true;
   @Input() showDescriptions = true;
   @Input() showOrderButton = false;
+  @Input() showImages = false;
   @Input() allergenMap: Record<string, Allergen> = {};
   @Output() addToOrder = new EventEmitter<MenuItem>();
 

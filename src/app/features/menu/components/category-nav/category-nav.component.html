@@ -1,4 +1,7 @@
-<nav class="category-nav" aria-label="Menu categories">
+<nav
+  class="category-nav"
+  [attr.aria-label]="translationService.translate('menuCategories')"
+>
   <ion-segment
     [value]="activeCategoryId"
     [scrollable]="true"
@@ -6,6 +9,7 @@
     @for (category of categories; track category.id) {
       <ion-segment-button
         [value]="category.id"
+        [attr.aria-current]="category.id === activeCategoryId ? 'true' : null"
         (click)="categorySelect.emit(category.id)"
       >
         {{ category.name | localizedText }}

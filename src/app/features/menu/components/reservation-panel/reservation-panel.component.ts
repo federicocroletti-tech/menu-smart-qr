@@ -1,26 +1,43 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, Input, NgZone } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  NgZone,
+  ViewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { switchMap } from 'rxjs';
 
 import type { Client } from '../../../../core/models/client.model';
 import {
   ReservationApiService,
   type ReservationAvailability,
+  type ReservationHold,
 } from '../../../../core/services/reservation-api.service';
 import { TranslationService } from '../../../../core/services/translation.service';
+import { isFutureReservationDateTime } from '../../../../core/utils/reservation-time.util';
+import { createWhatsAppUrl } from '../../../../core/utils/whatsapp.util';
+import { ReservationManagementComponent } from './reservation-management.component';
+
+type ReservationAllocationMode = 'guest_selected' | 'restaurant_assigned';
 
 @Component({
   selector: 'app-reservation-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReservationManagementComponent],
   templateUrl: './reservation-panel.component.html',
   styleUrl: './reservation-panel.component.scss',
 })
-export class ReservationPanelComponent {
+export class ReservationPanelComponent implements OnDestroy {
   @Input({ required: true }) client!: Client;
+  @Input() onlineBookingEnabled = true;
+  @Input() enableWhatsappFallback = true;
+  @ViewChild('dialog') private dialogRef?: ElementRef<HTMLElement>;
   isOpen = false;
+  isManaging = false;
   name = '';
   phone = '';
   date = '';
@@ -31,12 +48,21 @@ export class ReservationPanelComponent {
   availabilityErrorKey = '';
   isCheckingAvailability = false;
   isSubmitting = false;
+  isReleasingHold = false;
   acceptBookingTerms = false;
   acceptPrivacyNotice = false;
   confirmationCode = '';
   submissionErrorKey = '';
+  holdReleased = false;
+  allocationMode: ReservationAllocationMode = 'restaurant_assigned';
+  selectedTableSetId = '';
+  hold: ReservationHold | null = null;
+  remainingHoldSeconds = 0;
   private availabilityRequestId = 0;
   private idempotencyKey: string | null = null;
+  private returnFocusTarget: HTMLElement | null = null;
+  private holdTicker: ReturnType<typeof setInterval> | null = null;
+  private heldGuest: { name: string; phone: string; notes?: string } | null = null;
 
   constructor(
     public readonly translationService: TranslationService,
@@ -55,6 +81,7 @@ export class ReservationPanelComponent {
 
   get canCheckAvailability(): boolean {
     if (
+      !this.onlineBookingEnabled ||
       !this.date ||
       !this.time ||
       !Number.isInteger(this.partySize) ||
@@ -64,9 +91,11 @@ export class ReservationPanelComponent {
       return false;
     }
 
-    const reservationDate = new Date(`${this.date}T${this.time}`);
-    return !Number.isNaN(reservationDate.getTime()) &&
-      reservationDate.getTime() > Date.now();
+    return isFutureReservationDateTime(
+      this.date,
+      this.time,
+      this.client.timeZone ?? 'UTC',
+    );
   }
 
   get isValid(): boolean {
@@ -82,9 +111,11 @@ export class ReservationPanelComponent {
       return false;
     }
 
-    const reservationDate = new Date(`${this.date}T${this.time}`);
-    return !Number.isNaN(reservationDate.getTime()) &&
-      reservationDate.getTime() > Date.now();
+    return isFutureReservationDateTime(
+      this.date,
+      this.time,
+      this.client.timeZone ?? 'UTC',
+    );
   }
 
   get bookingTermsUrl(): string | null {
@@ -100,17 +131,176 @@ export class ReservationPanelComponent {
   }
 
   get canSubmitReservation(): boolean {
-    return this.isValid &&
+    return this.onlineBookingEnabled &&
+      this.isValid &&
       this.availability?.available === true &&
+      (this.allocationMode === 'restaurant_assigned' || this.selectedTableSet !== null) &&
       this.hasLegalDocuments &&
       this.acceptBookingTerms &&
       this.acceptPrivacyNotice &&
       !this.isSubmitting &&
+      !this.isReleasingHold &&
+      !this.hold &&
       !this.confirmationCode;
   }
 
+  get canConfirmHeldReservation(): boolean {
+    return Boolean(this.hold?.holdToken) &&
+      this.remainingHoldSeconds > 0 &&
+      this.hasLegalDocuments &&
+      this.acceptBookingTerms &&
+      this.acceptPrivacyNotice &&
+      !this.isSubmitting &&
+      !this.isReleasingHold;
+  }
+
+  get selectedTableSet(): ReservationAvailability['tableSets'][number] | null {
+    return this.availability?.tableSets.find(
+      (tableSet) => tableSet.id === this.selectedTableSetId,
+    ) ?? null;
+  }
+
+  get holdCountdownLabel(): string {
+    const minutes = Math.floor(this.remainingHoldSeconds / 60);
+    const seconds = this.remainingHoldSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  get holdExpirationTime(): string {
+    if (!this.hold?.expiresAt) {
+      return '';
+    }
+
+    return new Intl.DateTimeFormat(
+      this.translationService.getCurrentLanguage(),
+      { hour: '2-digit', minute: '2-digit', timeZone: this.client.timeZone ?? 'UTC' },
+    ).format(new Date(this.hold.expiresAt));
+  }
+
+  get whatsappReservationUrl(): string | null {
+    if (
+      !this.enableWhatsappFallback ||
+      !this.date ||
+      !this.time ||
+      !Number.isInteger(this.partySize) ||
+      this.partySize < this.minimumPartySize ||
+      this.partySize > this.maximumPartySize
+    ) {
+      return null;
+    }
+
+    const allocationText = this.translationService.translate(
+      this.allocationMode === 'restaurant_assigned'
+        ? 'restaurantAssigned'
+        : 'guestSelectedTable',
+    );
+    const selectedTableNames =
+      this.allocationMode === 'guest_selected'
+        ? this.selectedTableSet?.tableNames?.join(', ') ??
+          this.selectedTableSet?.tableIds.join(', ')
+        : '';
+    const message = [
+      this.translationService.translate('reservationWhatsappIntro'),
+      '',
+      `${this.translationService.translate('name')}: ${this.name.trim() || '-'}`,
+      `${this.translationService.translate('phone')}: ${this.phone.trim() || '-'}`,
+      `${this.translationService.translate('date')}: ${this.date}`,
+      `${this.translationService.translate('time')}: ${this.time}`,
+      `${this.translationService.translate('partySize')}: ${this.partySize}`,
+      `${this.translationService.translate('tableAssignment')}: ${allocationText}`,
+      ...(selectedTableNames
+        ? [`${this.translationService.translate('reservationTables')}: ${selectedTableNames}`]
+        : []),
+      ...(this.notes.trim()
+        ? [`${this.translationService.translate('notes')}: ${this.notes.trim()}`]
+        : []),
+    ].join('\n');
+
+    return createWhatsAppUrl(this.client.contacts, message);
+  }
+
+  get showWhatsappFallbackAction(): boolean {
+    return this.shouldOfferWhatsappFallback && Boolean(this.whatsappReservationUrl);
+  }
+
+  get showWhatsappFallbackUnavailable(): boolean {
+    return this.shouldOfferWhatsappFallback && !this.whatsappReservationUrl;
+  }
+
+  private get shouldOfferWhatsappFallback(): boolean {
+    const validSelection = Boolean(this.date && this.time) &&
+      Number.isInteger(this.partySize) &&
+      this.partySize >= this.minimumPartySize &&
+      this.partySize <= this.maximumPartySize &&
+      isFutureReservationDateTime(
+        this.date,
+        this.time,
+        this.client.timeZone ?? 'UTC',
+      );
+
+    return this.enableWhatsappFallback &&
+      validSelection &&
+      (!this.onlineBookingEnabled ||
+        !this.hasLegalDocuments ||
+        Boolean(this.availabilityErrorKey || this.submissionErrorKey));
+  }
+
+  ngOnDestroy(): void {
+    this.clearHoldTicker();
+  }
+
+  openPanel(trigger: HTMLElement): void {
+    this.returnFocusTarget = trigger;
+    this.isOpen = true;
+    setTimeout(() => this.focusFirstElement(), 0);
+  }
+
+  closePanel(): void {
+    this.isOpen = false;
+    setTimeout(() => this.returnFocusTarget?.focus(), 0);
+  }
+
+  onDialogKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closePanel();
+      return;
+    }
+
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const focusable = this.getFocusableElements();
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const dialog = this.dialogRef?.nativeElement;
+    if (!first || !last) {
+      event.preventDefault();
+      return;
+    }
+
+    if (
+      event.shiftKey &&
+      (document.activeElement === first || !dialog?.contains(document.activeElement))
+    ) {
+      event.preventDefault();
+      last.focus();
+    } else if (
+      !event.shiftKey &&
+      (document.activeElement === last || !dialog?.contains(document.activeElement))
+    ) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   checkAvailability(): void {
-    if (!this.canCheckAvailability || this.isCheckingAvailability) {
+    if (
+      !this.canCheckAvailability ||
+      this.isCheckingAvailability ||
+      this.isSubmitting
+    ) {
       return;
     }
 
@@ -128,6 +318,7 @@ export class ReservationPanelComponent {
               return;
             }
             this.availability = availability;
+            this.selectedTableSetId = availability.tableSets[0]?.id ?? '';
             this.isCheckingAvailability = false;
             if (!availability.available) {
               this.availabilityErrorKey = 'availabilityNotFound';
@@ -161,45 +352,53 @@ export class ReservationPanelComponent {
     this.isSubmitting = true;
     this.submissionErrorKey = '';
     this.idempotencyKey ??= crypto.randomUUID();
-
+    const holdRequest = {
+      date: this.date,
+      time: this.time,
+      partySize: this.partySize,
+      allocationMode: this.allocationMode,
+      ...(this.allocationMode === 'guest_selected'
+        ? { tableIds: this.selectedTableSet?.tableIds }
+        : {}),
+    };
+    const guest = {
+      name: this.name.trim(),
+      phone: this.phone.trim(),
+      notes: this.notes.trim() || undefined,
+    };
     this.reservationApiService
-      .createReservationHold(
-        this.client.id,
-        {
-          date: this.date,
-          time: this.time,
-          partySize: this.partySize,
-          allocationMode: 'restaurant_assigned',
-        },
-        this.idempotencyKey,
-      )
-      .pipe(
-        switchMap((hold) =>
-          this.reservationApiService.confirmReservation({
-            holdToken: hold.holdToken,
-            guest: {
-              name: this.name.trim(),
-              phone: this.phone.trim(),
-              notes: this.notes.trim() || undefined,
-            },
-            acceptTerms: true,
-            acceptPrivacy: true,
-            marketingConsent: false,
-          }),
-        ),
-      )
+      .createReservationHold(this.client.id, holdRequest, this.idempotencyKey)
       .subscribe({
-        next: (confirmation) => {
+        next: (hold) => {
           this.ngZone.run(() => {
-            this.confirmationCode = confirmation.confirmationCode;
+            if (!hold.expiresAt || !Number.isFinite(Date.parse(hold.expiresAt))) {
+              this.submissionErrorKey = 'reservationHoldExpiryUnavailable';
+              this.idempotencyKey = null;
+              this.isSubmitting = false;
+              this.changeDetector.detectChanges();
+              return;
+            }
+
+            this.hold = hold;
+            this.heldGuest = guest;
             this.isSubmitting = false;
+            this.updateHoldCountdown();
+            this.holdTicker = setInterval(
+              () => this.ngZone.run(() => this.updateHoldCountdown()),
+              1000,
+            );
             this.changeDetector.detectChanges();
           });
         },
         error: (error: unknown) => {
           this.ngZone.run(() => {
             console.error('Failed to save reservation:', error);
-            this.submissionErrorKey = 'reservationSubmitError';
+            this.submissionErrorKey =
+              error instanceof HttpErrorResponse && error.status === 410
+                ? 'reservationHoldExpired'
+                : error instanceof HttpErrorResponse && error.status === 409
+                  ? 'reservationNoLongerAvailable'
+                  : 'reservationSubmitError';
             this.isSubmitting = false;
             this.changeDetector.detectChanges();
           });
@@ -207,20 +406,165 @@ export class ReservationPanelComponent {
       });
   }
 
+  confirmHeldReservation(): void {
+    if (!this.canConfirmHeldReservation || !this.hold || !this.heldGuest) {
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.submissionErrorKey = '';
+    this.reservationApiService
+      .confirmReservation({
+        holdToken: this.hold.holdToken,
+        guest: this.heldGuest,
+        acceptTerms: true,
+        acceptPrivacy: true,
+        marketingConsent: false,
+      })
+      .subscribe({
+        next: (confirmation) => {
+          this.ngZone.run(() => {
+            this.clearHoldTicker();
+            this.hold = null;
+            this.heldGuest = null;
+            this.confirmationCode = confirmation.confirmationCode;
+            this.isSubmitting = false;
+            this.changeDetector.detectChanges();
+          });
+        },
+        error: (error: unknown) => {
+          this.ngZone.run(() => {
+            console.error('Failed to confirm reservation:', error);
+            this.submissionErrorKey =
+              error instanceof HttpErrorResponse && error.status === 410
+                ? 'reservationHoldExpired'
+                : error instanceof HttpErrorResponse && error.status === 409
+                  ? 'reservationNoLongerAvailable'
+                  : 'reservationSubmitError';
+            if (
+              error instanceof HttpErrorResponse &&
+              (error.status === 410 || error.status === 409)
+            ) {
+              this.expireLocalHold();
+            }
+            this.isSubmitting = false;
+            this.changeDetector.detectChanges();
+          });
+        },
+      });
+  }
+
+  releaseHeldReservation(): void {
+    if (!this.hold || this.isSubmitting || this.isReleasingHold) {
+      return;
+    }
+
+    this.isReleasingHold = true;
+    this.submissionErrorKey = '';
+    this.holdReleased = false;
+    this.reservationApiService.releaseReservationHold(this.hold.holdToken).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          this.resetAvailability();
+          this.holdReleased = true;
+          this.isReleasingHold = false;
+          this.changeDetector.detectChanges();
+        });
+      },
+      error: (error: unknown) => {
+        this.ngZone.run(() => {
+          console.error('Failed to release reservation hold:', error);
+          this.submissionErrorKey = 'reservationHoldReleaseError';
+          this.isReleasingHold = false;
+          this.changeDetector.detectChanges();
+        });
+      },
+    });
+  }
+
+  openManagement(): void {
+    this.isManaging = true;
+  }
+
+  closeManagement(): void {
+    this.isManaging = false;
+  }
+
   resetAvailability(): void {
+    if (this.isSubmitting) {
+      return;
+    }
+
     this.availabilityRequestId += 1;
+    this.holdReleased = false;
+    this.clearHoldTicker();
+    this.hold = null;
+    this.heldGuest = null;
+    this.remainingHoldSeconds = 0;
     this.availability = null;
     this.availabilityErrorKey = '';
     this.submissionErrorKey = '';
     this.confirmationCode = '';
     this.idempotencyKey = null;
     this.isCheckingAvailability = false;
+    this.selectedTableSetId = '';
+  }
+
+  private updateHoldCountdown(): void {
+    if (!this.hold?.expiresAt) {
+      return;
+    }
+
+    this.remainingHoldSeconds = Math.max(
+      0,
+      Math.ceil((Date.parse(this.hold.expiresAt) - Date.now()) / 1000),
+    );
+    if (this.remainingHoldSeconds === 0) {
+      this.expireLocalHold();
+      this.submissionErrorKey = 'reservationHoldExpired';
+    }
+    this.changeDetector.markForCheck();
+  }
+
+  private expireLocalHold(): void {
+    this.clearHoldTicker();
+    this.hold = null;
+    this.heldGuest = null;
+    this.remainingHoldSeconds = 0;
+    this.availability = null;
+    this.idempotencyKey = null;
+  }
+
+  private clearHoldTicker(): void {
+    if (this.holdTicker !== null) {
+      clearInterval(this.holdTicker);
+      this.holdTicker = null;
+    }
   }
 
   get minimumDate(): string {
-    const now = new Date();
-    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
-    return localDate.toISOString().slice(0, 10);
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: this.client.timeZone ?? 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+    return `${values['year']}-${values['month']}-${values['day']}`;
+  }
+
+  private focusFirstElement(): void {
+    this.dialogRef?.nativeElement.querySelector<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )?.focus();
+  }
+
+  private getFocusableElements(): HTMLElement[] {
+    return Array.from(
+      this.dialogRef?.nativeElement.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    );
   }
 
   private getSafeDocumentUrl(value: string | undefined): string | null {

@@ -207,6 +207,46 @@ describe("reservation API request handling", () => {
     expect(response.status).toBe(400);
   });
 
+  it("rejects malformed reservation hold release tokens before database access", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/reservation-holds/release`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ holdToken: "short-token" }),
+      },
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "Reservation hold not found",
+    });
+  });
+
+  it("validates guest names, phone numbers, and notes before database access", async () => {
+    const invalidGuests = [
+      { name: "--", phone: "+393331234567", notes: "Window seat" },
+      { name: "Ada Guest", phone: "abcdef", notes: "Window seat" },
+      { name: "Ada Guest", phone: "+393331234567", notes: "x".repeat(1001) },
+    ];
+
+    for (const guest of invalidGuests) {
+      const response = await fetch(`${baseUrl}/api/v1/reservations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          holdToken: "a".repeat(32),
+          guest,
+          acceptTerms: true,
+          acceptPrivacy: true,
+          marketingConsent: false,
+        }),
+      });
+
+      expect(response.status).toBe(400);
+    }
+  });
+
   it("requires a verified access token for restaurant memberships", async () => {
     const response = await fetch(`${baseUrl}/api/v1/me/restaurants`);
 

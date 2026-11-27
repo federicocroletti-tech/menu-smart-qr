@@ -2,11 +2,13 @@
 
 ## Stato attuale verificato
 
-Menu Smart QR e una SPA Angular standalone, con contenuti caricati da JSON statici tramite `HttpClient`. E stata aggiunta una fondazione API Node.js/Express con schema e runner di migrazione PostgreSQL, ma non e ancora collegata alla UI e non e configurata nella pubblicazione statica di `render.yaml`. Il backend ora include la verifica server-side dei token Supabase Auth, la tabella membership e policy RLS di sola lettura per tenant; la migrazione non e ancora stata applicata o verificata su un progetto Supabase reale. Il pannello amministrativo e le relative API restano da implementare.
+Menu Smart QR è una SPA Angular standalone. Con l'API configurata, profilo, allergeni e menu vengono caricati da PostgreSQL tramite l'API Node.js/Express; i JSON nel repository restano un fallback demo e dati seed. `render.yaml` configura il sito statico e l'API. Il backend usa Supabase Auth per le route protette e include membership e policy RLS di lettura. Le migrazioni `001`-`005` sono applicate al progetto remoto; la salute dell'API e la ricerca disponibilità per il demo Pizzeria Vesuvio sono state verificate live. Non sono ancora stati verificati con un flusso live completo i permessi RLS con più utenti/tenant né hold, conferma, consultazione e cancellazione end-to-end.
 
-Il controllo prenotazioni esistente e un modulo di contatto WhatsApp: raccoglie nome, telefono, data, ora, coperti e note, poi compone un messaggio. Non verifica orari o disponibilita e non crea una prenotazione confermata; si trova in `src/app/features/menu/components/reservation-panel/`. L'API ora implementa ricerca di disponibilita, hold temporaneo, conferma, recupero e cancellazione tramite codice, ma schema e concorrenza non sono stati verificati con un PostgreSQL reale. Build TypeScript e test senza database passano.
+Il pannello cliente `src/app/features/menu/components/reservation-panel/` verifica disponibilità tramite API e contiene il flusso di hold e conferma. La ricerca live è verificata; il form del demo Vesuvio non consente ancora di confermare perché mancano URL dei documenti legali. Hold, conferma, recupero e cancellazione sono implementati lato API, ma non sono stati verificati end-to-end su prenotazioni di prova.
 
-Il codice copre solo un primo backend tecnico: il flusso cliente non e ancora collegato alla UI; i dati reali di configurazione del ristorante, le API amministrative di scrittura, notifiche e pagamenti non sono implementati.
+La UI cliente ora crea un hold prima della conferma e ne mostra la scadenza con conto alla rovescia e i nomi dei tavoli restituiti dall'API; permette l'assegnazione al ristorante o la selezione di un tavolo disponibile. Il codice ricevuto consente di recuperare i dettagli e richiedere la cancellazione dall'interfaccia. Quando la prenotazione online non è configurata o fallisce, un link WhatsApp prepara una richiesta non vincolante; è disattivabile con `enableReservationWhatsappFallback` o `reservations.whatsappFallbackEnabled`. La UI non presenta la richiesta WhatsApp come prenotazione confermata. Queste interazioni frontend hanno test unitari mirati; l'integrazione PostgreSQL end-to-end resta soggetta alla procedura di verifica riportata sotto.
+
+Non esiste ancora un backoffice o un'API autenticata per modificare autonomamente menu e configurazioni. I tavoli aggiunti dalla migrazione `005` sono dati dimostrativi solo per Pizzeria Vesuvio, non una planimetria reale. Notifiche automatiche e pagamenti non sono implementati.
 
 ## Flusso cliente proposto
 
@@ -55,15 +57,16 @@ Gli stati garanzia previsti sono `not_required`, `pending`, `authorized`, `captu
 
 ## Contratti API e stato implementativo
 
-Le route cliente, membership e lista giornaliera staff sono implementate in `server/src/app.ts`; le altre route amministrative sono ancora proposte. L'autenticazione Supabase e validazione PostgreSQL restano da completare con un progetto reale.
+Le route cliente, membership e lista giornaliera staff sono implementate in `server/src/app.ts`; le API amministrative di scrittura sono ancora proposte. L'API è collegata al progetto remoto, ma l'isolamento RLS con utenti e tenant distinti richiede ancora test dedicati su quel database.
 
 | Metodo e percorso | Stato | Uso ed esito principale |
 |---|---|---|
-| `GET /api/v1/restaurants/{restaurantId}/availability?date=&time=&partySize=` | Implementata, non verificata con DB | Cerca una data e ora specifiche; durata e regole vengono risolte dal server. L'esito non garantisce il tavolo. |
-| `POST /api/v1/restaurants/{restaurantId}/reservation-holds` | Implementata, non verificata con DB | Richiede un hold per tavoli scelti o assegnazione automatica e una chiave idempotente. Restituisce scadenza, tavoli e token. |
-| `POST /api/v1/reservations` | Implementata, non verificata con DB | Registra dati guest e consensi per un hold valido e restituisce codice/stato. |
-| `GET /api/v1/reservations/{confirmationCode}` | Implementata, non verificata con DB | Recupera dati minimi con il codice di conferma. |
-| `POST /api/v1/reservations/{confirmationCode}/cancellation` | Implementata, non verificata con DB | Cancella la prenotazione e segnala se la richiesta e oltre il termine; non esegue trattenute. |
+| `GET /api/v1/restaurants/{restaurantId}/availability?date=&time=&partySize=` | Implementata e verificata live per il demo Pizzeria Vesuvio | Cerca una data e ora specifiche; durata e regole vengono risolte dal server. L'esito non garantisce il tavolo. |
+| `POST /api/v1/restaurants/{restaurantId}/reservation-holds` | Implementata; test end-to-end live da eseguire | Richiede un hold per tavoli scelti o assegnazione automatica e una chiave idempotente. Restituisce scadenza, tavoli e token. |
+| `POST /api/v1/reservation-holds/release` | Implementata; test PostgreSQL end-to-end disponibile | Rilascia in modo idempotente un hold non confermato usando il token nel body, non nell'URL. |
+| `POST /api/v1/reservations` | Implementata; test end-to-end live da eseguire | Registra dati guest e consensi per un hold valido e restituisce codice/stato. |
+| `GET /api/v1/reservations/{confirmationCode}` | Implementata; test end-to-end live da eseguire | Recupera dati minimi con il codice di conferma. |
+| `POST /api/v1/reservations/{confirmationCode}/cancellation` | Implementata; test end-to-end live da eseguire | Cancella la prenotazione e segnala se la richiesta e oltre il termine; non esegue trattenute. |
 | `GET /api/v1/me/restaurants` | Implementata, API testata con verifier/store mock; RLS non verificata su DB reale | Richiede un access token Supabase valido e delega la lettura delle membership alla sessione PostgreSQL con ruolo `authenticated`. |
 | `GET /api/v1/admin/restaurants/{restaurantId}/reservations?date=&status=&limit=&offset=` | Implementata, API testata con store mock; RLS non verificata su DB reale | Vista giornaliera filtrata e paginata per un membro autenticato del ristorante; restituisce contatto minimo. |
 | `POST /api/v1/admin/reservations` | Proposta | Inserisce prenotazione telefonica/manuale. |
@@ -92,12 +95,31 @@ Raccogliere solo nome e recapito necessari; marketing separato. Retention config
 
 ## Migrazione e fasi
 
-1. Completato in parte: aggiunti servizio Node.js API, schema PostgreSQL, runner migrazione, verifica server-side dei token Supabase e policy RLS di lettura per membership e dati tenant. Il menu JSON e la SPA restano indipendenti; la configurazione Render e ancora statica. Le route pubbliche booking restano sul server e usano i codici casuali; la chiave DB deve rimanere solo nell'ambiente server. Autenticazione, policy e connessione non sono state ancora verificate su un progetto Supabase reale.
-2. Configurare il servizio API e i segreti in un ambiente server; applicare e verificare le migrazioni su Supabase, inclusi test con due utenti e due ristoranti; configurare ristorante, sale, tavoli, orari e policy con dati approvati dal gestore. Non introdurre una pianta dimostrativa in produzione.
-3. MVP successivo: integrazione frontend, dati reali di configurazione, test transazionali su PostgreSQL, area personale essenziale, audit e verifica del flusso completo.
+1. Completato: servizio Node.js API, schema PostgreSQL, runner migrazioni `001`-`005`, verifica server-side token Supabase, policy RLS di lettura tenant e deploy Render/Supabase. La ricerca disponibilità è stata verificata live sul demo Vesuvio. La chiave DB rimane solo nell'ambiente server.
+2. In corso: aggiungere test automatizzati di build/test API alla CI e progettare i controlli d'isolamento con due tenant/utenti. Le configurazioni dei tavoli demo non devono essere riutilizzate come dati reali di un ristorante.
+3. Prossimo: verificare su staging i flussi PostgreSQL hold, conferma, consultazione e cancellazione; configurare documenti legali approvati prima di abilitare la conferma nel demo.
 4. Successivo: UI di accesso/dashboard, API amministrative di scrittura, editor pianta, aggiornamenti disponibilita live, esportazione, notifiche e gestione avanzata delle eccezioni.
 5. Ultimo: provider pagamenti, webhook e policy economiche approvate. Nessuna integrazione pagamenti prima dei test concorrenza/cancellazione.
 
 ## Verifiche richieste prima del rilascio
 
 Test unitari di durata/capienza/combinazioni e transizioni; test PostgreSQL concorrenti sullo stesso tavolo e hold scaduti; test API di idempotenza e cancellazione; test webhook nella fase dedicata; E2E e accessibilita con tastiera, zoom 200% e viewport mobile. La disponibilita frontend non e mai una garanzia di prenotazione.
+
+### Procedura riproducibile per i flussi PostgreSQL
+
+Il test d'integrazione `server/src/reservation-service.postgres.spec.ts` esercita via HTTP hold, riuso della chiave idempotente, rifiuto di una chiave riutilizzata con dati diversi, conferma ripetuta, recupero, cancellazione e scadenza. Richiede un database PostgreSQL **dedicato e sacrificabile**: le migrazioni usano lo schema `public` e non devono essere applicate a produzione per questa prova.
+
+In PowerShell, impostare l'URL del database di test, applicare le migrazioni e avviare il test:
+
+```powershell
+$env:RESERVATION_TEST_DATABASE_URL = "postgres://postgres:password@localhost:5432/menu_smart_qr_test"
+$env:DATABASE_URL = $env:RESERVATION_TEST_DATABASE_URL
+npm run server:migrate
+npm run server:test
+```
+
+Il test crea un ristorante temporaneo, avvia l'API contro quel pool, esegue le richieste e rimuove i record creati anche a fine esecuzione. Senza `RESERVATION_TEST_DATABASE_URL` il caso viene saltato; un test saltato non costituisce una verifica PostgreSQL. Il runner richiede PostgreSQL con le estensioni abilitate dalle migrazioni `001` e `002`.
+
+### Database remoto di test da predisporre
+
+Resta da creare un database PostgreSQL remoto dedicato a staging/test, separato da produzione. Configurare `DATABASE_URL` e `RESERVATION_TEST_DATABASE_URL` solo nei secret del relativo ambiente CI/staging, applicare le migrazioni fino alla `006` e usare esclusivamente dati sintetici. Non puntare mai il test d'integrazione al database di produzione.

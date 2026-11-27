@@ -39,6 +39,12 @@ jobs:
       - name: Install dependencies
         run: npx --yes npm@11.6.2 ci
 
+      - name: Build reservation API
+        run: npm run server:build
+
+      - name: Test reservation API
+        run: npm run server:test
+
       - name: Run unit tests
         run: npm test -- --watch=false
 

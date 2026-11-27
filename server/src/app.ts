@@ -23,6 +23,7 @@ import {
   confirmReservation,
   createReservationHold,
   hashConfirmationCode,
+  releaseReservationHold,
   ReservationError,
 } from "./reservation-service";
 import { reservationStatuses } from "./domain/reservations";
@@ -102,8 +103,13 @@ const holdSchema = availabilitySchema.extend({
 const confirmationSchema = z.object({
   holdToken: z.string().min(32).max(128),
   guest: z.object({
-    name: z.string().trim().min(2).max(120),
-    phone: z.string().trim().min(6).max(32),
+    name: z.string().trim().min(2).max(120).refine(
+      (name) => [...name.matchAll(/\p{L}/gu)].length >= 2,
+      "Name must contain at least two letters",
+    ),
+    phone: z.string().trim().min(6).max(32)
+      .regex(/^\+?[\d\s().-]+$/)
+      .refine((phone) => phone.replace(/\D/g, "").length >= 6),
     email: z.string().trim().email().max(254).optional(),
     notes: z.string().trim().max(1000).optional(),
   }).strict(),
@@ -220,6 +226,10 @@ export function createApp(
       return;
     }
     next();
+  });
+
+  const holdReleaseSchema = z.object({
+    holdToken: z.string().min(32).max(128),
   });
   app.use(express.json({ limit: "16kb", strict: true }));
   app.use(
@@ -397,6 +407,7 @@ export function createApp(
         holdToken: result.holdToken,
         expiresAt: result.expiresAt,
         tableIds: result.tableIds,
+        tableNames: result.tableNames,
       });
     }),
   );
@@ -460,6 +471,20 @@ export function createApp(
         partySize: reservation.party_size_current,
         tables: reservation.table_names ?? [],
       });
+    }),
+  );
+
+  app.post(
+    "/api/v1/reservation-holds/release",
+    asyncHandler(async (request, response) => {
+      const parsed = holdReleaseSchema.safeParse(request.body);
+      if (!parsed.success) {
+        response.status(404).json({ error: "Reservation hold not found" });
+        return;
+      }
+
+      const result = await releaseReservationHold(pool, parsed.data.holdToken);
+      response.status(200).json(result);
     }),
   );
 
