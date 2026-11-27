@@ -22,6 +22,18 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
   const tenantStore: TenantStore = {
     async listRestaurantsForUser() { return []; },
     async listReservationsForRestaurant() { return null; },
+    async canManageRestaurant() { return false; },
+    async getAvailabilityRules() { return null; },
+    async listAvailabilityExceptions() { return null; },
+    async listTableBlocks() { return null; },
+    async createStaffReservation() { return null; },
+    async updateReservationForStaff() { return null; },
+    async createTableBlock() { return null; },
+    async deleteTableBlock() { return false; },
+    async updateAvailabilityRules() { return false; },
+    async upsertAvailabilityException() { return null; },
+    async listNotifications() { return null; },
+    async exportReservations() { return null; },
   };
   const contentStore: RestaurantContentStore = {
     async getRestaurantContent() { return null; },
@@ -256,13 +268,93 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
     );
     expect(recovered.status).toBe(200);
     expect((await recovered.json()).status).toBe("confirmed");
+    const reservationRevision = recovered.headers.get("etag");
+    expect(reservationRevision).toMatch(/^"\d+"$/);
+
+    const modificationUrl =
+      `${baseUrl}/api/v1/reservations/${confirmationBody.confirmationCode}`;
+    const modificationHeaders = {
+      "Content-Type": "application/json",
+      "Idempotency-Key": `modify-${randomUUID()}`,
+      "If-Match": reservationRevision as string,
+    };
+    const modificationBody = {
+      date: reservationDate,
+      time: "12:30",
+      partySize: 2,
+    };
+    const modified = await fetch(modificationUrl, {
+      method: "PATCH",
+      headers: modificationHeaders,
+      body: JSON.stringify(modificationBody),
+    });
+    expect(modified.status).toBe(200);
+    expect(await modified.json()).toMatchObject({
+      status: "confirmed",
+      partySize: 2,
+    });
+    const replayedModification = await fetch(modificationUrl, {
+      method: "PATCH",
+      headers: modificationHeaders,
+      body: JSON.stringify(modificationBody),
+    });
+    expect(replayedModification.status).toBe(200);
+    expect(await replayedModification.json()).toMatchObject({
+      status: "confirmed",
+      partySize: 2,
+    });
+    const mismatchedModificationReplay = await fetch(modificationUrl, {
+      method: "PATCH",
+      headers: modificationHeaders,
+      body: JSON.stringify({ ...modificationBody, partySize: 3 }),
+    });
+    expect(mismatchedModificationReplay.status).toBe(409);
+    const staleModification = await fetch(modificationUrl, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": `stale-${randomUUID()}`,
+        "If-Match": reservationRevision as string,
+      },
+      body: JSON.stringify({ ...modificationBody, time: "13:00" }),
+    });
+    expect(staleModification.status).toBe(412);
 
     const cancellationUrl =
       `${baseUrl}/api/v1/reservations/${confirmationBody.confirmationCode}/cancellation`;
-    const cancellation = await fetch(cancellationUrl, { method: "POST" });
+    const cancellation = await fetch(cancellationUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: "Plans changed" }),
+    });
     expect(cancellation.status).toBe(200);
     const repeatedCancellation = await fetch(cancellationUrl, { method: "POST" });
     expect(repeatedCancellation.status).toBe(409);
+
+    const competingHolds = await Promise.all(
+      [randomUUID(), randomUUID()].map((key) =>
+        fetch(`${baseUrl}/api/v1/restaurants/${restaurantId}/reservation-holds`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": key,
+          },
+          body: JSON.stringify(holdRequest),
+        })
+      ),
+    );
+    expect(competingHolds.map((response) => response.status).sort()).toEqual([201, 409]);
+    const winningHold = competingHolds.find((response) => response.status === 201);
+    if (!winningHold) {
+      throw new Error("Expected one competing hold to acquire the table");
+    }
+    const winningHoldBody = await winningHold.json() as { holdToken: string };
+    const cleanupHold = await fetch(`${baseUrl}/api/v1/reservation-holds/release`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ holdToken: winningHoldBody.holdToken }),
+    });
+    expect(cleanupHold.status).toBe(200);
 
     const holdToRelease = await fetch(
       `${baseUrl}/api/v1/restaurants/${restaurantId}/reservation-holds`,

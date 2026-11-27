@@ -10,6 +10,8 @@ const migrationNames = [
   "004_demo_whatsapp_recipient.sql",
   "005_demo_reservation_setup.sql",
   "006_reservation_management_api.sql",
+  "007_reservation_modification_idempotency.sql",
+  "008_reservation_revision.sql",
 ];
 
 async function migrate(): Promise<void> {

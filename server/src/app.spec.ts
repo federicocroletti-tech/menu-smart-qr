@@ -57,6 +57,7 @@ describe("reservation API request handling", () => {
           {
             id: "reservation-one",
             status: "confirmed",
+            revision: 1,
             startsAt: new Date("2030-01-01T18:00:00.000Z"),
             endsAt: new Date("2030-01-01T20:00:00.000Z"),
             partySize: 2,
@@ -67,6 +68,59 @@ describe("reservation API request handling", () => {
         ],
         hasMore: false,
       };
+    },
+    async canManageRestaurant(userId, restaurantId) {
+      return userId === testUserId && restaurantId === "restaurant-one";
+    },
+    async getAvailabilityRules() {
+      return {
+        holdMinutes: 7,
+        maximumPartySize: 8,
+        onlineBookingEnabled: true,
+        cancellationNoticeMinutes: null,
+        bookingTermsVersion: "terms-v1",
+        privacyNoticeVersion: "privacy-v1",
+      };
+    },
+    async listAvailabilityExceptions() {
+      return [];
+    },
+    async listTableBlocks() {
+      return [];
+    },
+    async createStaffReservation() {
+      return { id: "staff-reservation-one", status: "confirmed", reused: false };
+    },
+    async updateReservationForStaff() {
+      return null;
+    },
+    async createTableBlock() {
+      return { id: "table-block-one" };
+    },
+    async deleteTableBlock() {
+      return false;
+    },
+    async updateAvailabilityRules() {
+      return true;
+    },
+    async upsertAvailabilityException() {
+      return null;
+    },
+    async listNotifications() {
+      return [];
+    },
+    async exportReservations() {
+      return [{
+        id: "reservation-one",
+        status: "confirmed",
+        revision: 1,
+        startsAt: new Date("2030-01-01T18:00:00.000Z"),
+        endsAt: new Date("2030-01-01T20:00:00.000Z"),
+        partySize: 2,
+        guestName: "=HYPERLINK(\"https://example.test\")",
+        guestPhone: "+393331234567",
+        tables: ["A1"],
+      }];
     },
   };
   const contentStore: RestaurantContentStore = {
@@ -298,6 +352,7 @@ describe("reservation API request handling", () => {
         {
           id: "reservation-one",
           status: "confirmed",
+          revision: 1,
           startsAt: "2030-01-01T18:00:00.000Z",
           endsAt: "2030-01-01T20:00:00.000Z",
           partySize: 2,
@@ -324,6 +379,190 @@ describe("reservation API request handling", () => {
     );
 
     expect(response.status).toBe(401);
+  });
+
+  it("requires staff authentication for administrative writes", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/availability-rules`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          holdMinutes: 7,
+          maximumPartySize: 8,
+          onlineBookingEnabled: true,
+          cancellationNoticeMinutes: null,
+        }),
+      },
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it("allows an authenticated manager to update availability rules", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/availability-rules`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          holdMinutes: 7,
+          maximumPartySize: 8,
+          onlineBookingEnabled: true,
+          cancellationNoticeMinutes: null,
+        }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ status: "updated" });
+  });
+
+  it("reads availability rules only through staff authentication", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/availability-rules`,
+      { headers: { Authorization: "Bearer valid-token" } },
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      holdMinutes: 7,
+      maximumPartySize: 8,
+      onlineBookingEnabled: true,
+    });
+  });
+
+  it("creates manual reservations with validated data and an idempotency key", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/reservations`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "manual-booking-1",
+        },
+        body: JSON.stringify({
+          startsAt: "2030-01-01T18:00:00.000Z",
+          endsAt: "2030-01-01T20:00:00.000Z",
+          partySize: 2,
+          tableIds: ["52fdfc07-2182-454f-963f-5f0f9a621d72"],
+          guest: { name: "Ada Guest", phone: "+393331234567" },
+          reason: "Phone booking",
+        }),
+      },
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toEqual({
+      id: "staff-reservation-one",
+      status: "confirmed",
+    });
+  });
+
+  it("exports CSV with formula-leading guest data neutralized", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/reservations/export?from=2030-01-01&to=2030-01-02`,
+      { headers: { Authorization: "Bearer valid-token" } },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/csv");
+    const csv = await response.text();
+    expect(csv).toContain("'=HYPERLINK");
+    expect(response.headers.get("content-disposition")).toContain("attachment");
+  });
+
+  it("validates availability exception bodies before database access", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/restaurants/restaurant-one/availability-exceptions`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: "2030-02-31",
+          closed: false,
+          opensAt: "19:00",
+          closesAt: "18:00",
+          reason: "Private event",
+        }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Invalid availability exception",
+    });
+  });
+
+  it("returns a client error for malformed JSON instead of an internal error", async () => {
+    const response = await fetch(`${baseUrl}/api/v1/reservations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{invalid",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Invalid JSON request body",
+    });
+  });
+
+  it("validates guest modification idempotency and payload", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/reservations/${"a".repeat(32)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: "2030-01-01", time: "19:00", partySize: 2 }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Idempotency-Key is required",
+    });
+  });
+
+  it("requires a reservation revision before guest modifications", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/reservations/${"a".repeat(32)}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": "guest-modification-1",
+        },
+        body: JSON.stringify({ date: "2030-01-01", time: "19:00", partySize: 2 }),
+      },
+    );
+
+    expect(response.status).toBe(428);
+    await expect(response.json()).resolves.toEqual({
+      error: "If-Match reservation revision is required",
+    });
+  });
+
+  it("requires a reservation revision before staff modifications", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/admin/reservations/52fdfc07-2182-454f-963f-5f0f9a621d72`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "seated", reason: "Guest arrived" }),
+      },
+    );
+
+    expect(response.status).toBe(428);
   });
 
   it("hides restaurants for which the authenticated user has no membership", async () => {

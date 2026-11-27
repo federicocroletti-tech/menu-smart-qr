@@ -57,7 +57,7 @@ Gli stati garanzia previsti sono `not_required`, `pending`, `authorized`, `captu
 
 ## Contratti API e stato implementativo
 
-Le route cliente, membership e lista giornaliera staff sono implementate in `server/src/app.ts`; le API amministrative di scrittura sono ancora proposte. L'API è collegata al progetto remoto, ma l'isolamento RLS con utenti e tenant distinti richiede ancora test dedicati su quel database.
+Le route cliente, membership, lista staff e gestione prenotazioni sono implementate in `server/src/app.ts`; le scritture amministrative usano un access token Supabase verificato e le query PostgreSQL operano con ruolo `authenticated` e policy RLS già previste. L'API è collegata al progetto remoto, ma l'isolamento RLS con utenti e tenant distinti richiede ancora test dedicati su quel database.
 
 | Metodo e percorso | Stato | Uso ed esito principale |
 |---|---|---|
@@ -69,11 +69,26 @@ Le route cliente, membership e lista giornaliera staff sono implementate in `ser
 | `POST /api/v1/reservations/{confirmationCode}/cancellation` | Implementata; test end-to-end live da eseguire | Cancella la prenotazione e segnala se la richiesta e oltre il termine; non esegue trattenute. |
 | `GET /api/v1/me/restaurants` | Implementata, API testata con verifier/store mock; RLS non verificata su DB reale | Richiede un access token Supabase valido e delega la lettura delle membership alla sessione PostgreSQL con ruolo `authenticated`. |
 | `GET /api/v1/admin/restaurants/{restaurantId}/reservations?date=&status=&limit=&offset=` | Implementata, API testata con store mock; RLS non verificata su DB reale | Vista giornaliera filtrata e paginata per un membro autenticato del ristorante; restituisce contatto minimo. |
-| `POST /api/v1/admin/reservations` | Proposta | Inserisce prenotazione telefonica/manuale. |
-| `PATCH /api/v1/admin/reservations/{id}` | Proposta | Modifica assegnazione, stato, coperti effettivi o eccezione. |
-| `POST /api/v1/admin/table-blocks` | Proposta | Blocca tavolo o area per un intervallo. |
+| `POST /api/v1/admin/restaurants/{restaurantId}/reservations` | Implementata | Crea una prenotazione manuale confermata. Richiede `Idempotency-Key`, contatto minimo, tavoli, intervallo ISO-8601 e motivo. |
+| `PATCH /api/v1/admin/reservations/{id}` | Implementata | Aggiorna stato, intervallo e/o coperti con controllo transizione, `If-Match: "<revision>"` e vincoli di collisione. |
+| `POST /api/v1/admin/restaurants/{restaurantId}/table-blocks` | Implementata | Blocca un tavolo per un intervallo; rifiuta prenotazioni attive o blocchi sovrapposti. |
+| `DELETE /api/v1/admin/restaurants/{restaurantId}/table-blocks/{blockId}` | Implementata | Rimuove un blocco del ristorante. |
+| `GET /api/v1/admin/restaurants/{restaurantId}/table-blocks?from=&to=` | Implementata | Legge blocchi sovrapposti all'intervallo. |
+| `GET /api/v1/admin/restaurants/{restaurantId}/availability-rules` | Implementata | Legge regole e versioni dei documenti legali per i membri. |
+| `PUT /api/v1/admin/restaurants/{restaurantId}/availability-rules` | Implementata | Aggiorna hold, coperti massimi, prenotazione online e preavviso di cancellazione. |
+| `GET /api/v1/admin/restaurants/{restaurantId}/availability-exceptions?from=&to=` | Implementata | Legge eccezioni nell'intervallo richiesto. |
+| `PUT /api/v1/admin/restaurants/{restaurantId}/availability-exceptions` | Implementata | Crea o sostituisce l'eccezione di apertura/chiusura per una data. |
+| `GET /api/v1/admin/restaurants/{restaurantId}/notifications?limit=` | Implementata | Legge lo stato delle notifiche senza esporre recapiti o payload provider. |
+| `GET /api/v1/admin/restaurants/{restaurantId}/reservations/export?from=&to=` | Implementata | Esporta CSV per un intervallo limitato; richiede ruolo owner/admin e protegge le celle da formula injection. |
+| `PATCH /api/v1/reservations/{confirmationCode}` | Implementata | Modifica data/ora/coperti con `Idempotency-Key` e `If-Match: "<revision>"`; il server ricalcola e rialloca atomicamente il tavolo. Il `GET` restituisce revision ed ETag. |
 
-Le API amministrative richiedono identita e autorizzazioni server-side separate da quelle cliente; la SPA non deve contenere credenziali database o chiavi `service_role`. L'accesso staff e in sola lettura e richiede una membership provisionata dal titolare; non esiste ancora un flusso di invito o bootstrap del proprietario. Le route di scrittura e il provider di pagamento non fanno parte dell'MVP attuale.
+Le route `/api/v1/admin/**` richiedono access token Supabase verificato; le mutazioni richiedono membership `owner` o `admin` verificata lato server e in RLS, mentre la lista giornaliera resta disponibile ai membri staff. La prenotazione guest usa codice opaco e token hold, senza riutilizzare l'autenticazione staff. La SPA non contiene credenziali database o chiavi `service_role`. Non esiste ancora un flusso di invito o bootstrap del proprietario.
+
+### Errori HTTP e idempotenza
+
+Gli errori API hanno forma `{ "error": "<messaggio>" }`: `400` per parametri/body non validi o chiavi idempotenti mancanti; `401` per token mancante/non valido; `404` per risorse non trovate o non accessibili nel tenant; `409` per chiave riutilizzata con payload diverso, transizione non consentita o collisione tavolo; `410` per hold scaduto; `412` per revisione superata; `413` per body eccessivo; `428` se manca `If-Match`; `429` per rate limit; `500` per errore interno senza dettagli database. Le route di modifica/cancellazione restituiscono inoltre `late` per una cancellazione oltre il preavviso configurato. La chiave idempotente della modifica viene memorizzata con hash e risultato nella stessa transazione; hold e conferma mantengono le proprie garanzie idempotenti. Ogni aggiornamento di prenotazione incrementa una revisione DB, così richieste concorrenti basate su una versione obsoleta falliscono senza sovrascrivere l'aggiornamento più recente.
+
+Conferme, modifiche e cancellazioni scrivono un outbox transazionale in `notifications` con deduplicazione. Lo stato iniziale è `queued`: la consegna effettiva richiede un worker/provider di messaggistica configurato e non viene dichiarata riuscita senza tale integrazione. Le API non restituiscono indirizzi email o numeri telefonici nel feed notifiche.
 
 ## Motore di disponibilita e concorrenza
 
@@ -98,7 +113,7 @@ Raccogliere solo nome e recapito necessari; marketing separato. Retention config
 1. Completato: servizio Node.js API, schema PostgreSQL, runner migrazioni `001`-`005`, verifica server-side token Supabase, policy RLS di lettura tenant e deploy Render/Supabase. La ricerca disponibilità è stata verificata live sul demo Vesuvio. La chiave DB rimane solo nell'ambiente server.
 2. In corso: aggiungere test automatizzati di build/test API alla CI e progettare i controlli d'isolamento con due tenant/utenti. Le configurazioni dei tavoli demo non devono essere riutilizzate come dati reali di un ristorante.
 3. Prossimo: verificare su staging i flussi PostgreSQL hold, conferma, consultazione e cancellazione; configurare documenti legali approvati prima di abilitare la conferma nel demo.
-4. Successivo: UI di accesso/dashboard, API amministrative di scrittura, editor pianta, aggiornamenti disponibilita live, esportazione, notifiche e gestione avanzata delle eccezioni.
+4. In corso: UI dashboard, editor pianta, aggiornamenti disponibilita live e integrazione del worker/provider per consegnare gli eventi outbox.
 5. Ultimo: provider pagamenti, webhook e policy economiche approvate. Nessuna integrazione pagamenti prima dei test concorrenza/cancellazione.
 
 ## Verifiche richieste prima del rilascio
@@ -107,7 +122,7 @@ Test unitari di durata/capienza/combinazioni e transizioni; test PostgreSQL conc
 
 ### Procedura riproducibile per i flussi PostgreSQL
 
-Il test d'integrazione `server/src/reservation-service.postgres.spec.ts` esercita via HTTP hold, riuso della chiave idempotente, rifiuto di una chiave riutilizzata con dati diversi, conferma ripetuta, recupero, cancellazione e scadenza. Richiede un database PostgreSQL **dedicato e sacrificabile**: le migrazioni usano lo schema `public` e non devono essere applicate a produzione per questa prova.
+Il test d'integrazione `server/src/reservation-service.postgres.spec.ts` esercita via HTTP hold, riuso della chiave idempotente, rifiuto di una chiave riutilizzata con dati diversi, conferma ripetuta, recupero, modifica idempotente, cancellazione e scadenza. Richiede un database PostgreSQL **dedicato e sacrificabile**: le migrazioni usano lo schema `public` e non devono essere applicate a produzione per questa prova.
 
 In PowerShell, impostare l'URL del database di test, applicare le migrazioni e avviare il test:
 
@@ -122,4 +137,4 @@ Il test crea un ristorante temporaneo, avvia l'API contro quel pool, esegue le r
 
 ### Database remoto di test da predisporre
 
-Resta da creare un database PostgreSQL remoto dedicato a staging/test, separato da produzione. Configurare `DATABASE_URL` e `RESERVATION_TEST_DATABASE_URL` solo nei secret del relativo ambiente CI/staging, applicare le migrazioni fino alla `006` e usare esclusivamente dati sintetici. Non puntare mai il test d'integrazione al database di produzione.
+Resta da creare un database PostgreSQL remoto dedicato a staging/test, separato da produzione. Configurare `DATABASE_URL` e `RESERVATION_TEST_DATABASE_URL` solo nei secret del relativo ambiente CI/staging, applicare le migrazioni fino alla `008` e usare esclusivamente dati sintetici. Non puntare mai il test d'integrazione al database di produzione.

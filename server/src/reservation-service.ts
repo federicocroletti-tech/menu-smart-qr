@@ -49,6 +49,217 @@ export interface ConfirmationRequest {
   marketingConsent: boolean;
 }
 
+export interface ReservationModificationRequest {
+  date: string;
+  time: string;
+  partySize: number;
+  idempotencyKey: string;
+  expectedRevision: number;
+}
+
+export async function modifyReservation(
+  pool: Pool,
+  confirmationCode: string,
+  request: ReservationModificationRequest,
+): Promise<{
+  status: ReservationStatus;
+  startsAt: Date;
+  endsAt: Date;
+  partySize: number;
+  revision: number;
+}> {
+  const requestHash = createHash("sha256")
+    .update(JSON.stringify({
+      date: request.date,
+      time: request.time,
+      partySize: request.partySize,
+    }))
+    .digest("hex");
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const result = await client.query<{
+      id: string;
+      restaurant_id: string;
+      status: ReservationStatus;
+      starts_at: Date;
+      party_size_current: number;
+      revision: number;
+    }>(
+      `SELECT id, restaurant_id, status, starts_at, party_size_current, revision
+       FROM reservations
+       WHERE confirmation_code_hash = $1
+       FOR UPDATE`,
+      [hashConfirmationCode(confirmationCode)],
+    );
+    const reservation = result.rows[0];
+    if (!reservation) {
+      throw new ReservationError(404, "Reservation not found");
+    }
+
+    const previousRequest = await client.query<{
+      request_hash: string;
+      starts_at: Date;
+      ends_at: Date;
+      party_size: number;
+      revision: number;
+    }>(
+      `SELECT request_hash, starts_at, ends_at, party_size, revision
+       FROM reservation_modification_requests
+       WHERE reservation_id = $1 AND idempotency_key = $2`,
+      [reservation.id, request.idempotencyKey],
+    );
+    if (previousRequest.rowCount) {
+      if (previousRequest.rows[0].request_hash !== requestHash) {
+        throw new ReservationError(409, "Idempotency key was already used for a different request");
+      }
+      await client.query("COMMIT");
+      return {
+        status: "confirmed",
+        startsAt: previousRequest.rows[0].starts_at,
+        endsAt: previousRequest.rows[0].ends_at,
+        partySize: previousRequest.rows[0].party_size,
+        revision: previousRequest.rows[0].revision,
+      };
+    }
+    if (reservation.status !== "confirmed") {
+      throw new ReservationError(409, "Only confirmed reservations can be modified");
+    }
+    if (reservation.revision !== request.expectedRevision) {
+      throw new ReservationError(412, "Reservation was modified by another request");
+    }
+
+    const availability = await findAvailability(
+      client,
+      {
+        restaurantId: reservation.restaurant_id,
+        date: request.date,
+        time: request.time,
+        partySize: request.partySize,
+      },
+      new Date(),
+      reservation.id,
+    );
+    const selected = availability.tableSets[0];
+    if (!selected) {
+      throw new ReservationError(409, "No table is available for the requested change");
+    }
+
+    const lockedTables = await client.query<{ id: string }>(
+      `SELECT id
+       FROM restaurant_tables
+       WHERE id = ANY($1::uuid[])
+       ORDER BY id
+       FOR UPDATE`,
+      [selected.tableIds],
+    );
+    if (lockedTables.rowCount !== selected.tableIds.length) {
+      throw new ReservationError(409, "A selected table is no longer available");
+    }
+    const currentAvailability = await findAvailability(
+      client,
+      {
+        restaurantId: reservation.restaurant_id,
+        date: request.date,
+        time: request.time,
+        partySize: request.partySize,
+      },
+      new Date(),
+      reservation.id,
+    );
+    if (!currentAvailability.tableSets.some((tableSet) =>
+      matchesRequestedTables(tableSet.tableIds, selected.tableIds)
+    )) {
+      throw new ReservationError(409, "A selected table is no longer available");
+    }
+
+    await client.query(
+      `DELETE FROM reservation_tables WHERE reservation_id = $1`,
+      [reservation.id],
+    );
+    for (const tableId of selected.tableIds) {
+      await client.query(
+        `INSERT INTO reservation_tables
+           (reservation_id, table_id, status, starts_at, ends_at)
+         VALUES ($1, $2, 'confirmed', $3, $4)`,
+        [reservation.id, tableId, availability.timing.startsAt, availability.timing.endsAt],
+      );
+    }
+    await client.query(
+      `UPDATE reservations
+       SET starts_at = $2,
+           ends_at = $3,
+           party_size_current = $4,
+           cancellation_deadline = CASE
+             WHEN $5::integer IS NULL THEN NULL
+             ELSE $2 - make_interval(mins => $5)
+           END,
+           updated_at = now()
+       WHERE id = $1`,
+      [
+        reservation.id,
+        availability.timing.startsAt,
+        availability.timing.endsAt,
+        request.partySize,
+        availability.timing.cancellationNoticeMinutes,
+      ],
+    );
+    await client.query(
+      `INSERT INTO reservation_modification_requests
+         (reservation_id, idempotency_key, request_hash, starts_at, ends_at, party_size, revision)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        reservation.id,
+        request.idempotencyKey,
+        requestHash,
+        availability.timing.startsAt,
+        availability.timing.endsAt,
+        request.partySize,
+        request.expectedRevision + 1,
+      ],
+    );
+    await client.query(
+      `INSERT INTO reservation_events
+         (reservation_id, actor_type, previous_status, new_status, reason, details)
+       VALUES ($1, 'guest', 'confirmed', 'confirmed', 'Guest modified reservation', $2)`,
+      [
+        reservation.id,
+        JSON.stringify({
+          previousStartsAt: reservation.starts_at,
+          startsAt: availability.timing.startsAt,
+          previousPartySize: reservation.party_size_current,
+          partySize: request.partySize,
+        }),
+      ],
+    );
+    await client.query(
+      `INSERT INTO notifications
+         (reservation_id, channel, status, event_type, recipient_type, dedupe_key)
+       VALUES ($1, 'sms', 'queued', 'reservation_modified', 'guest', $2)
+       ON CONFLICT (dedupe_key) DO NOTHING`,
+      [reservation.id, `reservation_modified:sms:${reservation.id}:${requestHash}`],
+    );
+
+    await client.query("COMMIT");
+    return {
+      status: "confirmed",
+      startsAt: availability.timing.startsAt,
+      endsAt: availability.timing.endsAt,
+      partySize: request.partySize,
+      revision: request.expectedRevision + 1,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    if (isPostgresConflict(error)) {
+      throw new ReservationError(409, "A selected table is no longer available");
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function expireExpiredHolds(pool: Pool): Promise<void> {
   const client = await pool.connect();
   try {
@@ -567,6 +778,22 @@ export async function confirmReservation(
        VALUES ($1, 'guest', 'holding', 'confirmed', 'Guest completed reservation')`,
       [reservation.id],
     );
+    await client.query(
+      `INSERT INTO notifications
+         (reservation_id, channel, status, event_type, recipient_type, dedupe_key)
+       VALUES ($1, 'sms', 'queued', 'reservation_confirmed', 'guest', $2)
+       ON CONFLICT (dedupe_key) DO NOTHING`,
+      [reservation.id, `reservation_confirmed:sms:${reservation.id}`],
+    );
+    if (request.guest.email) {
+      await client.query(
+        `INSERT INTO notifications
+           (reservation_id, channel, status, event_type, recipient_type, dedupe_key)
+         VALUES ($1, 'email', 'queued', 'reservation_confirmed', 'guest', $2)
+         ON CONFLICT (dedupe_key) DO NOTHING`,
+        [reservation.id, `reservation_confirmed:email:${reservation.id}`],
+      );
+    }
 
     await client.query("COMMIT");
     return { confirmationCode, status: "confirmed" };
@@ -642,6 +869,7 @@ export async function releaseReservationHold(
 export async function cancelReservation(
   pool: Pool,
   confirmationCode: string,
+  reason = "Guest requested cancellation",
 ): Promise<{ status: ReservationStatus; late: boolean }> {
   const client = await pool.connect();
   try {
@@ -683,12 +911,20 @@ export async function cancelReservation(
     await client.query(
       `INSERT INTO reservation_events
          (reservation_id, actor_type, previous_status, new_status, reason, details)
-       VALUES ($1, 'guest', $2, 'cancelled_by_guest', 'Guest requested cancellation', $3)`,
+       VALUES ($1, 'guest', $2, 'cancelled_by_guest', $3, $4)`,
       [
         reservation.id,
         reservation.status,
+        reason,
         JSON.stringify({ late }),
       ],
+    );
+    await client.query(
+      `INSERT INTO notifications
+         (reservation_id, channel, status, event_type, recipient_type, dedupe_key)
+       VALUES ($1, 'sms', 'queued', 'reservation_cancelled', 'guest', $2)
+       ON CONFLICT (dedupe_key) DO NOTHING`,
+      [reservation.id, `reservation_cancelled:${reservation.id}`],
     );
     await client.query("COMMIT");
     return { status: "cancelled_by_guest", late };
