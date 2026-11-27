@@ -34,6 +34,7 @@
   "noItems": "No items available in this category.",
   "loading": "Loading...",
   "demoModeNotice": "Demo mode: sample content; orders and reservations are disabled until the API is configured.",
+  "offlineNotice": "You are offline: the latest saved copy is available.",
   "error": "An error occurred. Please try again later.",
   "retry": "Retry",
   "language": "Language",

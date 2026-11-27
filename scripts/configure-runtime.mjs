@@ -27,6 +27,8 @@ if (configuredSupabaseUrl) {
 }
 const supabasePublishableKey =
   process.env.SUPABASE_PUBLISHABLE_KEY?.trim() ?? '';
+const enablePwaOffline =
+  (process.env.PWA_OFFLINE_ENABLED?.trim().toLowerCase() ?? '') === 'true';
 const outputPath = join(
   process.cwd(),
   'dist',
@@ -41,6 +43,7 @@ await writeFile(
     apiBaseUrl,
     supabaseUrl,
     supabasePublishableKey,
+    enablePwaOffline,
   })});\n`,
 );
 console.log(`Runtime API endpoint configured: ${apiBaseUrl || 'same origin'}`);

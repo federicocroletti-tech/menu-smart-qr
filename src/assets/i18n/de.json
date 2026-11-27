@@ -34,6 +34,7 @@
   "noItems": "Keine Elemente in dieser Kategorie verfügbar.",
   "loading": "Wird geladen...",
   "demoModeNotice": "Demomodus: Beispieldaten; Bestellungen und Reservierungen sind deaktiviert, bis die API konfiguriert ist.",
+  "offlineNotice": "Sie sind offline: Die zuletzt gespeicherte Kopie ist verfügbar.",
   "error": "Ein Fehler ist aufgetreten. Bitte später erneut versuchen.",
   "retry": "Erneut versuchen",
   "language": "Sprache",

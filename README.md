@@ -25,6 +25,7 @@ Offrire una demo professionale, responsive e multilingua configurabile per più 
 - Componenti Ionic per selezione lingua, ricerca e navigazione tra categorie
 - App Android e iOS basate sulla stessa applicazione Angular tramite Capacitor
 - API Node.js/Express per contenuti e prenotazioni, con persistenza PostgreSQL
+- PWA offline opzionale, disattivabile con il flag runtime `PWA_OFFLINE_ENABLED`
 
 ## Stack tecnico
 

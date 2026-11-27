@@ -4,8 +4,9 @@ declare global {
   interface Window {
     menuSmartQrRuntime?: {
       apiBaseUrl?: string;
-    supabaseUrl?: string;
-    supabasePublishableKey?: string;
+      supabaseUrl?: string;
+      supabasePublishableKey?: string;
+      enablePwaOffline?: boolean;
     };
   }
 }
@@ -43,5 +44,10 @@ export class RuntimeConfigService {
 
   get isApiConfigured(): boolean {
     return Boolean(this.apiBaseUrl);
+  }
+
+  get isPwaOfflineEnabled(): boolean {
+    return typeof window !== 'undefined'
+      && window.menuSmartQrRuntime?.enablePwaOffline === true;
   }
 }

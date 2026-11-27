@@ -10,6 +10,12 @@
   } @else if (client) {
     <app-restaurant-header [client]="client" />
 
+    @if (isOffline) {
+      <p class="offline-notice" role="status" aria-live="polite">
+        {{ translationService.translate("offlineNotice") }}
+      </p>
+    }
+
     @if (isBundledContentMode) {
       <p class="demo-mode-notice" role="status">{{ demoModeNotice }}</p>
     }

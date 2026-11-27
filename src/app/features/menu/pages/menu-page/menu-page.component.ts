@@ -78,6 +78,7 @@ export class MenuPageComponent implements OnInit, OnDestroy {
   hasError = false;
   filter: MenuFilter = {};
   activeCategoryId: string | null = null;
+  isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
 
   constructor(
     private readonly clientService: ClientService,
@@ -106,6 +107,18 @@ export class MenuPageComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  @HostListener('window:online')
+  onOnline(): void {
+    this.isOffline = false;
+    this.cdr.markForCheck();
+  }
+
+  @HostListener('window:offline')
+  onOffline(): void {
+    this.isOffline = true;
+    this.cdr.markForCheck();
   }
 
   get featureFlags(): Record<string, boolean | undefined> {

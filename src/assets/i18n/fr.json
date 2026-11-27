@@ -34,6 +34,7 @@
   "noItems": "Aucun élément disponible dans cette catégorie.",
   "loading": "Chargement en cours...",
   "demoModeNotice": "Mode démo : contenu d'exemple ; les commandes et réservations sont désactivées tant que l'API n'est pas configurée.",
+  "offlineNotice": "Vous êtes hors ligne : la copie enregistrée la plus récente est disponible.",
   "error": "Une erreur s'est produite. Veuillez réessayer plus tard.",
   "retry": "Réessayer",
   "language": "Langue",

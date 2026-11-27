@@ -20,6 +20,8 @@ services:
         value: https://vfsxocefazuwoszibjxq.supabase.co
       - key: SUPABASE_PUBLISHABLE_KEY
         sync: false
+      - key: PWA_OFFLINE_ENABLED
+        value: "false"
       - key: IDEMPOTENCY_SECRET
         generateValue: true
       - key: ALLOWED_ORIGINS
