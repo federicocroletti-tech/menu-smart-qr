@@ -12,6 +12,15 @@ import type { TenantStore } from "./tenant-database";
 
 const databaseUrl = process.env["RESERVATION_TEST_DATABASE_URL"];
 
+if (
+  process.env["REQUIRE_RESERVATION_TEST_DATABASE"] === "true" &&
+  !databaseUrl
+) {
+  throw new Error(
+    "RESERVATION_TEST_DATABASE_URL is required when PostgreSQL integration tests are mandatory",
+  );
+}
+
 describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
   const restaurantId = `reservation-test-${randomUUID()}`;
   const holdKey = `hold-${randomUUID()}`;

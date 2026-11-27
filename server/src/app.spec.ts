@@ -514,6 +514,19 @@ describe("reservation API request handling", () => {
     });
   });
 
+  it("returns a consistent client error when a JSON request exceeds the body limit", async () => {
+    const response = await fetch(`${baseUrl}/api/v1/reservations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: "x".repeat(17_000) }),
+    });
+
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toEqual({
+      error: "Request body is too large",
+    });
+  });
+
   it("validates guest modification idempotency and payload", async () => {
     const response = await fetch(
       `${baseUrl}/api/v1/reservations/${"a".repeat(32)}`,

@@ -129,7 +129,11 @@
   "reservations": {
     "enabled": true,
     "minimumPartySize": 1,
-    "maximumPartySize": 20
+    "maximumPartySize": 20,
+    "bookingTermsUrl": "/legal/demo-booking-terms.html",
+    "privacyNoticeUrl": "/legal/demo-privacy-notice.html",
+    "bookingTermsVersion": "demo-terms-v1",
+    "privacyNoticeVersion": "demo-privacy-v1"
   },
   "promotion": {
     "enabled": false,

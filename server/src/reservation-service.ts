@@ -193,7 +193,7 @@ export async function modifyReservation(
            party_size_current = $4,
            cancellation_deadline = CASE
              WHEN $5::integer IS NULL THEN NULL
-             ELSE $2 - make_interval(mins => $5)
+             ELSE $2::timestamptz - make_interval(mins => $5)
            END,
            updated_at = now()
        WHERE id = $1`,
@@ -386,7 +386,7 @@ export async function createReservationHold(
     await client.query("BEGIN");
     await client.query(
       "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
-      [`${request.restaurantId}\u0000${request.idempotencyKey}`],
+      [JSON.stringify([request.restaurantId, request.idempotencyKey])],
     );
     await expireHolds(client, request.restaurantId);
 

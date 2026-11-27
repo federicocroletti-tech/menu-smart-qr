@@ -120,9 +120,9 @@ database rimane su Supabase. Nel servizio API Render, imposta queste variabili:
   al browser; non inserire mai `service_role` o credenziali database nel sito.
   Configura la chiave anche nel servizio statico Render: il blueprint la
   dichiara senza un valore predefinito.
-- `DATABASE_SSL=require` obbliga la connessione TLS; per il pooler Supabase il
-  driver non verifica la catena del certificato. Per verificare anche
-  l'identità del server, configura nel driver il certificato CA Supabase.
+- `DATABASE_SSL=require` abilita TLS ma non verifica il certificato; per
+  verificare il server usa `DATABASE_SSL=verify-full` e una connection string
+  con `sslmode=verify-full` (per Supabase configura anche la CA richiesta).
   `IDEMPOTENCY_SECRET` viene generato dal blueprint.
 - `API_BASE_URL` è collegato automaticamente all'host dell'API Render.
 
@@ -141,16 +141,41 @@ npm run server:start
 In un secondo terminale, `npm start` avvia Angular e inoltra `/api` a
 `localhost:3000`. Verifica API e log di deploy; `npm run server:test` esegue i
 test HTTP/unitari e `npm run server:build` controlla la compilazione del server.
+`npm run test:e2e` avvia il sito e verifica nel browser Chromium nome accessibile,
+focus e chiusura della finestra prenotazioni. La CI installa Chromium e usa un
+PostgreSQL temporaneo: crea lo schema auth di test, applica tutte le migrazioni e
+richiede che la suite di concorrenza prenotazioni venga eseguita (non saltata).
+Per usare il database Neon isolato `menu-smart-qr-test`, configura localmente
+`server/.env` (file ignorato da Git) con la sua connection string sia in
+`DATABASE_URL` sia in `RESERVATION_TEST_DATABASE_URL`; imposta
+`sslmode=verify-full` nella stringa, `DATABASE_SSL=verify-full` e
+`REQUIRE_RESERVATION_TEST_DATABASE=true`. Non incollare la stringa nel
+repository o in chat. Quindi esegui:
+
+```powershell
+npm run server:build
+npm run server:test-db:bootstrap
+npm run server:migrate:neon
+npm run server:test:neon
+```
+
+Il bootstrap locale è limitato agli host Neon; la suite crea e rimuove record
+sintetici per verificare la concorrenza. Non importare dati di produzione. La CI
+continua a usare un database PostgreSQL effimero e non necessita della stringa
+Neon.
 Per creare una build mobile da collegare all'API remota, imposta `API_BASE_URL`
 all'URL HTTPS del servizio API prima di `npm run build:mobile`. Il piano gratuito
 Render è adatto a prove, ma può sospendere il servizio API dopo inattività; per
 prenotazioni in produzione seleziona un piano sempre attivo.
 
-**Il demo Pizzeria Vesuvio restituisce disponibilità per gli orari configurati,
-ma la conferma dal sito resta disabilitata finché non vengono pubblicati URL
-validi per `bookingTermsUrl` e `privacyNoticeUrl` nel profilo del ristorante.**
-Le tabelle attuali sono dimostrative e non descrivono una sala reale. Bar Milano
-e The Corner Pub non hanno ancora una configurazione di prenotazione equivalente.
+**Pizzeria Vesuvio è un demo con dati fittizi.** Il profilo punta alle pagine
+`/legal/demo-booking-terms.html` e `/legal/demo-privacy-notice.html`, necessarie
+per collaudare il flusso di prenotazione. Sono bozze dimostrative, non documenti
+legali e non vanno usate per raccogliere prenotazioni o dati reali. Prima di
+attivare un locale reale, sostituisci entrambe le pagine e i relativi URL con
+documenti approvati dal titolare e adeguati al servizio. Le tabelle attuali sono
+dimostrative e non descrivono una sala reale. Bar Milano e The Corner Pub non
+hanno ancora una configurazione di prenotazione equivalente.
 
 Il backoffice non include ancora funzioni per modificare menu, orari, tavoli,
 regole o documenti. Per il piano multi-ristorante, i limiti attuali e la

@@ -134,4 +134,30 @@ describe('RestaurantContentApiService', () => {
       request.url.startsWith('assets/clients/'),
     );
   });
+
+  it('allows a failed content request to be retried instead of caching the error', () => {
+    const url =
+      'https://api.example.test/api/v1/restaurants/pizzeria-vesuvio/content';
+    let response: RestaurantContent | undefined;
+
+    service.getRestaurantContent('pizzeria-vesuvio').subscribe({
+      error: () => undefined,
+    });
+    httpTestingController.expectOne(url).flush('API unavailable', {
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+
+    service
+      .getRestaurantContent('pizzeria-vesuvio')
+      .subscribe((content) => (response = content));
+    httpTestingController.expectOne(url).flush({
+      client: { id: 'pizzeria-vesuvio' },
+      allergens: [],
+      menuIndex: { currency: 'EUR', categories: [] },
+      menuCategories: {},
+    });
+
+    expect(response?.client.id).toBe('pizzeria-vesuvio');
+  });
 });

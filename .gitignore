@@ -5,6 +5,8 @@
 /tmp/
 /coverage/
 /e2e/test-output/
+/test-results/
+/playwright-report/
 /.angular/
 .angular/
 
@@ -20,6 +22,7 @@
 
 # Environment files
 /.env
+/server/.env
 
 # Angular CLI and build artefacts
 /.angular-cli.json

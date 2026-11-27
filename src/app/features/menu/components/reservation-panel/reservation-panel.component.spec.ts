@@ -238,6 +238,32 @@ describe('ReservationPanelComponent', () => {
     expect(createReservationHold).not.toHaveBeenCalled();
   });
 
+  it('allows same-site legal document paths but rejects protocol-relative URLs', () => {
+    const component = createComponent();
+    component.client = {
+      ...client,
+      reservations: {
+        bookingTermsUrl: '/legal/demo-booking-terms.html',
+        privacyNoticeUrl: '/legal/demo-privacy-notice.html',
+      },
+    };
+
+    expect(component.bookingTermsUrl).toBe('/legal/demo-booking-terms.html');
+    expect(component.privacyNoticeUrl).toBe('/legal/demo-privacy-notice.html');
+    expect(component.hasLegalDocuments).toBe(true);
+
+    component.client = {
+      ...client,
+      reservations: {
+        bookingTermsUrl: '//untrusted.example/terms',
+        privacyNoticeUrl: '/legal/demo-privacy-notice.html',
+      },
+    };
+
+    expect(component.bookingTermsUrl).toBeNull();
+    expect(component.hasLegalDocuments).toBe(false);
+  });
+
   it('does not request availability for an invalid party size', () => {
     const component = createComponent();
     component.client = client;

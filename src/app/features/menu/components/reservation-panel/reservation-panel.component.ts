@@ -280,15 +280,16 @@ export class ReservationPanelComponent implements OnDestroy {
       return;
     }
 
+    const activeElement = dialog?.ownerDocument.activeElement ?? null;
     if (
       event.shiftKey &&
-      (document.activeElement === first || !dialog?.contains(document.activeElement))
+      (activeElement === first || !dialog?.contains(activeElement))
     ) {
       event.preventDefault();
       last.focus();
     } else if (
       !event.shiftKey &&
-      (document.activeElement === last || !dialog?.contains(document.activeElement))
+      (activeElement === last || !dialog?.contains(activeElement))
     ) {
       event.preventDefault();
       first.focus();
@@ -572,7 +573,15 @@ export class ReservationPanelComponent implements OnDestroy {
       return null;
     }
     try {
-      const url = new URL(value);
+      const isLocalPath = value.startsWith('/') && !value.startsWith('//');
+      const url = isLocalPath
+        ? new URL(value, 'https://local.invalid')
+        : new URL(value);
+      if (isLocalPath) {
+        return url.origin === 'https://local.invalid'
+          ? `${url.pathname}${url.search}${url.hash}`
+          : null;
+      }
       return url.protocol === 'https:' || url.protocol === 'http:'
         ? url.href
         : null;
