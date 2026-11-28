@@ -101,6 +101,7 @@
   "privacyNoticeConsent": "J'ai lu la politique de confidentialité.",
   "readDocument": "Lire",
   "reservationLegalDocumentsMissing": "L'établissement doit configurer les liens vers ses conditions de réservation et sa politique de confidentialité avant d'accepter les réservations en ligne.",
+  "reservationLegalDocumentsChanged": "Les documents juridiques ont changé. Rechargez la page et consultez les versions actuelles.",
   "confirmReservation": "Confirmer la réservation",
   "savingReservation": "Enregistrement...",
   "reservationConfirmed": "Réservation confirmée. Conservez ce code de confirmation :",

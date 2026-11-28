@@ -251,6 +251,8 @@ describe("reservation API request handling", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         holdToken: "a".repeat(32),
+        bookingTermsVersion: "terms-v1",
+        privacyNoticeVersion: "privacy-v1",
         guest: { name: "Ada Guest", phone: "+393331234567" },
         acceptTerms: false,
         acceptPrivacy: true,
@@ -290,6 +292,8 @@ describe("reservation API request handling", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           holdToken: "a".repeat(32),
+          bookingTermsVersion: "terms-v1",
+          privacyNoticeVersion: "privacy-v1",
           guest,
           acceptTerms: true,
           acceptPrivacy: true,
@@ -299,6 +303,22 @@ describe("reservation API request handling", () => {
 
       expect(response.status).toBe(400);
     }
+  });
+
+  it("requires versions for both legal documents before confirming", async () => {
+    const response = await fetch(`${baseUrl}/api/v1/reservations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        holdToken: "a".repeat(32),
+        guest: { name: "Ada Guest", phone: "+393331234567" },
+        acceptTerms: true,
+        acceptPrivacy: true,
+        marketingConsent: false,
+      }),
+    });
+
+    expect(response.status).toBe(400);
   });
 
   it("requires a verified access token for restaurant memberships", async () => {

@@ -145,7 +145,7 @@ test HTTP/unitari e `npm run server:build` controlla la compilazione del server.
 focus e chiusura della finestra prenotazioni. La CI installa Chromium e usa un
 PostgreSQL temporaneo: crea lo schema auth di test, applica tutte le migrazioni e
 richiede che la suite di concorrenza prenotazioni venga eseguita (non saltata).
-Per usare il database Neon isolato `menu-smart-qr-test`, configura localmente
+Per usare il database Neon isolato di test, configura localmente
 `server/.env` (file ignorato da Git) con la sua connection string sia in
 `DATABASE_URL` sia in `RESERVATION_TEST_DATABASE_URL`; imposta
 `sslmode=verify-full` nella stringa, `DATABASE_SSL=verify-full` e
@@ -168,14 +168,14 @@ all'URL HTTPS del servizio API prima di `npm run build:mobile`. Il piano gratuit
 Render è adatto a prove, ma può sospendere il servizio API dopo inattività; per
 prenotazioni in produzione seleziona un piano sempre attivo.
 
-**Pizzeria Vesuvio è un demo con dati fittizi.** Il profilo punta alle pagine
-`/legal/demo-booking-terms.html` e `/legal/demo-privacy-notice.html`, necessarie
-per collaudare il flusso di prenotazione. Sono bozze dimostrative, non documenti
-legali e non vanno usate per raccogliere prenotazioni o dati reali. Prima di
-attivare un locale reale, sostituisci entrambe le pagine e i relativi URL con
-documenti approvati dal titolare e adeguati al servizio. Le tabelle attuali sono
-dimostrative e non descrivono una sala reale. Bar Milano e The Corner Pub non
-hanno ancora una configurazione di prenotazione equivalente.
+**Pizzeria Vesuvio è un demo con dati fittizi e le prenotazioni sono disabilitate.**
+Il profilo non configura URL o versioni legali. Le pagine
+`/legal/demo-booking-terms.html` e `/legal/demo-privacy-notice.html` sono bozze
+dimostrative, non documenti legali e non vanno usate per raccogliere prenotazioni
+o dati reali. Prima di attivare un locale reale, configura entrambi i documenti
+HTTPS e le relative versioni, approvati dal titolare e adeguati al servizio.
+Le tabelle attuali sono dimostrative e non descrivono una sala reale. Bar Milano
+e The Corner Pub non hanno ancora una configurazione di prenotazione equivalente.
 
 Il backoffice non include ancora funzioni per modificare menu, orari, tavoli,
 regole o documenti. Per il piano multi-ristorante, i limiti attuali e la

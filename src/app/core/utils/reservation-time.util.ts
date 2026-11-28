@@ -8,7 +8,8 @@ export function isFutureReservationDateTime(
     return false;
   }
 
-  const parsedDate = new Date(`${date}T${time}:00.000Z`);
+  const localDateTime = `${date}T${time}:00`;
+  const parsedDate = new Date(`${localDateTime}.000Z`);
   if (
     Number.isNaN(parsedDate.getTime()) ||
     parsedDate.toISOString().slice(0, 16) !== `${date}T${time}`
@@ -17,21 +18,58 @@ export function isFutureReservationDateTime(
   }
 
   try {
-    const parts = new Intl.DateTimeFormat('en-CA', {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
       timeZone,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
+      second: '2-digit',
       hourCycle: 'h23',
-    }).formatToParts(now);
-    const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-    const currentLocalDateTime =
-      `${values['year']}-${values['month']}-${values['day']}T` +
-      `${values['hour']}:${values['minute']}`;
+    });
+    const localDateTimeKey = `${localDateTime}`;
+    const wallTimeAsUtc = parsedDate.getTime();
+    const offsets = new Set<number>();
 
-    return `${date}T${time}` > currentLocalDateTime;
+    for (const hours of [-36, -24, -12, 0, 12, 24, 36]) {
+      const probe = new Date(wallTimeAsUtc + hours * 60 * 60 * 1000);
+      const parts = formatter.formatToParts(probe);
+      const values = Object.fromEntries(
+        parts.map(({ type, value }) => [type, value]),
+      );
+      const formattedAsUtc = Date.UTC(
+        Number(values['year']),
+        Number(values['month']) - 1,
+        Number(values['day']),
+        Number(values['hour']),
+        Number(values['minute']),
+        Number(values['second']),
+      );
+      offsets.add(
+        (formattedAsUtc - Math.floor(probe.getTime() / 1000) * 1000) / 60_000,
+      );
+    }
+
+    const matchingInstants = [...offsets]
+      .map((offset) => wallTimeAsUtc - offset * 60_000)
+      .filter((instant) => {
+        const parts = formatter.formatToParts(new Date(instant));
+        const values = Object.fromEntries(
+          parts.map(({ type, value }) => [type, value]),
+        );
+        return (
+          `${values['year']}-${values['month']}-${values['day']}T` +
+            `${values['hour']}:${values['minute']}:${values['second']}` ===
+          localDateTimeKey
+        );
+      });
+
+    if (matchingInstants.length === 0) {
+      return false;
+    }
+
+    return Math.max(...matchingInstants) > now.getTime();
   } catch (error) {
     console.error('Invalid restaurant time zone:', timeZone, error);
     return false;

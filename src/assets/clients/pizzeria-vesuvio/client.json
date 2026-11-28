@@ -122,18 +122,18 @@
       "enablePrices": true,
       "enableDescriptions": true,
       "enableOrders": true,
-      "enableReservations": true,
+      "enableReservations": false,
       "showPromotion": true
     }
   },
   "reservations": {
-    "enabled": true,
+    "enabled": false,
+    "bookingTermsUrl": "https://menu-smart-qr.onrender.com/legal/demo-booking-terms.html",
+    "bookingTermsVersion": "demo-reservation-terms-v1",
+    "privacyNoticeUrl": "https://menu-smart-qr.onrender.com/legal/demo-privacy-notice.html",
+    "privacyNoticeVersion": "demo-privacy-notice-v1",
     "minimumPartySize": 1,
-    "maximumPartySize": 20,
-    "bookingTermsUrl": "/legal/demo-booking-terms.html",
-    "privacyNoticeUrl": "/legal/demo-privacy-notice.html",
-    "bookingTermsVersion": "demo-terms-v1",
-    "privacyNoticeVersion": "demo-privacy-v1"
+    "maximumPartySize": 20
   },
   "promotion": {
     "enabled": false,

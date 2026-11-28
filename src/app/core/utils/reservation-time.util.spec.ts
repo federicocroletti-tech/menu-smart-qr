@@ -25,4 +25,45 @@ describe('isFutureReservationDateTime', () => {
       isFutureReservationDateTime('2026-01-15', '12:00', 'Invalid/Zone', now),
     ).toBe(false);
   });
+
+  it('rejects a selected time that is already past within the current minute', () => {
+    expect(
+      isFutureReservationDateTime(
+        '2026-01-15',
+        '12:00',
+        'Europe/Rome',
+        new Date('2026-01-15T11:00:30.000Z'),
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects wall times that do not exist during the spring DST transition', () => {
+    expect(
+      isFutureReservationDateTime(
+        '2026-03-29',
+        '02:30',
+        'Europe/Rome',
+        new Date('2026-03-28T12:00:00.000Z'),
+      ),
+    ).toBe(false);
+  });
+
+  it('uses the later Europe/Rome instant for an ambiguous autumn wall time', () => {
+    expect(
+      isFutureReservationDateTime(
+        '2026-10-25',
+        '02:30',
+        'Europe/Rome',
+        new Date('2026-10-25T01:00:00.000Z'),
+      ),
+    ).toBe(true);
+    expect(
+      isFutureReservationDateTime(
+        '2026-10-25',
+        '02:30',
+        'Europe/Rome',
+        new Date('2026-10-25T01:30:00.000Z'),
+      ),
+    ).toBe(false);
+  });
 });

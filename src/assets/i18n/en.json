@@ -101,6 +101,7 @@
   "privacyNoticeConsent": "I have read the privacy notice.",
   "readDocument": "Read",
   "reservationLegalDocumentsMissing": "The venue must configure links to its booking terms and privacy notice before accepting online reservations.",
+  "reservationLegalDocumentsChanged": "The legal documents have changed. Reload the page and review the current versions.",
   "confirmReservation": "Confirm reservation",
   "savingReservation": "Saving...",
   "reservationConfirmed": "Reservation confirmed. Keep this confirmation code:",

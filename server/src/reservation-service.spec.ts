@@ -34,9 +34,14 @@ describe("releaseReservationHold", () => {
     const statements: string[] = [];
     const query = async (sql: string) => {
       statements.push(sql);
-      if (sql.includes("SELECT id, status")) {
+      if (sql.includes("SELECT id, restaurant_id, status")) {
         return {
-          rows: [{ id: "reservation-id", status: "holding" }],
+          rows: [{
+            id: "reservation-id",
+            restaurant_id: "restaurant-id",
+            status: "holding",
+            hold_is_active: true,
+          }],
           rowCount: 1,
         };
       }

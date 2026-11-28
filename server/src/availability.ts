@@ -7,7 +7,7 @@ import {
   type TableCombination,
 } from "./domain/reservations";
 
-type Queryable = Pick<Pool, "query"> | Pick<PoolClient, "query">;
+export type ReservationQueryable = Pick<Pool, "query"> | Pick<PoolClient, "query">;
 
 interface ScheduleRow extends QueryResultRow {
   starts_at: Date;
@@ -66,6 +66,18 @@ export interface ReservationTiming {
   cancellationNoticeMinutes: number | null;
 }
 
+export interface ReservationLegalConfiguration {
+  onlineBookingEnabled: boolean;
+  clientBookingEnabled: boolean;
+  bookingTermsVersion: string;
+  privacyNoticeVersion: string;
+  bookingTermsUrl: string | null;
+  privacyNoticeUrl: string | null;
+  clientBookingTermsVersion: string | null;
+  clientPrivacyNoticeVersion: string | null;
+  legalDocumentsConfigured: boolean;
+}
+
 export interface AvailabilityResult {
   timing: ReservationTiming;
   tableSets: AvailableTableSet[];
@@ -80,8 +92,91 @@ export class AvailabilityError extends Error {
   }
 }
 
+function isHttpsDocumentUrl(value: string | null): boolean {
+  if (!value) {
+    return false;
+  }
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" &&
+      Boolean(url.hostname) &&
+      !url.username &&
+      !url.password;
+  } catch {
+    return false;
+  }
+}
+
+function isConfiguredDocumentVersion(value: string | null): boolean {
+  const version = value?.trim();
+  return Boolean(version && !/^demo(?:[-_ ]|$)/i.test(version));
+}
+
+export async function resolveReservationLegalConfiguration(
+  queryable: ReservationQueryable,
+  restaurantId: string,
+): Promise<ReservationLegalConfiguration | null> {
+  const result = await queryable.query<{
+    online_booking_enabled: boolean;
+    booking_terms_version: string;
+    privacy_notice_version: string;
+    booking_terms_url: string | null;
+    privacy_notice_url: string | null;
+    client_reservations_enabled: string | null;
+    client_reservations_flag: string | null;
+    client_booking_terms_version: string | null;
+    client_privacy_notice_version: string | null;
+  }>(
+    `SELECT ar.online_booking_enabled,
+            ar.booking_terms_version,
+            ar.privacy_notice_version,
+            rc.client_data #>> '{reservations,bookingTermsUrl}' AS booking_terms_url,
+            rc.client_data #>> '{reservations,privacyNoticeUrl}' AS privacy_notice_url,
+            rc.client_data #>> '{reservations,enabled}'
+              AS client_reservations_enabled,
+            rc.client_data #>> '{settings,featureFlags,enableReservations}'
+              AS client_reservations_flag,
+            rc.client_data #>> '{reservations,bookingTermsVersion}'
+              AS client_booking_terms_version,
+            rc.client_data #>> '{reservations,privacyNoticeVersion}'
+              AS client_privacy_notice_version
+     FROM availability_rules ar
+     LEFT JOIN restaurant_content rc ON rc.restaurant_id = ar.restaurant_id
+     WHERE ar.restaurant_id = $1`,
+    [restaurantId],
+  );
+  const configuration = result.rows[0];
+  if (!configuration) {
+    return null;
+  }
+
+  const legalDocumentsConfigured =
+    isHttpsDocumentUrl(configuration.booking_terms_url) &&
+    isHttpsDocumentUrl(configuration.privacy_notice_url) &&
+    isConfiguredDocumentVersion(configuration.booking_terms_version) &&
+    isConfiguredDocumentVersion(configuration.privacy_notice_version) &&
+    configuration.client_booking_terms_version ===
+      configuration.booking_terms_version &&
+    configuration.client_privacy_notice_version ===
+      configuration.privacy_notice_version;
+
+  return {
+    onlineBookingEnabled: configuration.online_booking_enabled,
+    clientBookingEnabled:
+      configuration.client_reservations_enabled === "true" &&
+      configuration.client_reservations_flag === "true",
+    bookingTermsVersion: configuration.booking_terms_version,
+    privacyNoticeVersion: configuration.privacy_notice_version,
+    bookingTermsUrl: configuration.booking_terms_url,
+    privacyNoticeUrl: configuration.privacy_notice_url,
+    clientBookingTermsVersion: configuration.client_booking_terms_version,
+    clientPrivacyNoticeVersion: configuration.client_privacy_notice_version,
+    legalDocumentsConfigured,
+  };
+}
+
 export async function resolveReservationTiming(
-  queryable: Queryable,
+  queryable: ReservationQueryable,
   request: AvailabilityRequest,
 ): Promise<ReservationTiming> {
   const result = await queryable.query<ScheduleRow>(
@@ -114,6 +209,10 @@ export async function resolveReservationTiming(
        AND ar.online_booking_enabled
        AND $4::smallint <= ar.maximum_party_size
        AND (($2::date + $3::time) AT TIME ZONE r.time_zone) > now()
+       AND (
+         (($2::date + $3::time) AT TIME ZONE r.time_zone)
+           AT TIME ZONE r.time_zone
+       ) = ($2::date + $3::time)
        AND (
          EXISTS (
            SELECT 1
@@ -191,7 +290,7 @@ export async function resolveReservationTiming(
 }
 
 export async function findAvailability(
-  queryable: Queryable,
+  queryable: ReservationQueryable,
   request: AvailabilityRequest,
   now: Date = new Date(),
   excludeReservationId?: string,

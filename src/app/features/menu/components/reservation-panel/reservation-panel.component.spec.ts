@@ -33,6 +33,8 @@ const client: Client = {
     maximumPartySize: 8,
     bookingTermsUrl: 'https://example.test/booking-terms',
     privacyNoticeUrl: 'https://example.test/privacy',
+    bookingTermsVersion: 'terms-v1',
+    privacyNoticeVersion: 'privacy-v1',
   },
 };
 
@@ -203,6 +205,8 @@ describe('ReservationPanelComponent', () => {
 
     expect(confirmReservation).toHaveBeenCalledWith({
       holdToken: 'hold-token-value-that-is-long-enough',
+      bookingTermsVersion: 'terms-v1',
+      privacyNoticeVersion: 'privacy-v1',
       guest: {
         name: 'Ada Lovelace',
         phone: '+39 333 1234567',
@@ -238,30 +242,63 @@ describe('ReservationPanelComponent', () => {
     expect(createReservationHold).not.toHaveBeenCalled();
   });
 
-  it('allows same-site legal document paths but rejects protocol-relative URLs', () => {
+  it('requires HTTPS legal documents and non-demo document versions', () => {
     const component = createComponent();
     component.client = {
       ...client,
       reservations: {
-        bookingTermsUrl: '/legal/demo-booking-terms.html',
-        privacyNoticeUrl: '/legal/demo-privacy-notice.html',
+        bookingTermsUrl: 'https://venue.example/terms',
+        privacyNoticeUrl: 'https://venue.example/privacy',
+        bookingTermsVersion: 'terms-2026-01',
+        privacyNoticeVersion: 'privacy-2026-01',
       },
     };
 
-    expect(component.bookingTermsUrl).toBe('/legal/demo-booking-terms.html');
-    expect(component.privacyNoticeUrl).toBe('/legal/demo-privacy-notice.html');
+    expect(component.bookingTermsUrl).toBe('https://venue.example/terms');
+    expect(component.privacyNoticeUrl).toBe('https://venue.example/privacy');
     expect(component.hasLegalDocuments).toBe(true);
 
     component.client = {
       ...client,
       reservations: {
-        bookingTermsUrl: '//untrusted.example/terms',
-        privacyNoticeUrl: '/legal/demo-privacy-notice.html',
+        bookingTermsUrl: 'http://venue.example/terms',
+        privacyNoticeUrl: 'https://venue.example/privacy',
+        bookingTermsVersion: 'demo-terms-v1',
+        privacyNoticeVersion: 'privacy-2026-01',
       },
     };
 
     expect(component.bookingTermsUrl).toBeNull();
     expect(component.hasLegalDocuments).toBe(false);
+  });
+
+  it('does not confirm a held reservation when a legal document is missing', () => {
+    const component = createComponent();
+    component.client = client;
+    component.date = '2099-12-31';
+    component.time = '20:00';
+    component.partySize = 2;
+    component.name = 'Ada Lovelace';
+    component.phone = '+39 333 1234567';
+    component.availability = availableResponse;
+    component.acceptBookingTerms = true;
+    component.acceptPrivacyNotice = true;
+    component.submitReservation();
+    expect(component.hold).not.toBeNull();
+
+    component.client = {
+      ...client,
+      reservations: {
+        bookingTermsUrl: client.reservations?.bookingTermsUrl,
+        bookingTermsVersion: client.reservations?.bookingTermsVersion,
+      },
+    };
+
+    component.confirmHeldReservation();
+
+    expect(component.canConfirmHeldReservation).toBe(false);
+    expect(confirmReservation).not.toHaveBeenCalled();
+    component.ngOnDestroy();
   });
 
   it('does not request availability for an invalid party size', () => {

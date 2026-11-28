@@ -101,6 +101,7 @@
   "privacyNoticeConsent": "Ich habe die Datenschutzhinweise gelesen.",
   "readDocument": "Lesen",
   "reservationLegalDocumentsMissing": "Der Betrieb muss Links zu den Reservierungsbedingungen und Datenschutzhinweisen einrichten, bevor Online-Reservierungen angenommen werden.",
+  "reservationLegalDocumentsChanged": "Die rechtlichen Dokumente wurden geändert. Laden Sie die Seite neu und prüfen Sie die aktuellen Versionen.",
   "confirmReservation": "Reservierung bestätigen",
   "savingReservation": "Wird gespeichert...",
   "reservationConfirmed": "Reservierung bestätigt. Bitte bewahren Sie diesen Bestätigungscode auf:",

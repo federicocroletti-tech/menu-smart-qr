@@ -7,6 +7,10 @@ interface ClientProfile {
   id: string;
   name: string;
   timeZone: string;
+  reservations?: {
+    bookingTermsVersion?: string;
+    privacyNoticeVersion?: string;
+  };
 }
 
 interface MenuIndex {
@@ -63,7 +67,23 @@ async function seedContent(): Promise<void> {
           `INSERT INTO restaurant_content
              (restaurant_id, client_data, allergens, menu_index, menu_categories)
            VALUES ($1, $2::jsonb, $3::jsonb, $4::jsonb, $5::jsonb)
-           ON CONFLICT (restaurant_id) DO NOTHING`,
+           ON CONFLICT (restaurant_id)
+           DO UPDATE SET
+             client_data = jsonb_set(
+               jsonb_set(
+                 restaurant_content.client_data,
+                 '{reservations}',
+                 COALESCE(EXCLUDED.client_data -> 'reservations', 'null'::jsonb),
+                 true
+               ),
+               '{settings,featureFlags,enableReservations}',
+               COALESCE(
+                 EXCLUDED.client_data #> '{settings,featureFlags,enableReservations}',
+                 'false'::jsonb
+               ),
+               true
+             ),
+             updated_at = now()`,
           [
             client.id,
             JSON.stringify(client),
@@ -72,6 +92,19 @@ async function seedContent(): Promise<void> {
             JSON.stringify(menuCategories),
           ],
         );
+        if (client.reservations) {
+          await databaseClient.query(
+            `UPDATE availability_rules
+             SET booking_terms_version = COALESCE($2, booking_terms_version),
+                 privacy_notice_version = COALESCE($3, privacy_notice_version)
+             WHERE restaurant_id = $1`,
+            [
+              client.id,
+              client.reservations.bookingTermsVersion ?? null,
+              client.reservations.privacyNoticeVersion ?? null,
+            ],
+          );
+        }
         await databaseClient.query("COMMIT");
         console.log(`Synchronized restaurant content: ${client.id}`);
       } catch (error) {

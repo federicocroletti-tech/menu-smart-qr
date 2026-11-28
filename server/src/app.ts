@@ -116,6 +116,8 @@ const holdSchema = availabilitySchema.extend({
 
 const confirmationSchema = z.object({
   holdToken: z.string().min(32).max(128),
+  bookingTermsVersion: z.string().trim().min(1).max(100),
+  privacyNoticeVersion: z.string().trim().min(1).max(100),
   guest: z.object({
     name: z.string().trim().min(2).max(120).refine(
       (name) => [...name.matchAll(/\p{L}/gu)].length >= 2,

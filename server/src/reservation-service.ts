@@ -5,6 +5,7 @@ import type { Pool, PoolClient } from "pg";
 import {
   AvailabilityError,
   findAvailability,
+  resolveReservationLegalConfiguration,
   resolveReservationTiming,
   type AvailabilityRequest,
 } from "./availability";
@@ -38,6 +39,8 @@ export interface HoldResult {
 
 export interface ConfirmationRequest {
   holdToken: string;
+  bookingTermsVersion: string;
+  privacyNoticeVersion: string;
   guest: {
     name: string;
     phone: string;
@@ -328,7 +331,7 @@ async function expireHolds(
        SELECT id, status
        FROM reservations
        WHERE status IN ('holding', 'awaiting_guarantee')
-         AND hold_expires_at <= now()
+         AND (hold_expires_at IS NULL OR hold_expires_at <= now())
          AND ($1::text IS NULL OR restaurant_id = $1)
        FOR UPDATE
      )
@@ -389,6 +392,20 @@ export async function createReservationHold(
       [JSON.stringify([request.restaurantId, request.idempotencyKey])],
     );
     await expireHolds(client, request.restaurantId);
+    const legalConfiguration = await resolveReservationLegalConfiguration(
+      client,
+      request.restaurantId,
+    );
+    if (
+      !legalConfiguration?.onlineBookingEnabled ||
+      !legalConfiguration.clientBookingEnabled ||
+      !legalConfiguration.legalDocumentsConfigured
+    ) {
+      throw new ReservationError(
+        503,
+        "Online reservations require configured legal documents",
+      );
+    }
 
     const existing = await client.query<ExistingHold>(
       `SELECT id, status, starts_at, ends_at, party_size_current,
@@ -644,6 +661,7 @@ export async function confirmReservation(
 ): Promise<{ confirmationCode: string; status: ReservationStatus }> {
   const tokenHash = hashToken(request.holdToken);
   const client = await pool.connect();
+  let transactionCommitted = false;
 
   try {
     await client.query("BEGIN");
@@ -655,8 +673,6 @@ export async function confirmReservation(
       hold_is_active: boolean;
       starts_at: Date;
       cancellation_notice_minutes: number | null;
-      booking_terms_version: string;
-      privacy_notice_version: string;
       confirmation_code_hash: string | null;
     }>(
       `SELECT r.id,
@@ -666,8 +682,6 @@ export async function confirmReservation(
               r.hold_expires_at > now() AS hold_is_active,
               r.starts_at,
               ar.cancellation_notice_minutes,
-              ar.booking_terms_version,
-              ar.privacy_notice_version,
               r.confirmation_code_hash
        FROM reservations r
        JOIN availability_rules ar ON ar.restaurant_id = r.restaurant_id
@@ -691,6 +705,9 @@ export async function confirmReservation(
         status: reservation.status,
       };
     }
+    if (reservation.status === "expired") {
+      throw new ReservationError(410, "Reservation hold has expired");
+    }
     if (reservation.status !== "holding") {
       throw new ReservationError(409, "Reservation hold is no longer active");
     }
@@ -713,7 +730,32 @@ export async function confirmReservation(
         [reservation.id],
       );
       await client.query("COMMIT");
+      transactionCommitted = true;
       throw new ReservationError(410, "Reservation hold has expired");
+    }
+
+    const legalConfiguration = await resolveReservationLegalConfiguration(
+      client,
+      reservation.restaurant_id,
+    );
+    if (
+      !legalConfiguration?.onlineBookingEnabled ||
+      !legalConfiguration.clientBookingEnabled ||
+      !legalConfiguration.legalDocumentsConfigured
+    ) {
+      throw new ReservationError(
+        503,
+        "Online reservations require configured legal documents",
+      );
+    }
+    if (
+      request.bookingTermsVersion !== legalConfiguration.bookingTermsVersion ||
+      request.privacyNoticeVersion !== legalConfiguration.privacyNoticeVersion
+    ) {
+      throw new ReservationError(
+        412,
+        "Legal documents changed; review the current documents before confirming",
+      );
     }
 
     const guest = await client.query<{ id: string }>(
@@ -767,8 +809,8 @@ export async function confirmReservation(
          ($1, 'marketing', 'optional', $4)`,
       [
         reservation.id,
-        reservation.booking_terms_version,
-        reservation.privacy_notice_version,
+        legalConfiguration.bookingTermsVersion,
+        legalConfiguration.privacyNoticeVersion,
         request.marketingConsent,
       ],
     );
@@ -796,9 +838,12 @@ export async function confirmReservation(
     }
 
     await client.query("COMMIT");
+    transactionCommitted = true;
     return { confirmationCode, status: "confirmed" };
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (!transactionCommitted) {
+      await client.query("ROLLBACK");
+    }
     if (error instanceof AvailabilityError || error instanceof ReservationError) {
       throw error;
     }
@@ -813,13 +858,16 @@ export async function releaseReservationHold(
   holdToken: string,
 ): Promise<{ status: ReservationStatus }> {
   const client = await pool.connect();
+  let transactionCommitted = false;
   try {
     await client.query("BEGIN");
     const result = await client.query<{
       id: string;
+      restaurant_id: string;
       status: ReservationStatus;
+      hold_is_active: boolean;
     }>(
-      `SELECT id, status
+      `SELECT id, restaurant_id, status, hold_expires_at > now() AS hold_is_active
        FROM reservations
        WHERE hold_token_hash = $1
        FOR UPDATE`,
@@ -832,7 +880,17 @@ export async function releaseReservationHold(
 
     if (reservation.status === "cancelled_by_guest") {
       await client.query("COMMIT");
+      transactionCommitted = true;
       return { status: reservation.status };
+    }
+    if (reservation.status === "expired") {
+      throw new ReservationError(410, "Reservation hold has expired");
+    }
+    if (reservation.status === "holding" && !reservation.hold_is_active) {
+      await expireHolds(client, reservation.restaurant_id);
+      await client.query("COMMIT");
+      transactionCommitted = true;
+      throw new ReservationError(410, "Reservation hold has expired");
     }
     if (reservation.status !== "holding") {
       throw new ReservationError(409, "Reservation hold is no longer active");
@@ -857,9 +915,12 @@ export async function releaseReservationHold(
       [reservation.id],
     );
     await client.query("COMMIT");
+    transactionCommitted = true;
     return { status: "cancelled_by_guest" };
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (!transactionCommitted) {
+      await client.query("ROLLBACK");
+    }
     throw error;
   } finally {
     client.release();

@@ -52,6 +52,8 @@ export interface ReservationHold {
 
 export interface ReservationConfirmationRequest {
   holdToken: string;
+  bookingTermsVersion: string;
+  privacyNoticeVersion: string;
   guest: {
     name: string;
     phone: string;

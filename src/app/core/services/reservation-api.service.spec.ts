@@ -97,6 +97,8 @@ describe('ReservationApiService', () => {
   it('confirms a hold only with explicit terms and privacy acceptance', () => {
     const confirmationRequest: ReservationConfirmationRequest = {
       holdToken: 'hold-token',
+      bookingTermsVersion: 'terms-v1',
+      privacyNoticeVersion: 'privacy-v1',
       guest: {
         name: 'Ada Lovelace',
         phone: '+39 333 1234567',

@@ -11,6 +11,53 @@ import { createApp } from "./app";
 import type { TenantStore } from "./tenant-database";
 
 const databaseUrl = process.env["RESERVATION_TEST_DATABASE_URL"];
+const legalClientData = {
+  settings: { featureFlags: { enableReservations: true } },
+  reservations: {
+    enabled: true,
+    bookingTermsUrl: "https://legal.example.test/booking-terms",
+    privacyNoticeUrl: "https://legal.example.test/privacy",
+    bookingTermsVersion: "test-terms-v1",
+    privacyNoticeVersion: "test-privacy-v1",
+  },
+};
+
+function isAllowedReservationTestDatabase(connectionString: string): boolean {
+  try {
+    const hostname = new URL(connectionString).hostname.toLowerCase();
+    return hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1" ||
+      hostname === "[::1]" ||
+      hostname.endsWith(".neon.tech");
+  } catch {
+    return false;
+  }
+}
+
+function nextLastSundayOfMonth(month: number): string {
+  const todayParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const todayValues = Object.fromEntries(
+    todayParts.map(({ type, value }) => [type, value]),
+  );
+  const today = `${todayValues["year"]}-${todayValues["month"]}-${todayValues["day"]}`;
+  let year = Number(todayValues["year"]);
+
+  while (true) {
+    const lastDay = new Date(Date.UTC(year, month + 1, 0));
+    const lastSunday = lastDay.getUTCDate() - lastDay.getUTCDay();
+    const date = `${year}-${String(month + 1).padStart(2, "0")}-${String(lastSunday).padStart(2, "0")}`;
+    if (date > today) {
+      return date;
+    }
+    year += 1;
+  }
+}
 
 if (
   process.env["REQUIRE_RESERVATION_TEST_DATABASE"] === "true" &&
@@ -21,11 +68,18 @@ if (
   );
 }
 
+if (databaseUrl && !isAllowedReservationTestDatabase(databaseUrl)) {
+  throw new Error(
+    "Reservation integration tests are restricted to local PostgreSQL or Neon test hosts",
+  );
+}
+
 describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
   const restaurantId = `reservation-test-${randomUUID()}`;
   const holdKey = `hold-${randomUUID()}`;
   const releaseHoldKey = `release-${randomUUID()}`;
   const expiredHoldKey = `expired-${randomUUID()}`;
+  const expiredReleaseHoldKey = `expired-release-${randomUUID()}`;
   const originalSecret = process.env["IDEMPOTENCY_SECRET"];
   const tokenVerifier: AccessTokenVerifier = { async verify() { return null; } };
   const tenantStore: TenantStore = {
@@ -63,9 +117,18 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
     const dayOfWeek = date.getUTCDay();
     const area = await pool.query<{ id: string }>(
       `INSERT INTO restaurants (id, name, time_zone)
-       VALUES ($1, 'Reservation integration test', 'UTC')
+       VALUES ($1, 'Reservation integration test', 'Europe/Rome')
        RETURNING id`,
       [restaurantId],
+    );
+    await pool.query(
+      `INSERT INTO restaurant_content
+         (restaurant_id, client_data, allergens, menu_index, menu_categories)
+       VALUES ($1, $2::jsonb, '[]'::jsonb, '{}'::jsonb, '{}'::jsonb)`,
+      [restaurantId, JSON.stringify({
+        ...legalClientData,
+        id: restaurantId,
+      })],
     );
     const diningArea = await pool.query<{ id: string }>(
       `INSERT INTO dining_areas (restaurant_id, name)
@@ -86,11 +149,23 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
       [restaurantId, dayOfWeek],
     );
     await pool.query(
+      `INSERT INTO opening_hours (restaurant_id, day_of_week, opens_at, closes_at)
+       VALUES ($1, 0, '01:00', '04:00')`,
+      [restaurantId],
+    );
+    await pool.query(
       `INSERT INTO service_shifts
          (restaurant_id, day_of_week, starts_at, ends_at, duration_minutes,
           cleanup_minutes, slot_interval_minutes)
        VALUES ($1, $2, '10:00', '14:00', 60, 0, 30)`,
       [restaurantId, dayOfWeek],
+    );
+    await pool.query(
+      `INSERT INTO service_shifts
+         (restaurant_id, day_of_week, starts_at, ends_at, duration_minutes,
+          cleanup_minutes, slot_interval_minutes)
+       VALUES ($1, 0, '01:00', '04:00', 30, 0, 30)`,
+      [restaurantId],
     );
     await pool.query(
       `INSERT INTO availability_rules
@@ -193,6 +268,47 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
       partySize: 2,
       allocationMode: "restaurant_assigned",
     };
+    await pool.query(
+      `UPDATE restaurant_content
+       SET client_data = jsonb_set(
+         client_data,
+         '{reservations,privacyNoticeUrl}',
+         'null'::jsonb
+       )
+       WHERE restaurant_id = $1`,
+      [restaurantId],
+    );
+    const missingLegalDocumentHold = await fetch(
+      `${baseUrl}/api/v1/restaurants/${restaurantId}/reservation-holds`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": `missing-docs-${randomUUID()}`,
+        },
+        body: JSON.stringify(holdRequest),
+      },
+    );
+    expect(missingLegalDocumentHold.status).toBe(503);
+    await pool.query(
+      `UPDATE restaurant_content SET client_data = $2::jsonb
+       WHERE restaurant_id = $1`,
+      [restaurantId, JSON.stringify({
+        ...legalClientData,
+        id: restaurantId,
+      })],
+    );
+
+    const springGap = await fetch(
+      `${baseUrl}/api/v1/restaurants/${restaurantId}/availability?date=${nextLastSundayOfMonth(2)}&time=02%3A30&partySize=2`,
+    );
+    expect(springGap.status).toBe(404);
+    const autumnFold = await fetch(
+      `${baseUrl}/api/v1/restaurants/${restaurantId}/availability?date=${nextLastSundayOfMonth(9)}&time=02%3A30&partySize=2`,
+    );
+    expect(autumnFold.status).toBe(200);
+    expect((await autumnFold.json()).available).toBe(true);
+
     const hold = await fetch(`${baseUrl}/api/v1/restaurants/${restaurantId}/reservation-holds`, {
       method: "POST",
       headers: {
@@ -234,11 +350,23 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
 
     const confirmationRequest = {
       holdToken: holdBody.holdToken,
+      bookingTermsVersion: "test-terms-v1",
+      privacyNoticeVersion: "test-privacy-v1",
       guest: { name: "Ada Lovelace", phone: "+39 333 1234567", notes: "Window" },
       acceptTerms: true,
       acceptPrivacy: true,
       marketingConsent: false,
     };
+    const staleLegalVersion = await fetch(`${baseUrl}/api/v1/reservations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...confirmationRequest,
+        bookingTermsVersion: "stale-terms-v0",
+      }),
+    });
+    expect(staleLegalVersion.status).toBe(412);
+
     const firstConfirmation = await fetch(`${baseUrl}/api/v1/reservations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -276,7 +404,14 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
       `${baseUrl}/api/v1/reservations/${confirmationBody.confirmationCode}`,
     );
     expect(recovered.status).toBe(200);
-    expect((await recovered.json()).status).toBe("confirmed");
+    const recoveredBody = await recovered.json();
+    expect(recoveredBody.status).toBe("confirmed");
+    expect(new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Rome",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(new Date(recoveredBody.startsAt))).toBe("12:00");
     const reservationRevision = recovered.headers.get("etag");
     expect(reservationRevision).toMatch(/^"\d+"$/);
 
@@ -417,6 +552,18 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
       body: JSON.stringify({ ...confirmationRequest, holdToken: expiredHoldBody.holdToken }),
     });
     expect(expiredConfirmation.status).toBe(410);
+    const repeatedExpiredConfirmation = await fetch(
+      `${baseUrl}/api/v1/reservations`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...confirmationRequest,
+          holdToken: expiredHoldBody.holdToken,
+        }),
+      },
+    );
+    expect(repeatedExpiredConfirmation.status).toBe(410);
     const expiredReplay = await fetch(
       `${baseUrl}/api/v1/restaurants/${restaurantId}/reservation-holds`,
       {
@@ -429,5 +576,44 @@ describe.skipIf(!databaseUrl)("reservation PostgreSQL integration", () => {
       },
     );
     expect(expiredReplay.status).toBe(409);
+
+    const expiringRelease = await fetch(
+      `${baseUrl}/api/v1/restaurants/${restaurantId}/reservation-holds`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": expiredReleaseHoldKey,
+        },
+        body: JSON.stringify(holdRequest),
+      },
+    );
+    expect(expiringRelease.status).toBe(201);
+    const expiringReleaseBody = await expiringRelease.json() as {
+      holdToken: string;
+    };
+    await pool.query(
+      `UPDATE reservations SET hold_expires_at = now() - interval '1 minute'
+       WHERE restaurant_id = $1 AND idempotency_key = $2`,
+      [restaurantId, expiredReleaseHoldKey],
+    );
+    const expiredRelease = await fetch(
+      `${baseUrl}/api/v1/reservation-holds/release`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ holdToken: expiringReleaseBody.holdToken }),
+      },
+    );
+    expect(expiredRelease.status).toBe(410);
+    const repeatedExpiredRelease = await fetch(
+      `${baseUrl}/api/v1/reservation-holds/release`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ holdToken: expiringReleaseBody.holdToken }),
+      },
+    );
+    expect(repeatedExpiredRelease.status).toBe(410);
   }, 30_000);
 });

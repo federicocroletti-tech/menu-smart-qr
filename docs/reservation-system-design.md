@@ -2,9 +2,13 @@
 
 ## Stato attuale verificato
 
-Menu Smart QR è una SPA Angular standalone. Con l'API configurata, profilo, allergeni e menu vengono caricati da PostgreSQL tramite l'API Node.js/Express; i JSON nel repository restano un fallback demo e dati seed. `render.yaml` configura il sito statico e l'API. Il backend usa Supabase Auth per le route protette e include membership e policy RLS di lettura. Le migrazioni `001`-`005` sono applicate al progetto remoto; la salute dell'API e la ricerca disponibilità per il demo Pizzeria Vesuvio sono state verificate live. Non sono ancora stati verificati con un flusso live completo i permessi RLS con più utenti/tenant né hold, conferma, consultazione e cancellazione end-to-end.
+Menu Smart QR è una SPA Angular standalone. Con l'API configurata, profilo, allergeni e menu vengono caricati da PostgreSQL tramite l'API Node.js/Express; i JSON nel repository restano anche configurazione seed. `render.yaml` configura il sito statico e l'API. Il backend usa Supabase Auth per le route protette e include membership e policy RLS di lettura. Le migrazioni `001`-`005` sono state applicate al progetto remoto; la salute API e la ricerca disponibilità erano state verificate live. Il profilo Pizzeria Vesuvio, i recapiti, gli orari e i tavoli sono però dimostrativi e non identificano un esercente reale.
 
-Il pannello cliente `src/app/features/menu/components/reservation-panel/` verifica disponibilità tramite API e contiene il flusso di hold e conferma. La ricerca live è verificata; il form del demo Vesuvio non consente ancora di confermare perché mancano URL dei documenti legali. Hold, conferma, recupero e cancellazione sono implementati lato API, ma non sono stati verificati end-to-end su prenotazioni di prova.
+CR-01 mantiene Vesuvio non prenotabile finché il titolare non fornisce documenti approvati: i link locali demo non sono più configurati, il profilo seed disabilita `reservations.enabled` e `enableReservations` e la migrazione `009_disable_demo_reservations.sql` disabilita il booking PostgreSQL per quel profilo. Il seed sincronizza il solo blocco di configurazione prenotazioni dal JSON, senza sovrascrivere il resto dei contenuti. Anche bypassando la UI, l'API rifiuta hold/conferme se i due URL HTTPS e le relative versioni non sono configurati e allineati tra contenuto pubblico e regole DB.
+
+La validazione del wall time usa il fuso del ristorante: rifiuta minuti già trascorsi e orari inesistenti al cambio primaverile; per l'ora ripetuta autunnale Europe/Rome usa l'istanza standard successiva, coerente con `AT TIME ZONE` di PostgreSQL. Conferma e rilascio restituiscono `410` per un hold scaduto, incluse le richieste ripetute; la doppia conferma valida resta idempotente, la doppia cancellazione restituisce `409`. I test unitari coprono la logica frontend; il test d'integrazione copre il flusso PostgreSQL, incluse versioni legali, concorrenza, DST, replay e scadenza.
+
+**Verifica live CR-01 eseguita su Neon di test:** bootstrap completato, migrazione `009_disable_demo_reservations.sql` applicata e suite PostgreSQL passata (40 test). Il flusso HTTP ha verificato hold, conferma idempotente, recupero, cancellazione, scadenza, concorrenza e orari Europe/Rome. Produzione Supabase/Render non è stata modificata; il profilo Vesuvio resta disabilitato perché mancano documenti legali approvati.
 
 La UI cliente ora crea un hold prima della conferma e ne mostra la scadenza con conto alla rovescia e i nomi dei tavoli restituiti dall'API; permette l'assegnazione al ristorante o la selezione di un tavolo disponibile. Il codice ricevuto consente di recuperare i dettagli e richiedere la cancellazione dall'interfaccia. Quando la prenotazione online non è configurata o fallisce, un link WhatsApp prepara una richiesta non vincolante; è disattivabile con `enableReservationWhatsappFallback` o `reservations.whatsappFallbackEnabled`. La UI non presenta la richiesta WhatsApp come prenotazione confermata. Queste interazioni frontend hanno test unitari mirati; l'integrazione PostgreSQL end-to-end resta soggetta alla procedura di verifica riportata sotto.
 
@@ -62,9 +66,9 @@ Le route cliente, membership, lista staff e gestione prenotazioni sono implement
 | Metodo e percorso | Stato | Uso ed esito principale |
 |---|---|---|
 | `GET /api/v1/restaurants/{restaurantId}/availability?date=&time=&partySize=` | Implementata e verificata live per il demo Pizzeria Vesuvio | Cerca una data e ora specifiche; durata e regole vengono risolte dal server. L'esito non garantisce il tavolo. |
-| `POST /api/v1/restaurants/{restaurantId}/reservation-holds` | Implementata; test end-to-end live da eseguire | Richiede un hold per tavoli scelti o assegnazione automatica e una chiave idempotente. Restituisce scadenza, tavoli e token. |
+| `POST /api/v1/restaurants/{restaurantId}/reservation-holds` | Implementata; test end-to-end live da eseguire | Richiede configurazione booking attiva, due URL HTTPS e versioni coerenti, oltre a una chiave idempotente. Restituisce scadenza, tavoli e token. |
 | `POST /api/v1/reservation-holds/release` | Implementata; test PostgreSQL end-to-end disponibile | Rilascia in modo idempotente un hold non confermato usando il token nel body, non nell'URL. |
-| `POST /api/v1/reservations` | Implementata; test end-to-end live da eseguire | Registra dati guest e consensi per un hold valido e restituisce codice/stato. |
+| `POST /api/v1/reservations` | Implementata; test end-to-end live da eseguire | Richiede hold attivo, accettazioni esplicite e le versioni correnti dei due documenti; restituisce lo stesso codice sui replay della conferma valida. |
 | `GET /api/v1/reservations/{confirmationCode}` | Implementata; test end-to-end live da eseguire | Recupera dati minimi con il codice di conferma. |
 | `POST /api/v1/reservations/{confirmationCode}/cancellation` | Implementata; test end-to-end live da eseguire | Cancella la prenotazione e segnala se la richiesta e oltre il termine; non esegue trattenute. |
 | `GET /api/v1/me/restaurants` | Implementata, API testata con verifier/store mock; RLS non verificata su DB reale | Richiede un access token Supabase valido e delega la lettura delle membership alla sessione PostgreSQL con ruolo `authenticated`. |
@@ -86,7 +90,7 @@ Le route `/api/v1/admin/**` richiedono access token Supabase verificato; le muta
 
 ### Errori HTTP e idempotenza
 
-Gli errori API hanno forma `{ "error": "<messaggio>" }`: `400` per parametri/body non validi o chiavi idempotenti mancanti; `401` per token mancante/non valido; `404` per risorse non trovate o non accessibili nel tenant; `409` per chiave riutilizzata con payload diverso, transizione non consentita o collisione tavolo; `410` per hold scaduto; `412` per revisione superata; `413` per body eccessivo; `428` se manca `If-Match`; `429` per rate limit; `500` per errore interno senza dettagli database. Le route di modifica/cancellazione restituiscono inoltre `late` per una cancellazione oltre il preavviso configurato. La chiave idempotente della modifica viene memorizzata con hash e risultato nella stessa transazione; hold e conferma mantengono le proprie garanzie idempotenti. Ogni aggiornamento di prenotazione incrementa una revisione DB, così richieste concorrenti basate su una versione obsoleta falliscono senza sovrascrivere l'aggiornamento più recente.
+Gli errori API hanno forma `{ "error": "<messaggio>" }`: `400` per parametri/body non validi o chiavi idempotenti mancanti; `401` per token mancante/non valido; `404` per risorse non trovate o non accessibili nel tenant; `409` per chiave riutilizzata con payload diverso, versione legale obsoleta, transizione non consentita o collisione tavolo; `410` per hold scaduto, anche nei replay di conferma/rilascio; `412` per revisione o versione legale superata; `413` per body eccessivo; `428` se manca `If-Match`; `429` per rate limit; `503` se booking o documenti legali non sono configurati; `500` per errore interno senza dettagli database. Le route di modifica/cancellazione restituiscono inoltre `late` per una cancellazione oltre il preavviso configurato. La chiave idempotente della modifica viene memorizzata con hash e risultato nella stessa transazione; hold e conferma mantengono le proprie garanzie idempotenti. Ogni aggiornamento di prenotazione incrementa una revisione DB, così richieste concorrenti basate su una versione obsoleta falliscono senza sovrascrivere l'aggiornamento più recente.
 
 Conferme, modifiche e cancellazioni scrivono un outbox transazionale in `notifications` con deduplicazione. Lo stato iniziale è `queued`: la consegna effettiva richiede un worker/provider di messaggistica configurato e non viene dichiarata riuscita senza tale integrazione. Le API non restituiscono indirizzi email o numeri telefonici nel feed notifiche.
 
@@ -96,7 +100,7 @@ Conferme, modifiche e cancellazioni scrivono un outbox transazionale in `notific
 - Calcolare soluzioni da capienza e combinazioni configurate, escludendo prenotazioni attive, prenotazioni manuali e blocchi.
 - L'endpoint di ricerca e informativo; la creazione dell'hold ripete tutte le verifiche in transazione.
 - Il servizio implementa lock delle righe tavolo in ordine deterministico e la migrazione definisce un vincolo di esclusione GiST sugli intervalli attivi. Una collisione concorrente e gestita come conflitto; questa proprieta non e stata ancora verificata su PostgreSQL reale.
-- La scadenza viene controllata nel servizio e pulita da un job periodico. La durata e configurabile tra 5 e 10 minuti; lo schema usa 7 minuti come valore iniziale.
+- La scadenza viene controllata nel servizio e pulita da un job periodico. Hold scaduti restituiscono `410` sia in conferma sia in rilascio; una conferma ripetuta resta idempotente, mentre replay di hold scaduto e doppia cancellazione sono conflitti espliciti. La durata e configurabile tra 5 e 10 minuti; lo schema usa 7 minuti come valore iniziale.
 - Chiavi idempotenti per creazione/conferma; nessuna riga per minuto, gli slot sono configurabili a 15 o 30 minuti.
 - Il cambiamento coperti/tavolo dopo conferma richiede una nuova allocazione atomica e genera un evento.
 
@@ -122,19 +126,22 @@ Test unitari di durata/capienza/combinazioni e transizioni; test PostgreSQL conc
 
 ### Procedura riproducibile per i flussi PostgreSQL
 
-Il test d'integrazione `server/src/reservation-service.postgres.spec.ts` esercita via HTTP hold, riuso della chiave idempotente, rifiuto di una chiave riutilizzata con dati diversi, conferma ripetuta, recupero, modifica idempotente, cancellazione e scadenza. Richiede un database PostgreSQL **dedicato e sacrificabile**: le migrazioni usano lo schema `public` e non devono essere applicate a produzione per questa prova.
+Per CR-01 la suite include il rifiuto di URL/versioni legali assenti o incoerenti, test di mapping Europe/Rome per gli orari DST, `410` ripetuto per conferma e rilascio dopo scadenza, e replay idempotente della conferma.
 
-In PowerShell, impostare l'URL del database di test, applicare le migrazioni e avviare il test:
+Il test d'integrazione `server/src/reservation-service.postgres.spec.ts` esercita via HTTP hold, riuso della chiave idempotente, conferma ripetuta, recupero, cancellazione, concorrenza e scadenza. Le migrazioni usano lo schema `public`: eseguirle solo sul database Neon dedicato ai test, mai su Supabase produzione.
+
+In `server/.env`, `DATABASE_URL` e `RESERVATION_TEST_DATABASE_URL` devono puntare entrambi al database Neon di test: `DATABASE_URL` serve al runner delle migrazioni, mentre il test apre il pool con `RESERVATION_TEST_DATABASE_URL`. Questa configurazione locale non cambia il servizio Render, dove `DATABASE_URL` resta collegato a Supabase e la password è un segreto separato. Il test d'integrazione rifiuta host diversi da Neon e PostgreSQL locale (usato dalla CI).
+
+Eseguire in PowerShell:
 
 ```powershell
-$env:RESERVATION_TEST_DATABASE_URL = "postgres://postgres:password@localhost:5432/menu_smart_qr_test"
-$env:DATABASE_URL = $env:RESERVATION_TEST_DATABASE_URL
-npm run server:migrate
-npm run server:test
+$env:REQUIRE_RESERVATION_TEST_DATABASE = "true"
+npm run server:build
+npm run server:test-db:bootstrap
+npm run server:migrate:neon
+npm run server:test:neon
 ```
 
-Il test crea un ristorante temporaneo, avvia l'API contro quel pool, esegue le richieste e rimuove i record creati anche a fine esecuzione. Senza `RESERVATION_TEST_DATABASE_URL` il caso viene saltato; un test saltato non costituisce una verifica PostgreSQL. Il runner richiede PostgreSQL con le estensioni abilitate dalle migrazioni `001` e `002`.
+Il bootstrap locale è limitato agli host Neon; la suite crea e rimuove record sintetici. Senza `RESERVATION_TEST_DATABASE_URL` il caso viene saltato; un test saltato non costituisce una verifica PostgreSQL. Il runner richiede PostgreSQL con le estensioni abilitate dalle migrazioni `001` e `002`.
 
-### Database remoto di test da predisporre
-
-Resta da creare un database PostgreSQL remoto dedicato a staging/test, separato da produzione. Configurare `DATABASE_URL` e `RESERVATION_TEST_DATABASE_URL` solo nei secret del relativo ambiente CI/staging, applicare le migrazioni fino alla `008` e usare esclusivamente dati sintetici. Non puntare mai il test d'integrazione al database di produzione.
+CR-01 aggiunge la migrazione `009_disable_demo_reservations.sql`; applicarla al database Neon di test prima della verifica. La migrazione di produzione non è stata eseguita.

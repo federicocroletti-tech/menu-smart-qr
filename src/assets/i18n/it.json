@@ -103,6 +103,7 @@
   "privacyNoticeConsent": "Ho letto l'informativa privacy.",
   "readDocument": "Leggi",
   "reservationLegalDocumentsMissing": "Il locale deve configurare i link ai termini di prenotazione e all'informativa privacy prima di accettare prenotazioni online.",
+  "reservationLegalDocumentsChanged": "I documenti legali sono cambiati. Ricarica la pagina e consulta le versioni aggiornate.",
   "confirmReservation": "Conferma prenotazione",
   "savingReservation": "Salvataggio in corso...",
   "reservationConfirmed": "Prenotazione confermata. Conserva il codice di conferma:",

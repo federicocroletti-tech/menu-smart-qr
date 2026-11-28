@@ -12,6 +12,7 @@ const migrationNames = [
   "006_reservation_management_api.sql",
   "007_reservation_modification_idempotency.sql",
   "008_reservation_revision.sql",
+  "009_disable_demo_reservations.sql",
 ];
 
 async function migrate(): Promise<void> {

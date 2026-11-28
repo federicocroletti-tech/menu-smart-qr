@@ -127,7 +127,14 @@ export class ReservationPanelComponent implements OnDestroy {
   }
 
   get hasLegalDocuments(): boolean {
-    return this.bookingTermsUrl !== null && this.privacyNoticeUrl !== null;
+    return this.bookingTermsUrl !== null &&
+      this.privacyNoticeUrl !== null &&
+      this.isConfiguredDocumentVersion(
+        this.client.reservations?.bookingTermsVersion,
+      ) &&
+      this.isConfiguredDocumentVersion(
+        this.client.reservations?.privacyNoticeVersion,
+      );
   }
 
   get canSubmitReservation(): boolean {
@@ -394,12 +401,7 @@ export class ReservationPanelComponent implements OnDestroy {
         error: (error: unknown) => {
           this.ngZone.run(() => {
             console.error('Failed to save reservation:', error);
-            this.submissionErrorKey =
-              error instanceof HttpErrorResponse && error.status === 410
-                ? 'reservationHoldExpired'
-                : error instanceof HttpErrorResponse && error.status === 409
-                  ? 'reservationNoLongerAvailable'
-                  : 'reservationSubmitError';
+            this.submissionErrorKey = this.getReservationSubmissionErrorKey(error);
             this.isSubmitting = false;
             this.changeDetector.detectChanges();
           });
@@ -408,7 +410,15 @@ export class ReservationPanelComponent implements OnDestroy {
   }
 
   confirmHeldReservation(): void {
-    if (!this.canConfirmHeldReservation || !this.hold || !this.heldGuest) {
+    const bookingTermsVersion = this.client.reservations?.bookingTermsVersion;
+    const privacyNoticeVersion = this.client.reservations?.privacyNoticeVersion;
+    if (
+      !this.canConfirmHeldReservation ||
+      !this.hold ||
+      !this.heldGuest ||
+      !bookingTermsVersion ||
+      !privacyNoticeVersion
+    ) {
       return;
     }
 
@@ -417,6 +427,8 @@ export class ReservationPanelComponent implements OnDestroy {
     this.reservationApiService
       .confirmReservation({
         holdToken: this.hold.holdToken,
+        bookingTermsVersion,
+        privacyNoticeVersion,
         guest: this.heldGuest,
         acceptTerms: true,
         acceptPrivacy: true,
@@ -436,15 +448,12 @@ export class ReservationPanelComponent implements OnDestroy {
         error: (error: unknown) => {
           this.ngZone.run(() => {
             console.error('Failed to confirm reservation:', error);
-            this.submissionErrorKey =
-              error instanceof HttpErrorResponse && error.status === 410
-                ? 'reservationHoldExpired'
-                : error instanceof HttpErrorResponse && error.status === 409
-                  ? 'reservationNoLongerAvailable'
-                  : 'reservationSubmitError';
+            this.submissionErrorKey = this.getReservationSubmissionErrorKey(error);
             if (
               error instanceof HttpErrorResponse &&
-              (error.status === 410 || error.status === 409)
+              (error.status === 410 ||
+                error.status === 409 ||
+                error.status === 412)
             ) {
               this.expireLocalHold();
             }
@@ -475,7 +484,13 @@ export class ReservationPanelComponent implements OnDestroy {
       error: (error: unknown) => {
         this.ngZone.run(() => {
           console.error('Failed to release reservation hold:', error);
-          this.submissionErrorKey = 'reservationHoldReleaseError';
+          this.submissionErrorKey =
+            error instanceof HttpErrorResponse && error.status === 410
+              ? 'reservationHoldExpired'
+              : 'reservationHoldReleaseError';
+          if (error instanceof HttpErrorResponse && error.status === 410) {
+            this.expireLocalHold();
+          }
           this.isReleasingHold = false;
           this.changeDetector.detectChanges();
         });
@@ -573,20 +588,37 @@ export class ReservationPanelComponent implements OnDestroy {
       return null;
     }
     try {
-      const isLocalPath = value.startsWith('/') && !value.startsWith('//');
-      const url = isLocalPath
-        ? new URL(value, 'https://local.invalid')
-        : new URL(value);
-      if (isLocalPath) {
-        return url.origin === 'https://local.invalid'
-          ? `${url.pathname}${url.search}${url.hash}`
-          : null;
-      }
-      return url.protocol === 'https:' || url.protocol === 'http:'
+      const url = new URL(value);
+      return url.protocol === 'https:' && url.hostname &&
+        !url.username && !url.password
         ? url.href
         : null;
     } catch {
       return null;
+    }
+  }
+
+  private isConfiguredDocumentVersion(value: string | undefined): boolean {
+    const version = value?.trim();
+    return Boolean(version && !/^demo(?:[-_ ]|$)/i.test(version));
+  }
+
+  private getReservationSubmissionErrorKey(error: unknown): string {
+    if (!(error instanceof HttpErrorResponse)) {
+      return 'reservationSubmitError';
+    }
+
+    switch (error.status) {
+      case 410:
+        return 'reservationHoldExpired';
+      case 412:
+        return 'reservationLegalDocumentsChanged';
+      case 503:
+        return 'reservationLegalDocumentsMissing';
+      case 409:
+        return 'reservationNoLongerAvailable';
+      default:
+        return 'reservationSubmitError';
     }
   }
 }
